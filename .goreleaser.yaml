@@ -36,6 +36,8 @@ archives:
     files:
       - README.md
       - LICENSE
+      # Apache-2.0 section 4(d): the NOTICE file travels with the work.
+      - NOTICE
       - CHANGELOG.md
       - docs/report-schema.json
 

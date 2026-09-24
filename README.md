@@ -299,7 +299,7 @@ See [docs/decisions.md](docs/decisions.md) for why things are the way they are.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Apache-2.0 — see [LICENSE](LICENSE) and [NOTICE](NOTICE).
 
 ---
 

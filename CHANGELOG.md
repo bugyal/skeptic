@@ -13,6 +13,8 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **License is Apache-2.0**, restoring the project's intended license. v0.1.0
+  shipped under MIT in error; see the note under that release below.
 - Module path is `github.com/bugyal/skeptic`. The previous path did not exist
   on GitHub, so `go install` could not have worked.
 - README opens with one pitch line instead of two, and carries CI, release and
@@ -20,6 +22,10 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `results/` has an index stating how to read the findings.
 
 ## [0.1.0] - 2026-09-24
+
+> **Licensing note.** The v0.1.0 archives carry an MIT `LICENSE` in error. The
+> project is Apache-2.0; v0.1.1 corrects the shipped artifacts. The v0.1.0 tag
+> is immutable in the Go module proxy and is left in place rather than rewritten.
 
 First release. Skeptic runs control experiments over a coding-agent benchmark
 and reports which tasks are not measuring what they claim to.
