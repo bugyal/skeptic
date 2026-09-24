@@ -281,3 +281,89 @@ benchmark consumer actually wants to run.
 
 README copy is cheap to revise once real findings exist, so this is a starting
 position, not a commitment.
+
+---
+
+## D6. Docker through the CLI, not the Go SDK
+
+**Status:** decided.
+
+The brief listed the Docker Go SDK as acceptable. The CLI is used instead: it
+adds no dependencies, keeps the binary small, and works with any
+CLI-compatible runtime such as podman. Every call goes through one `Client`
+type, so switching to the SDK means replacing one file.
+
+The cost is that `docker` must be on PATH. `skeptic lint` needs no runtime at
+all, which is the path a CI job can always take.
+
+---
+
+## D7. SWE-bench exports are read as JSONL, not parquet
+
+**Status:** decided.
+
+A parquet reader would be the largest dependency in the project, for a format
+users can convert in one line:
+
+```python
+load_dataset("SWE-bench/SWE-bench_Verified", split="test").to_json("verified.jsonl")
+```
+
+JSON arrays and newline-delimited JSON are both accepted.
+
+The adapter reads the **augmented** datasets under the `SWE-bench` org, which
+carry `image`, `eval_script`, `log_parser` and `eval_type` per row. The classic
+`princeton-nlp/SWE-bench_Verified` columns do not include these, and an export
+missing them is reported `UNSUPPORTED` with that reason rather than guessed at.
+
+This is what makes the adapter tractable: because each row ships its own eval
+script and names its own parser, Skeptic never reimplements the repository-to-
+test-command mapping. It ports the parsers, which are finite (7 real
+implementations, the rest aliases) and cover all 500 Verified instances.
+
+---
+
+## D8. Test output must be merged inside the container
+
+**Status:** decided, after a bug.
+
+SWE-bench eval scripts run under `set -uxo pipefail` and bracket the test run
+with marker lines. Those markers are shell **xtrace output, on stderr**, while
+test results go to **stdout**. Scoring means reading what falls between them.
+
+Capturing the two streams separately and reassembling them on the host does not
+work. They are separate pipes with no ordering guarantee, and `os/exec` copies
+them on independent goroutines. In practice the fixture run failed roughly
+three times in four: the results line landed outside the marker window and the
+instance was reported `ERROR — no test results parsed from output`.
+
+Test commands therefore run with stderr redirected into stdout **inside the
+container** (`{ cmd ; } 2>&1`), which is the only way to get the order the
+program actually wrote. The separate streams are still captured as evidence.
+
+Worth recording because the failure mode was a plausible-looking wrong answer
+rather than a crash: a benchmark would have been reported broken when the only
+broken thing was Skeptic's own output handling.
+
+---
+
+## D9. The partial control, verified
+
+**Status:** verified end to end.
+
+`testdata/partial/demo` is a synthetic instance whose suite grades half of what
+the task requires. The reference patch fixes two functions in two hunks; the
+tests exercise only one of them.
+
+Observed:
+
+| Control | Score | Reading |
+|---|---|---|
+| nop | 0.00 | correct — an untouched workspace fails |
+| oracle | 1.00 | correct — the full fix passes |
+| partial, `add` hunk withheld | 0.00 | the suite noticed |
+| partial, `sub` hunk withheld | **1.00** | **the suite never graded it** |
+
+Both original controls classify this task `CLEAN`. Only the partial control
+sees the problem. The discrimination matters as much as the detection: a probe
+that flagged both hunks would be noise. `e2e/partial_test.go` asserts both.
