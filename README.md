@@ -177,6 +177,18 @@ Three tasks of 241 is 1.2%: a real, fixable defect in a few tasks, not an
 indictment of the benchmark. Details and a draft report in
 [`results/terminal-bench-1/2026-09-25`](results/terminal-bench-1/2026-09-25).
 
+### Static scan coverage
+
+| Corpus | Tasks | OK | WARN | FAIL |
+|---|---:|---:|---:|---:|
+| [Terminal-Bench 1.x](results/terminal-bench-1/2026-09-25) | 241 | 212 | 26 | **3** |
+| [SWE-bench Verified](results/swe-bench-verified/2026-09-25-leakage) | 500 | 431 | 69 | 0 |
+| Harbor examples | 58 | 31 | 27 | 0 |
+
+Harbor scoring zero is the point: its format keeps `solution/` and `tests/`
+outside the `environment/` build context, so the leak that hits three
+Terminal-Bench 1.x tasks is structurally impossible there.
+
 ### Answer leakage in SWE-bench Verified
 
 `skeptic lint` scans all 500 instances in **0.44 seconds** — no containers, no
@@ -208,22 +220,24 @@ flagged instances, and the caveats are in
 
 ### Control runs
 
-| Benchmark | Date | Instances run | Clean | Flagged | Errors |
+| Benchmark | Date | Instances | Clean | Flagged | Errors |
 |---|---|---:|---:|---:|---:|
-| [SWE-bench Verified](results/swe-bench-verified/2026-09-24) | 2026-09-24 | 4 of 500 | 4 | 0 | 8 |
+| [SWE-bench Verified](results/swe-bench-verified/2026-09-25-controls) | 2026-09-25 | 12 | 12 | 0 | 0 |
 
-The subset takes one instance per repository — the smallest set that exercises
-all twelve of SWE-bench's log parsers. Each instance that ran produced the
-expected split: empty diff 0.00, gold patch 1.00.
+One instance per repository — the smallest subset exercising **all twelve** of
+SWE-bench's log parsers, which between them cover all 500 instances. Every one
+produced the expected split: empty diff 0.00, gold patch 1.00. Nothing was
+flagged, reported as plainly as a failure would be.
 
-The eight errors were a host running out of disk, **not** benchmark defects.
-Evaluation images are ~4 GB each. One instance scored CLEAN on its own and
-errored in the batch, which is precisely why `ERROR` is its own category rather
-than a zero.
+The partial control ran on the one multi-hunk patch in the set
+(`mwaskom__seaborn-3187`). Withholding either hunk drops exactly one
+FAIL_TO_PASS test while all 248 regression tests hold — each hunk has its own
+test, so that suite grades the whole change. A negative result, and a useful
+one: the probe discriminates rather than flagging whatever it can reduce.
 
-**The control runs are not yet an audit of SWE-bench.** They say the adapter
-reads the format correctly. The full set needs roughly 2 TB of image traffic and
-a machine that is not a laptop.
+**This validates the adapter, not the benchmark.** Twelve instances of 500. The
+full set needs roughly 2 TB of image traffic. Findings about SWE-bench itself
+come from the static scan above, which covers all 500.
 
 ## In CI
 
