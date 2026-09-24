@@ -284,11 +284,11 @@ func candidateAnswers(sol task.Solution) []string {
 	for i, line := range lines {
 		line = strings.TrimSpace(line)
 		if m := writeRedirect.FindStringSubmatch(line); m != nil {
-			add(shellStripQuotes(m[1]))
+			add(stripPrintfFormat(shellStripQuotes(m[1])))
 			continue
 		}
 		if m := writeTee.FindStringSubmatch(line); m != nil {
-			add(shellStripQuotes(m[1]))
+			add(stripPrintfFormat(shellStripQuotes(m[1])))
 			continue
 		}
 		if m := heredocWrite.FindStringSubmatch(line); m != nil {
@@ -335,6 +335,20 @@ func shellStripQuotes(v string) string {
 		if len(v) >= 2 && strings.HasPrefix(v, q) && strings.HasSuffix(v, q) {
 			return strings.TrimSuffix(strings.TrimPrefix(v, q), q)
 		}
+	}
+	return v
+}
+
+// printfFormat matches a printf format token made only of directives, whose
+// expansion is unknown: '%s', '%d', '%%' and flags/widths in between.
+var printfFormat = regexp.MustCompile(`^%[-+ #0-9.]*[a-zA-Z%]$`)
+
+// stripPrintfFormat drops a leading printf format argument made purely of
+// directives (as in `printf '%s' "value"`), where the value follows it.
+func stripPrintfFormat(v string) string {
+	fields := strings.Fields(v)
+	if len(fields) > 1 && printfFormat.MatchString(shellStripQuotes(fields[0])) {
+		return strings.Join(fields[1:], " ")
 	}
 	return v
 }
@@ -414,4 +428,10 @@ func truncate(s string, n int) string {
 		return s
 	}
 	return s[:n] + "…"
+}
+
+// sprintf is fmt.Sprintf spelled differently so test callers can build
+// finding messages the same way the checks do.
+func sprintf(format string, args ...interface{}) string {
+	return fmt.Sprintf(format, args...)
 }
