@@ -25,9 +25,13 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.1.0] - 2026-09-24
 
-> **Licensing note.** The v0.1.0 archives carry an MIT `LICENSE` in error. The
-> project is Apache-2.0; v0.1.1 corrects the shipped artifacts. The v0.1.0 tag
-> is immutable in the Go module proxy and is left in place rather than rewritten.
+> **Withdrawn.** The v0.1.0 archives carried an MIT `LICENSE` in error; the
+> project is Apache-2.0. The GitHub release and its binaries were deleted and
+> v0.1.1 supersedes it.
+>
+> The tag remains, and `go install github.com/bugyal/skeptic/cmd/skeptic@v0.1.0`
+> still resolves: the Go module proxy caches versions immutably, so that source
+> tree cannot be withdrawn and still carries the MIT file. Use v0.1.1 or later.
 
 First release. Skeptic runs control experiments over a coding-agent benchmark
 and reports which tasks are not measuring what they claim to.
