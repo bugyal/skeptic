@@ -1,5 +1,7 @@
-> **DRAFT — not filed.** For review first.
-> Target: `harbor-framework/terminal-bench-1`.
+> **FILED** 2026-09-25 as
+> [harbor-framework/terminal-bench-1#1474](https://github.com/harbor-framework/terminal-bench-1/issues/1474).
+> Re-verified against `main` immediately before filing; checked against existing
+> issues #666 and #1339, neither of which covers this.
 
 **Title:** Three tasks copy `solution.sh` and `tests/` into the agent's image
 

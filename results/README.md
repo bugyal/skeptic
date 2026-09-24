@@ -51,4 +51,4 @@ filed**. Read the evidence before sending anything, and keep the criticism on
 the artefact rather than its authors.
 
 - [SWE-bench: self-referential PR links](swe-bench-verified/2026-09-25-leakage/issues/)
-- [Terminal-Bench: tests baked into the image](terminal-bench-1/2026-09-25/issues/)
+- [Terminal-Bench: tests baked into the image](terminal-bench-1/2026-09-25/issues/) — **filed** as [terminal-bench-1#1474](https://github.com/harbor-framework/terminal-bench-1/issues/1474)
