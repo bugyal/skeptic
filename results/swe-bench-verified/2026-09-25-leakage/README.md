@@ -25,7 +25,55 @@ Breaking down the 69:
 | Mentions a patch | 22 |
 | Contains what looks like a diff | 6 |
 
-## The sharp subset: a task that links its own answer
+## The sharpest case: a task that contains its own fix
+
+`scikit-learn__scikit-learn-14710` does not merely link the answer. Its
+`problem_statement` contains a unified diff of the fix, at the same file and the
+same hunk as the gold patch.
+
+From the problem statement:
+
+```diff
++        if hasattr(self, 'classes_'):
++            y_small_train = self.classes_[y_small_train.astype(int)]
+         self.train_score_.append(
+             self.scorer_(self, X_binned_small_train, y_small_train)
+         )
+
+         if self._use_validation_data:
++            if hasattr(self, 'classes_'):
++                y_val = self.classes_[y_val.astype(int)]
+```
+
+From the instance's `patch` field — the answer:
+
+```diff
++        if is_classifier(self):
++            y_small_train = self.classes_[y_small_train.astype(int)]
+         self.train_score_.append(
+             self.scorer_(self, X_binned_small_train, y_small_train)
+         )
+
+         if self._use_validation_data:
++            if is_classifier(self):
++                y_val = self.classes_[y_val.astype(int)]
+```
+
+Same file, same hunk at line 426, same added lines. The sole difference is the
+guard: `hasattr(self, 'classes_')` versus `is_classifier(self)`, which are
+equivalent here.
+
+This needs no network and no link-following. The fix is in the question. It is
+the "solution leakage" category in its purest form.
+
+**A caution on the other five diff-flagged instances.** Only this one holds up.
+`django__django-13410` overlaps the gold patch on 5 of 6 added lines, but those
+lines are `try:`, `return True`, `return False` — generic Python that matches by
+chance. The remaining four contain a diff of the *broken* behaviour or of an
+unrelated file, not the fix. Six instances tripped the check; one is a real
+leak. That ratio is why the check is a WARN.
+
+## The other sharp subset: tasks that link their own answer
 
 Of those, **8 instances link to the exact pull request that is their own gold
 patch** — the instance number and the linked PR number are the same:

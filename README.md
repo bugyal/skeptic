@@ -183,7 +183,11 @@ indictment of the benchmark. Details and a draft report in
 model, no API key — and flags **69 (13.8%)** whose problem statement carries a
 leakage signal.
 
-Eight of them link the **exact pull request that is their own gold patch**.
+One of them, `scikit-learn__scikit-learn-14710`, contains **the fix itself** —
+a diff at the same file and hunk as the gold patch, differing only in an
+equivalent guard (`hasattr(self, 'classes_')` vs `is_classifier(self)`).
+
+Eight more link the **exact pull request that is their own gold patch**.
 Verbatim, from `django__django-10097`:
 
 ```
