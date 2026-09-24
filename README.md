@@ -152,27 +152,49 @@ downstream is format-agnostic. See `internal/adapter/adapter.go`.
 
 ## Results on public benchmarks
 
-A partial run, reported as such.
+### Answer leakage in SWE-bench Verified
+
+`skeptic lint` scans all 500 instances in **0.44 seconds** — no containers, no
+model, no API key — and flags **69 (13.8%)** whose problem statement carries a
+leakage signal.
+
+Eight of them link the **exact pull request that is their own gold patch**.
+Verbatim, from `django__django-10097`:
+
+```
+Pull request: https://github.com/django/django/pull/10097
+```
+
+That PR is the answer. The task hands the agent a URL to it.
+
+This is the failure mode an [audit of SWE-bench](https://arxiv.org/html/2410.06992v1)
+measured at 32.67% of apparently-successful patches — and it is detectable
+statically, for free, in under a second.
+
+The honest scope: this shows **the answer is reachable from the question**, not
+that any model exploited it. The official harness runs without network access,
+and a linked PR is not the same as a pasted fix. Full findings, the other 61
+flagged instances, and the caveats are in
+[`results/swe-bench-verified/2026-09-25-leakage`](results/swe-bench-verified/2026-09-25-leakage).
+
+### Control runs
 
 | Benchmark | Date | Instances run | Clean | Flagged | Errors |
 |---|---|---:|---:|---:|---:|
 | [SWE-bench Verified](results/swe-bench-verified/2026-09-24) | 2026-09-24 | 4 of 500 | 4 | 0 | 8 |
 
 The subset takes one instance per repository — the smallest set that exercises
-all twelve of SWE-bench's log parsers. Four ran to completion, each producing
-the expected split (empty diff 0.00, gold patch 1.00), and between them those
-four parsers cover **423 of the 500** instances.
+all twelve of SWE-bench's log parsers. Each instance that ran produced the
+expected split: empty diff 0.00, gold patch 1.00.
 
 The eight errors were a host running out of disk, **not** benchmark defects.
 Evaluation images are ~4 GB each. One instance scored CLEAN on its own and
 errored in the batch, which is precisely why `ERROR` is its own category rather
 than a zero.
 
-**This is not an audit of SWE-bench.** Four instances say the adapter reads the
-format correctly; they say nothing about whether the benchmark is sound. The
-full set needs roughly 2 TB of image traffic and a machine that is not a laptop.
-Raw reports and the exact instance list are committed under
-[`results/`](results/swe-bench-verified/2026-09-24).
+**The control runs are not yet an audit of SWE-bench.** They say the adapter
+reads the format correctly. The full set needs roughly 2 TB of image traffic and
+a machine that is not a laptop.
 
 ## In CI
 
