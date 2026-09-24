@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "skeptic_version": "dev",
+  "generated_at": "2026-09-24T17:54:24.867181Z",
+  "host": {
+    "os": "darwin",
+    "arch": "arm64",
+    "docker_api": "1.54"
+  },
+  "run_dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/swb-run2",
+  "totals": {
+    "total": 1,
+    "clean": 1,
+    "flagged": 0,
+    "errors": 0,
+    "no_oracle": 0,
+    "unsupported": 0,
+    "weak_tests": 0
+  },
+  "tasks": [
+    {
+      "id": "astropy__astropy-12907",
+      "format": "swebench",
+      "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/subset.jsonl",
+      "verdict": "CLEAN",
+      "reason": "oracle 1.00, nop 0.00",
+      "nop_score": 0,
+      "oracle_score": 1,
+      "nop_seconds": 129.139529833,
+      "oracle_seconds": 242.569634042,
+      "seconds": 426.261759792,
+      "image_digest": "sha256:e082963099ed7d5a5f75a0be46e338be36faae33b2cba5289a9ddbd505997f1f",
+      "log_dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/swb-run2/astropy__astropy-12907"
+    }
+  ]
+}
