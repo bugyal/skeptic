@@ -4,7 +4,6 @@ package e2e
 
 import (
 	"context"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
@@ -17,13 +16,6 @@ import (
 )
 
 const partialFixture = "../testdata/partial/demo"
-
-func dbgRunDir(t *testing.T) string {
-	if d := os.Getenv("SKEPTIC_DEBUG_RUNDIR"); d != "" {
-		return d
-	}
-	return t.TempDir()
-}
 
 // TestPartialControlFindsUngradedHunk is the regression test for the weak-test
 // probe. The fixture passes both original controls; only the partial control
@@ -54,13 +46,12 @@ func TestPartialControlFindsUngradedHunk(t *testing.T) {
 	}
 
 	runner := check.NewRunner(dc, check.Options{
-		RunDir:          dbgRunDir(t),
+		RunDir:          t.TempDir(),
 		Timeout:         5 * time.Minute,
 		Partial:         true,
 		PartialMaxHunks: 2,
 	})
 	res := runner.Run(ctx, tasks, 1, nil)[0]
-	t.Logf("DEBUG verdict=%s reason=%s nopErr=%v", res.Verdict, res.Reason, res.Nop)
 
 	// Both original controls must be satisfied: this task looks fine to them.
 	if res.Verdict != check.VerdictClean {
