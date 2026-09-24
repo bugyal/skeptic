@@ -186,6 +186,11 @@ func (r *Runner) runPartials(ctx context.Context, t *task.Task, image, taskLogDi
 		// just the nop control, which already ran.
 		return
 	}
+	if p.SemanticHunks() < 2 {
+		// Nothing left to learn: at most one hunk changes observable
+		// behaviour, so any "weak test" result would be about comments.
+		return
+	}
 
 	max := r.opts.PartialMaxHunks
 	if max <= 0 {
@@ -198,6 +203,14 @@ func (r *Runner) runPartials(ctx context.Context, t *task.Task, image, taskLogDi
 	for i := 0; i < max; i++ {
 		if ctx.Err() != nil {
 			return
+		}
+		// A hunk that only edits comments or blank lines cannot be graded by
+		// any test, so withholding it says nothing about the suite. Probing it
+		// would report a weak test that is not there.
+		if fi, hi, ok := p.Locate(i); ok && !p.Files[fi].Hunks[hi].Semantic() {
+			r.log.Debug("partial control: skipping non-semantic hunk",
+				"task", t.ID, "hunk", p.Describe(i))
+			continue
 		}
 		reduced, _, err := p.Without(i)
 		if err != nil || reduced.HunkCount() == 0 {

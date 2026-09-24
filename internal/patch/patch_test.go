@@ -174,3 +174,77 @@ func TestReducedPatchAppliesWithGit(t *testing.T) {
 		t.Fatalf("git apply --check rejected the reduced patch: %v\n%s\npatch:\n%s", err, out, reduced.String())
 	}
 }
+
+func TestHunkSemantic(t *testing.T) {
+	commentOnly := `diff --git a/a.py b/a.py
+--- a/a.py
++++ b/a.py
+@@ -1,3 +1,3 @@
+ def f():
+-    # siderial time
++    # sidereal time
+     return 1
+`
+	p, err := Parse(commentOnly)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.Files[0].Hunks[0].Semantic() {
+		t.Error("a comment-only hunk must not count as semantic; no test can observe it")
+	}
+	if p.SemanticHunks() != 0 {
+		t.Errorf("SemanticHunks = %d, want 0", p.SemanticHunks())
+	}
+
+	real, err := Parse(twoHunks)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !real.Files[0].Hunks[0].Semantic() {
+		t.Error("a code change must count as semantic")
+	}
+	if real.SemanticHunks() != 2 {
+		t.Errorf("SemanticHunks = %d, want 2", real.SemanticHunks())
+	}
+}
+
+// Blank-line-only churn is not observable either.
+func TestHunkSemanticBlankLines(t *testing.T) {
+	blank := `diff --git a/a.py b/a.py
+--- a/a.py
++++ b/a.py
+@@ -1,4 +1,3 @@
+ def f():
+     return 1
+-
+ 
+`
+	p, err := Parse(blank)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.Files[0].Hunks[0].Semantic() {
+		t.Error("removing a blank line is not a semantic change")
+	}
+}
+
+// A hunk mixing a comment edit with a code change is semantic.
+func TestHunkSemanticMixed(t *testing.T) {
+	mixed := `diff --git a/a.py b/a.py
+--- a/a.py
++++ b/a.py
+@@ -1,3 +1,3 @@
+ def f():
+-    # old note
+-    return 1
++    # new note
++    return 2
+`
+	p, err := Parse(mixed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !p.Files[0].Hunks[0].Semantic() {
+		t.Error("a hunk containing a code change is semantic even if it also edits comments")
+	}
+}

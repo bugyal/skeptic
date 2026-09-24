@@ -222,3 +222,57 @@ func (p *Patch) Describe(index int) string {
 	h := f.Hunks[hi]
 	return fmt.Sprintf("%s lines %d-%d", f.Path, h.NewStart, h.NewStart+h.NewCount-1)
 }
+
+// commentPrefixes covers the line-comment syntax of the languages benchmark
+// repositories actually use.
+var commentPrefixes = []string{"#", "//", "--", ";", "%", "*", "/*", "*/"}
+
+// Semantic reports whether a hunk changes anything a test could observe.
+//
+// A hunk that only edits comments or blank lines cannot be graded by any test,
+// so withholding it proves nothing about the test suite. Treating such a hunk
+// as evidence of weak tests is a false positive: the first real instance the
+// partial control flagged, astropy__astropy-13398, turned out to include a
+// hunk whose entire content was fixing "siderial" to "sidereal" in a comment.
+func (h Hunk) Semantic() bool {
+	for _, l := range h.Lines {
+		if len(l) == 0 {
+			continue
+		}
+		switch l[0] {
+		case '+', '-':
+		default:
+			continue // context line
+		}
+		body := strings.TrimSpace(l[1:])
+		if body == "" {
+			continue // blank line added or removed
+		}
+		if !isComment(body) {
+			return true
+		}
+	}
+	return false
+}
+
+func isComment(s string) bool {
+	for _, p := range commentPrefixes {
+		if strings.HasPrefix(s, p) {
+			return true
+		}
+	}
+	return false
+}
+
+// SemanticHunks counts the hunks that change observable behaviour.
+func (p *Patch) SemanticHunks() int {
+	n := 0
+	for _, f := range p.Files {
+		for _, h := range f.Hunks {
+			if h.Semantic() {
+				n++
+			}
+		}
+	}
+	return n
+}
