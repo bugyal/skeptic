@@ -255,6 +255,15 @@ type ExecOptions struct {
 	Env     map[string]string
 	User    string
 	Timeout time.Duration
+	// CombineStreams redirects stderr into stdout inside the container, so
+	// the two arrive in the order the program wrote them.
+	//
+	// Interleaving cannot be reconstructed on the host: stdout and stderr are
+	// separate pipes with no ordering guarantee between them, so a harness
+	// that brackets its results with shell xtrace markers on stderr will
+	// intermittently appear to have produced no results at all. Merging at
+	// the source is the only reliable fix.
+	CombineStreams bool
 }
 
 // Exec runs a shell command inside a running container.
@@ -269,8 +278,17 @@ func (c *Client) Exec(ctx context.Context, container, command string, o ExecOpti
 	for k, v := range o.Env {
 		args = append(args, "-e", k+"="+v)
 	}
+	if o.CombineStreams {
+		command = "{ " + command + " ; } 2>&1"
+	}
 	args = append(args, container, "sh", "-c", command)
-	return c.run(ctx, o.Timeout, args...)
+	res, err := c.run(ctx, o.Timeout, args...)
+	if o.CombineStreams {
+		// Everything came back on stdout in true order; Combined would
+		// otherwise duplicate it via the host-side multiplexer.
+		res.Combined = res.Stdout
+	}
+	return res, err
 }
 
 // CopyIn copies a host file or directory into the container. A trailing

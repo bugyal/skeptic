@@ -349,6 +349,9 @@ func (r *Runner) runControl(ctx context.Context, t *task.Task, image string, c C
 		WorkDir: t.Tests.WorkDir,
 		Env:     t.Tests.Env,
 		Timeout: r.testTimeout(t),
+		// Scorers that locate results between markers need the true write
+		// order, which only holds when the container merges the streams.
+		CombineStreams: true,
 	})
 	out.ExitCode = testRes.ExitCode
 	out.TimedOut = testRes.TimedOut
