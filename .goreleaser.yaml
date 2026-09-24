@@ -1,0 +1,81 @@
+# goreleaser configuration.
+#   local check:  goreleaser check
+#   dry run:      goreleaser release --snapshot --clean
+version: 2
+
+project_name: skeptic
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: skeptic
+    main: ./cmd/skeptic
+    binary: skeptic
+    env:
+      # A static binary is the point: the target user drops it into CI with no
+      # Go or Python environment present.
+      - CGO_ENABLED=0
+    goos: [linux, darwin]
+    goarch: [amd64, arm64]
+    flags: [-trimpath]
+    ldflags:
+      - -s -w
+      - -X github.com/skeptic-labs/skeptic/internal/version.Version={{.Version}}
+      - -X github.com/skeptic-labs/skeptic/internal/version.Commit={{.Commit}}
+      - -X github.com/skeptic-labs/skeptic/internal/version.Date={{.Date}}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - id: skeptic
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    formats: [tar.gz]
+    files:
+      - README.md
+      - LICENSE
+      - CHANGELOG.md
+      - docs/report-schema.json
+
+checksum:
+  name_template: checksums.txt
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  use: github
+  sort: asc
+  groups:
+    - title: Features
+      regexp: '^feat(\(.+\))?:'
+      order: 0
+    - title: Fixes
+      regexp: '^fix(\(.+\))?:'
+      order: 1
+    - title: Documentation
+      regexp: '^docs(\(.+\))?:'
+      order: 2
+    - title: Other
+      order: 99
+  filters:
+    exclude:
+      - '^chore:'
+      - '^test:'
+      - Merge pull request
+
+release:
+  draft: true
+  prerelease: auto
+  footer: |
+    ## Verifying a benchmark with this build
+
+    ```sh
+    skeptic lint  ./tasks     # static checks, no Docker
+    skeptic check ./tasks     # the oracle and nop controls
+    ```
+
+    Report format is versioned; the schema ships in the archive as
+    `docs/report-schema.json`.
