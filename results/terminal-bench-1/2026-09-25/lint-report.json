@@ -1,0 +1,1802 @@
+[
+  {
+    "task_id": "3d-model-format-legacy",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/3d-model-format-legacy",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "accelerate-maximal-square",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/accelerate-maximal-square",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "acl-permissions-inheritance",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/acl-permissions-inheritance",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "adaptive-rejection-sampler",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/adaptive-rejection-sampler",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "add-benchmark-lm-eval-harness",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/add-benchmark-lm-eval-harness",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "aimo-airline-departures",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/aimo-airline-departures",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "amuse-install",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/amuse-install",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "analyze-access-logs",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/analyze-access-logs",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "ancient-puzzle",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/ancient-puzzle",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "supported",
+        "severity": "WARN",
+        "message": "task cannot be checked by skeptic: multi-container task (2 compose services)"
+      },
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      },
+      {
+        "check": "tests",
+        "severity": "FAIL",
+        "message": "no test command"
+      }
+    ]
+  },
+  {
+    "task_id": "assign-seats",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/assign-seats",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "attention-mil",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/attention-mil",
+    "worst": "WARN",
+    "findings": [
+      {
+        "check": "leakage",
+        "severity": "WARN",
+        "message": "instruction mentions a patch; check it does not describe the reference fix directly"
+      }
+    ]
+  },
+  {
+    "task_id": "audio-synth-stft-peaks",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/audio-synth-stft-peaks",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "bank-trans-filter",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/bank-trans-filter",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "blind-maze-explorer-5x5",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/blind-maze-explorer-5x5",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "blind-maze-explorer-algorithm",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/blind-maze-explorer-algorithm",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "bn-fit-modify",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/bn-fit-modify",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "break-filter-js-from-html",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/break-filter-js-from-html",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "broken-networking",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/broken-networking",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "broken-python",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/broken-python",
+    "worst": "WARN",
+    "findings": [
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      }
+    ]
+  },
+  {
+    "task_id": "build-cython-ext",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/build-cython-ext",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "build-initramfs-qemu",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/build-initramfs-qemu",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "build-linux-kernel-qemu",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/build-linux-kernel-qemu",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "build-pmars",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/build-pmars",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "build-pov-ray",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/build-pov-ray",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "build-stp",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/build-stp",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "build-tcc-qemu",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/build-tcc-qemu",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "caffe-cifar-10",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/caffe-cifar-10",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "cancel-async-tasks",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/cancel-async-tasks",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "cartpole-rl-training",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/cartpole-rl-training",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "catch-me-if-you-can",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/catch-me-if-you-can",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "causal-inference-r",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/causal-inference-r",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "chem-property-targeting",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/chem-property-targeting",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "chem-rf",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/chem-rf",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "chess-best-move",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/chess-best-move",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "circuit-fibsqrt",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/circuit-fibsqrt",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "classifier-debug",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/classifier-debug",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "cobol-modernization",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/cobol-modernization",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "code-from-image",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/code-from-image",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "compile-compcert",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/compile-compcert",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "conda-env-conflict-resolution",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/conda-env-conflict-resolution",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "supported",
+        "severity": "WARN",
+        "message": "task cannot be checked by skeptic: no Dockerfile in the task directory"
+      },
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      },
+      {
+        "check": "tests",
+        "severity": "FAIL",
+        "message": "no test command"
+      }
+    ]
+  },
+  {
+    "task_id": "configure-git-webserver",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/configure-git-webserver",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "constraints-scheduling",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/constraints-scheduling",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "count-call-stack",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/count-call-stack",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "count-dataset-tokens",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/count-dataset-tokens",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "countdown-game",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/countdown-game",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "cpp-compatibility",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/cpp-compatibility",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "cprofiling-python",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/cprofiling-python",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "crack-7z-hash",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/crack-7z-hash",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "create-bucket",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/create-bucket",
+    "worst": "WARN",
+    "findings": [
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      }
+    ]
+  },
+  {
+    "task_id": "cron-broken-network",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/cron-broken-network",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "cross-entropy-method",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/cross-entropy-method",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "leakage",
+        "severity": "FAIL",
+        "message": "the tests directory is baked into the image; an agent could read the exam it is being graded on"
+      }
+    ]
+  },
+  {
+    "task_id": "csv-to-parquet",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/csv-to-parquet",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "custom-memory-heap-crash",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/custom-memory-heap-crash",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "db-wal-recovery",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/db-wal-recovery",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "debug-long-program",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/debug-long-program",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "supported",
+        "severity": "WARN",
+        "message": "task cannot be checked by skeptic: multi-container task (2 compose services)"
+      },
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      },
+      {
+        "check": "tests",
+        "severity": "FAIL",
+        "message": "no test command"
+      }
+    ]
+  },
+  {
+    "task_id": "decommissioning-service-with-sensitive-data",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/decommissioning-service-with-sensitive-data",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "deterministic-tarball",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/deterministic-tarball",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "distribution-search",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/distribution-search",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "dna-assembly",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/dna-assembly",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "dna-insert",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/dna-insert",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "download-youtube",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/download-youtube",
+    "worst": "WARN",
+    "findings": [
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      }
+    ]
+  },
+  {
+    "task_id": "enemy-grid-escape",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/enemy-grid-escape",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "extract-elf",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/extract-elf",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "extract-moves-from-video",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/extract-moves-from-video",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "extract-safely",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/extract-safely",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "supported",
+        "severity": "WARN",
+        "message": "task cannot be checked by skeptic: no Dockerfile in the task directory"
+      },
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      },
+      {
+        "check": "tests",
+        "severity": "FAIL",
+        "message": "no test command"
+      }
+    ]
+  },
+  {
+    "task_id": "feal-differential-cryptanalysis",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/feal-differential-cryptanalysis",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "feal-linear-cryptanalysis",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/feal-linear-cryptanalysis",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "fibonacci-server",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/fibonacci-server",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "filter-js-from-html",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/filter-js-from-html",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "financial-document-processor",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/financial-document-processor",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "find-official-code",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/find-official-code",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "find-restaurant",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/find-restaurant",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "supported",
+        "severity": "WARN",
+        "message": "task cannot be checked by skeptic: multi-container task (2 compose services)"
+      },
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      },
+      {
+        "check": "tests",
+        "severity": "FAIL",
+        "message": "no test command"
+      }
+    ]
+  },
+  {
+    "task_id": "fix-code-vulnerability",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/fix-code-vulnerability",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "fix-git",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/fix-git",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "fix-ocaml-gc",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/fix-ocaml-gc",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "fix-pandas-version",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/fix-pandas-version",
+    "worst": "WARN",
+    "findings": [
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      }
+    ]
+  },
+  {
+    "task_id": "fix-permissions",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/fix-permissions",
+    "worst": "WARN",
+    "findings": [
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      }
+    ]
+  },
+  {
+    "task_id": "flood-monitoring-basic",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/flood-monitoring-basic",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "fmri-encoding-r",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/fmri-encoding-r",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "form-filling",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/form-filling",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "gcc-compiler-optimization",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/gcc-compiler-optimization",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "gcode-to-text",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/gcode-to-text",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "get-bitcoin-nodes",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/get-bitcoin-nodes",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "git-leak-recovery",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/git-leak-recovery",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "git-multibranch",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/git-multibranch",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "git-workflow-hack",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/git-workflow-hack",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "gomoku-planner",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/gomoku-planner",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "gpt2-codegolf",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/gpt2-codegolf",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "grid-pattern-transform",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/grid-pattern-transform",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "hdfs-deployment",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/hdfs-deployment",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "hello-world",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/hello-world",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "heterogeneous-dates",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/heterogeneous-dates",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "hf-lora-adapter",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/hf-lora-adapter",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "hf-model-inference",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/hf-model-inference",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "hf-train-lora-adapter",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/hf-train-lora-adapter",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "home-server-https",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/home-server-https",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "supported",
+        "severity": "WARN",
+        "message": "task cannot be checked by skeptic: multi-container task (2 compose services)"
+      },
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      },
+      {
+        "check": "tests",
+        "severity": "FAIL",
+        "message": "no test command"
+      }
+    ]
+  },
+  {
+    "task_id": "html-finance-verify",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/html-finance-verify",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "huarong-dao-solver",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/huarong-dao-solver",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "hydra-debug-slurm-mode",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/hydra-debug-slurm-mode",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "ilp-solver",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/ilp-solver",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "implement-eigenvectors-from-eigenvalues-research-paper",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/implement-eigenvectors-from-eigenvalues-research-paper",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "incompatible-python-fasttext",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/incompatible-python-fasttext",
+    "worst": "WARN",
+    "findings": [
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      }
+    ]
+  },
+  {
+    "task_id": "install-klee-minimal",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/install-klee-minimal",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "install-windows-3.11",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/install-windows-3.11",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "install-windows-xp",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/install-windows-xp",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "interactive-maze-game",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/interactive-maze-game",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "supported",
+        "severity": "WARN",
+        "message": "task cannot be checked by skeptic: multi-container task (2 compose services)"
+      },
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      },
+      {
+        "check": "tests",
+        "severity": "FAIL",
+        "message": "no test command"
+      }
+    ]
+  },
+  {
+    "task_id": "intrusion-detection",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/intrusion-detection",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "jq-data-processing",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/jq-data-processing",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "jsonl-aggregator",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/jsonl-aggregator",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "jupyter-notebook-server",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/jupyter-notebook-server",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "kv-store-grpc",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/kv-store-grpc",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "large-scale-text-editing",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/large-scale-text-editing",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "largest-eigenval",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/largest-eigenval",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "lean4-proof",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/lean4-proof",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "leelachess0-pytorch-conversion",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/leelachess0-pytorch-conversion",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "llm-inference-batching-scheduler",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/llm-inference-batching-scheduler",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "llm-spec-decoding",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/llm-spec-decoding",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "log-summary",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/log-summary",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "log-summary-date-ranges",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/log-summary-date-ranges",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "logistic-regression-divergence",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/logistic-regression-divergence",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "magsac-install",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/magsac-install",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "mahjong-winninghand",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/mahjong-winninghand",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "mailman",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/mailman",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "make-doom-for-mips",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/make-doom-for-mips",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "make-mips-interpreter",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/make-mips-interpreter",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "matlab-python-conversion",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/matlab-python-conversion",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "mcmc-sampling-stan",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/mcmc-sampling-stan",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "merge-diff-arc-agi-task",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/merge-diff-arc-agi-task",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "mixed-integer-programming",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/mixed-integer-programming",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "mlflow-register",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/mlflow-register",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "mnist-learning-fix",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/mnist-learning-fix",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "model-extraction-relu-logits",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/model-extraction-relu-logits",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "modernize-fortran-build",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/modernize-fortran-build",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "modernize-scientific-stack",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/modernize-scientific-stack",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "movie-helper",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/movie-helper",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "mteb-eval",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/mteb-eval",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "mteb-leaderboard",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/mteb-leaderboard",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "mteb-retrieve",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/mteb-retrieve",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "multi-source-data-merger",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/multi-source-data-merger",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "multistep-definite-integral",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/multistep-definite-integral",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "leakage",
+        "severity": "FAIL",
+        "message": "the tests directory is baked into the image; an agent could read the exam it is being graded on"
+      }
+    ]
+  },
+  {
+    "task_id": "neuron-to-jaxley-conversion",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/neuron-to-jaxley-conversion",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "new-encrypt-command",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/new-encrypt-command",
+    "worst": "WARN",
+    "findings": [
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      }
+    ]
+  },
+  {
+    "task_id": "nginx-request-logging",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/nginx-request-logging",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "npm-conflict-resolution",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/npm-conflict-resolution",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "ode-solver-rk4",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/ode-solver-rk4",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "oom",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/oom",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "openssl-selfsigned-cert",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/openssl-selfsigned-cert",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "optimal-transport",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/optimal-transport",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "organization-json-generator",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/organization-json-generator",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "overfull-hbox",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/overfull-hbox",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "pandas-etl",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/pandas-etl",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "pandas-sql-query",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/pandas-sql-query",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "parallel-particle-simulator",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/parallel-particle-simulator",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "parallelize-compute-squares",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/parallelize-compute-squares",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "parallelize-graph",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/parallelize-graph",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "password-recovery",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/password-recovery",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "path-tracing",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/path-tracing",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "path-tracing-reverse",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/path-tracing-reverse",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "pcap-to-netflow",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/pcap-to-netflow",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "play-lord",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/play-lord",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "leakage",
+        "severity": "FAIL",
+        "message": "the tests directory is baked into the image; an agent could read the exam it is being graded on"
+      }
+    ]
+  },
+  {
+    "task_id": "play-zork",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/play-zork",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "play-zork-easy",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/play-zork-easy",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "png-generation",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/png-generation",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "polyglot-c-py",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/polyglot-c-py",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "polyglot-rust-c",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/polyglot-rust-c",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "port-compressor",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/port-compressor",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "portfolio-optimization",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/portfolio-optimization",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "postgres-csv-clean",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/postgres-csv-clean",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "supported",
+        "severity": "WARN",
+        "message": "task cannot be checked by skeptic: multi-container task (2 compose services)"
+      },
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      },
+      {
+        "check": "tests",
+        "severity": "FAIL",
+        "message": "no test command"
+      }
+    ]
+  },
+  {
+    "task_id": "predicate-pushdown-bench",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/predicate-pushdown-bench",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "predict-customer-churn",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/predict-customer-churn",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "privilege-escalation",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/privilege-escalation",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "processing-pipeline",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/processing-pipeline",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "protein-assembly",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/protein-assembly",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "protocol-analysis-rs",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/protocol-analysis-rs",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "prove-plus-comm",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/prove-plus-comm",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "puzzle-solver",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/puzzle-solver",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "pypi-server",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/pypi-server",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "pytorch-model-cli",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/pytorch-model-cli",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "pytorch-model-recovery",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/pytorch-model-recovery",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "qemu-alpine-ssh",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/qemu-alpine-ssh",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "qemu-startup",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/qemu-startup",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "query-optimize",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/query-optimize",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "raman-fitting",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/raman-fitting",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "rare-mineral-allocation",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/rare-mineral-allocation",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "recover-accuracy-log",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/recover-accuracy-log",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "recover-obfuscated-files",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/recover-obfuscated-files",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "regex-chess",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/regex-chess",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "regex-log",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/regex-log",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "reshard-c4-data",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/reshard-c4-data",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "reverse-engineering",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/reverse-engineering",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "rstan-to-pystan",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/rstan-to-pystan",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "run-pdp11-code",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/run-pdp11-code",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "sam-cell-seg",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/sam-cell-seg",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "sanitize-git-repo",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/sanitize-git-repo",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "schedule-vacation",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/schedule-vacation",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "schemelike-metacircular-eval",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/schemelike-metacircular-eval",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "security-celery-redis-rce",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/security-celery-redis-rce",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "supported",
+        "severity": "WARN",
+        "message": "task cannot be checked by skeptic: multi-container task (3 compose services)"
+      },
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      },
+      {
+        "check": "tests",
+        "severity": "FAIL",
+        "message": "no test command"
+      }
+    ]
+  },
+  {
+    "task_id": "security-vulhub-minio",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/security-vulhub-minio",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "supported",
+        "severity": "WARN",
+        "message": "task cannot be checked by skeptic: multi-container task (4 compose services)"
+      },
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      },
+      {
+        "check": "tests",
+        "severity": "FAIL",
+        "message": "no test command"
+      }
+    ]
+  },
+  {
+    "task_id": "setup-custom-dev-env",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/setup-custom-dev-env",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "sha-puzzle",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/sha-puzzle",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "shell-deobfuscation",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/shell-deobfuscation",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "simple-sheets-put",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/simple-sheets-put",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "supported",
+        "severity": "WARN",
+        "message": "task cannot be checked by skeptic: multi-container task (3 compose services)"
+      },
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      },
+      {
+        "check": "tests",
+        "severity": "FAIL",
+        "message": "no test command"
+      }
+    ]
+  },
+  {
+    "task_id": "simple-web-scraper",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/simple-web-scraper",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "supported",
+        "severity": "WARN",
+        "message": "task cannot be checked by skeptic: multi-container task (2 compose services)"
+      },
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      },
+      {
+        "check": "tests",
+        "severity": "FAIL",
+        "message": "no test command"
+      }
+    ]
+  },
+  {
+    "task_id": "slurm-simple-node-monitoring",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/slurm-simple-node-monitoring",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "solana-data",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/solana-data",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "solve-maze-challenge",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/solve-maze-challenge",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "solve-sudoku",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/solve-sudoku",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "sparql-professors-universities",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/sparql-professors-universities",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "sparql-university",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/sparql-university",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "speech-to-text",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/speech-to-text",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "spinning-up-rl",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/spinning-up-rl",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "spring-messaging-vul",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/spring-messaging-vul",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "supported",
+        "severity": "WARN",
+        "message": "task cannot be checked by skeptic: multi-container task (2 compose services)"
+      },
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      },
+      {
+        "check": "tests",
+        "severity": "FAIL",
+        "message": "no test command"
+      }
+    ]
+  },
+  {
+    "task_id": "sql-injection-attack",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/sql-injection-attack",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "supported",
+        "severity": "WARN",
+        "message": "task cannot be checked by skeptic: multi-container task (4 compose services)"
+      },
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      },
+      {
+        "check": "tests",
+        "severity": "FAIL",
+        "message": "no test command"
+      }
+    ]
+  },
+  {
+    "task_id": "sqlite-db-truncate",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/sqlite-db-truncate",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "sqlite-with-gcov",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/sqlite-with-gcov",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "stable-parallel-kmeans",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/stable-parallel-kmeans",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "sudo-llvm-ir",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/sudo-llvm-ir",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "swe-bench-astropy-1",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/swe-bench-astropy-1",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "supported",
+        "severity": "WARN",
+        "message": "task cannot be checked by skeptic: no tests directory (or it is empty)"
+      },
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      },
+      {
+        "check": "tests",
+        "severity": "FAIL",
+        "message": "no test command"
+      }
+    ]
+  },
+  {
+    "task_id": "swe-bench-astropy-2",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/swe-bench-astropy-2",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "supported",
+        "severity": "WARN",
+        "message": "task cannot be checked by skeptic: no tests directory (or it is empty)"
+      },
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      },
+      {
+        "check": "tests",
+        "severity": "FAIL",
+        "message": "no test command"
+      }
+    ]
+  },
+  {
+    "task_id": "swe-bench-fsspec",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/swe-bench-fsspec",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "swe-bench-langcodes",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/swe-bench-langcodes",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "supported",
+        "severity": "WARN",
+        "message": "task cannot be checked by skeptic: no tests directory (or it is empty)"
+      },
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      },
+      {
+        "check": "tests",
+        "severity": "FAIL",
+        "message": "no test command"
+      }
+    ]
+  },
+  {
+    "task_id": "tmux-advanced-workflow",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/tmux-advanced-workflow",
+    "worst": "FAIL",
+    "findings": [
+      {
+        "check": "supported",
+        "severity": "WARN",
+        "message": "task cannot be checked by skeptic: no Dockerfile in the task directory"
+      },
+      {
+        "check": "solution",
+        "severity": "WARN",
+        "message": "no reference solution; the oracle control cannot run for this task"
+      },
+      {
+        "check": "tests",
+        "severity": "FAIL",
+        "message": "no test command"
+      }
+    ]
+  },
+  {
+    "task_id": "torch-pipeline-parallelism",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/torch-pipeline-parallelism",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "torch-tensor-parallelism",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/torch-tensor-parallelism",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "train-bpe-tokenizer",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/train-bpe-tokenizer",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "train-fasttext",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/train-fasttext",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "tree-directory-parser",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/tree-directory-parser",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "triton-interpret",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/triton-interpret",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "tune-mjcf",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/tune-mjcf",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "unprivileged-headless-pyrender",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/unprivileged-headless-pyrender",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "vertex-solver",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/vertex-solver",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "video-processing",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/video-processing",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "vimscript-vim-quine",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/vimscript-vim-quine",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "vul-flask",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/vul-flask",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "vul-flink",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/vul-flink",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "vulnerable-secret",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/vulnerable-secret",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "wasm-pipeline",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/wasm-pipeline",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "weighted-max-sat-solver",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/weighted-max-sat-solver",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "winning-avg-corewars",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/winning-avg-corewars",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "word2vec-from-scratch",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/word2vec-from-scratch",
+    "worst": "OK",
+    "findings": null
+  },
+  {
+    "task_id": "write-compressor",
+    "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/write-compressor",
+    "worst": "OK",
+    "findings": null
+  }
+]
