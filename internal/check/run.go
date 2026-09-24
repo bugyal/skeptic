@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/skeptic-labs/skeptic/internal/docker"
+	"github.com/skeptic-labs/skeptic/internal/patch"
 	"github.com/skeptic-labs/skeptic/internal/task"
 )
 
@@ -29,22 +30,34 @@ type ControlResult struct {
 	TimedOut bool          `json:"timed_out"`
 	Error    string        `json:"error,omitempty"`
 	LogDir   string        `json:"log_dir,omitempty"`
+	// Detail is a short human summary from a custom scorer, e.g. how many
+	// expected tests passed.
+	Detail string `json:"detail,omitempty"`
+	// Hunk names the withheld change, for partial control results.
+	Hunk string `json:"hunk,omitempty"`
+
+	// Captured output, kept off the report but available to a scorer.
+	stdout, stderr string
 }
 
 // TaskResult is everything Skeptic concluded about one task.
 type TaskResult struct {
-	ID          string         `json:"id"`
-	Format      string         `json:"format"`
-	Dir         string         `json:"dir"`
-	Verdict     Verdict        `json:"verdict"`
-	Reason      string         `json:"reason"`
-	Nop         *ControlResult `json:"nop"`
-	Oracle      *ControlResult `json:"oracle"`
-	ImageDigest string         `json:"image_digest,omitempty"`
-	Duration    time.Duration  `json:"duration_ns"`
-	Error       string         `json:"error,omitempty"`
-	Unsupported string         `json:"unsupported,omitempty"`
-	LogDir      string         `json:"log_dir,omitempty"`
+	ID      string         `json:"id"`
+	Format  string         `json:"format"`
+	Dir     string         `json:"dir"`
+	Verdict Verdict        `json:"verdict"`
+	Reason  string         `json:"reason"`
+	Nop     *ControlResult `json:"nop"`
+	Oracle  *ControlResult `json:"oracle"`
+	// Partials holds one result per hunk withheld by the partial control.
+	Partials []*ControlResult `json:"partials,omitempty"`
+	// WeakTests names hunks whose absence the test suite failed to notice.
+	WeakTests   []string      `json:"weak_tests,omitempty"`
+	ImageDigest string        `json:"image_digest,omitempty"`
+	Duration    time.Duration `json:"duration_ns"`
+	Error       string        `json:"error,omitempty"`
+	Unsupported string        `json:"unsupported,omitempty"`
+	LogDir      string        `json:"log_dir,omitempty"`
 }
 
 // NopScore returns the nop control's score, or nil when it did not produce one.
@@ -78,7 +91,12 @@ type Options struct {
 	NoCache        bool
 	Only           Control // empty runs both
 	Platform       string
-	Log            *slog.Logger
+	// Partial enables the weak-test probe. Off by default: it costs an extra
+	// container run per hunk sampled.
+	Partial bool
+	// PartialMaxHunks caps how many hunks are withheld, one at a time.
+	PartialMaxHunks int
+	Log             *slog.Logger
 }
 
 // Runner executes controls against tasks.
@@ -122,16 +140,80 @@ func (r *Runner) CheckTask(ctx context.Context, t *task.Task) TaskResult {
 	res.ImageDigest = digest
 
 	if r.opts.Only == "" || r.opts.Only == ControlNop {
-		res.Nop = r.runControl(ctx, t, image, ControlNop, taskLogDir)
+		res.Nop = r.runControl(ctx, t, image, ControlNop, taskLogDir, "")
 	}
 	if (r.opts.Only == "" || r.opts.Only == ControlOracle) && t.Solution.Available() {
-		res.Oracle = r.runControl(ctx, t, image, ControlOracle, taskLogDir)
+		res.Oracle = r.runControl(ctx, t, image, ControlOracle, taskLogDir, "")
+	}
+
+	// The partial control only means anything once the full solution is known
+	// to score 1.0; otherwise a lower score says nothing about the tests.
+	if r.opts.Partial && res.Oracle != nil && res.Oracle.Score != nil && *res.Oracle.Score == 1 {
+		r.runPartials(ctx, t, image, taskLogDir, &res)
 	}
 
 	res.Verdict, res.Error = classify(t, res.Nop, res.Oracle)
 	res.Reason = res.Verdict.Reason(res)
 	res.Duration = time.Since(start)
 	return res
+}
+
+// runPartials withholds hunks from the reference patch, one at a time, and
+// records any whose absence the test suite does not notice.
+func (r *Runner) runPartials(ctx context.Context, t *task.Task, image, taskLogDir string, res *TaskResult) {
+	if t.Solution.Kind != task.SolutionPatch {
+		// A shell-script solution has no hunks to withhold; saying nothing is
+		// correct, and inventing a mutation would need a model.
+		return
+	}
+	content := t.Solution.PatchContent
+	if content == "" && t.Solution.PatchFile != "" {
+		b, err := os.ReadFile(t.Solution.PatchFile)
+		if err != nil {
+			return
+		}
+		content = string(b)
+	}
+
+	p, err := patch.Parse(content)
+	if err != nil {
+		r.log.Warn("partial control: unparsable solution patch", "task", t.ID, "err", err)
+		return
+	}
+	total := p.HunkCount()
+	if total < 2 {
+		// A single-hunk patch cannot be reduced: withholding its only hunk is
+		// just the nop control, which already ran.
+		return
+	}
+
+	max := r.opts.PartialMaxHunks
+	if max <= 0 {
+		max = 3
+	}
+	if max > total {
+		max = total
+	}
+
+	for i := 0; i < max; i++ {
+		if ctx.Err() != nil {
+			return
+		}
+		reduced, _, err := p.Without(i)
+		if err != nil || reduced.HunkCount() == 0 {
+			continue
+		}
+		desc := p.Describe(i)
+		out := r.runControl(ctx, t, image, ControlPartial,
+			filepath.Join(taskLogDir, fmt.Sprintf("partial-%d", i)), reduced.String())
+		out.Hunk = desc
+		res.Partials = append(res.Partials, out)
+
+		// Full marks without the hunk means the suite never graded it.
+		if out.Error == "" && out.Score != nil && *out.Score == 1 {
+			res.WeakTests = append(res.WeakTests, desc)
+		}
+	}
 }
 
 // image builds or pulls the task environment. Builds are cached by a content
@@ -177,9 +259,13 @@ func (r *Runner) image(ctx context.Context, t *task.Task, logDir string) (ref, d
 
 // runControl runs one control in a container of its own. Each control gets a
 // fresh container so neither can observe the other's side effects.
-func (r *Runner) runControl(ctx context.Context, t *task.Task, image string, c Control, taskLogDir string) *ControlResult {
+func (r *Runner) runControl(ctx context.Context, t *task.Task, image string, c Control, taskLogDir, reducedPatch string) *ControlResult {
 	start := time.Now()
 	out := &ControlResult{Control: c, LogDir: filepath.Join(taskLogDir, string(c))}
+	if c == ControlPartial {
+		// runPartials already gave each probe its own directory.
+		out.LogDir = taskLogDir
+	}
 
 	name := fmt.Sprintf("skeptic-%s-%s-%d", sanitize(t.ID), c, time.Now().UnixNano())
 	if len(name) > 100 {
@@ -190,7 +276,7 @@ func (r *Runner) runControl(ctx context.Context, t *task.Task, image string, c C
 		Image:    image,
 		Name:     name,
 		WorkDir:  t.Environment.WorkDir,
-		Platform: r.opts.Platform,
+		Platform: r.platform(t),
 	})
 	if err != nil {
 		out.Error = fmt.Sprintf("starting container: %v", err)
@@ -217,8 +303,25 @@ func (r *Runner) runControl(ctx context.Context, t *task.Task, image string, c C
 	}
 
 	if c == ControlOracle {
-		if err := r.applySolution(ctx, container, t, out); err != nil {
+		if err := r.applySolution(ctx, container, t, t.Solution.PatchContent, out); err != nil {
 			out.Error = err.Error()
+			out.Duration = time.Since(start)
+			return out
+		}
+	}
+	if c == ControlPartial {
+		if err := r.applySolution(ctx, container, t, reducedPatch, out); err != nil {
+			out.Error = err.Error()
+			out.Duration = time.Since(start)
+			return out
+		}
+	}
+
+	// Formats that carry their test script inline write it in now, after any
+	// solution has run, so the solution cannot see or edit it.
+	if t.Tests.ScriptContent != "" {
+		if err := r.docker.WriteFile(ctx, container, t.Tests.ScriptPath, t.Tests.ScriptContent); err != nil {
+			out.Error = fmt.Sprintf("writing test script: %v", err)
 			out.Duration = time.Since(start)
 			return out
 		}
@@ -241,6 +344,7 @@ func (r *Runner) runControl(ctx context.Context, t *task.Task, image string, c C
 	})
 	out.ExitCode = testRes.ExitCode
 	out.TimedOut = testRes.TimedOut
+	out.stdout, out.stderr = testRes.Stdout, testRes.Stderr
 	// Always written, even when empty: "the test printed nothing" is itself
 	// evidence when someone disputes a flag.
 	writeFileAlways(filepath.Join(out.LogDir, "test.stdout"), testRes.Stdout)
@@ -268,7 +372,7 @@ func (r *Runner) runControl(ctx context.Context, t *task.Task, image string, c C
 	return out
 }
 
-func (r *Runner) applySolution(ctx context.Context, container string, t *task.Task, out *ControlResult) error {
+func (r *Runner) applySolution(ctx context.Context, container string, t *task.Task, patchOverride string, out *ControlResult) error {
 	switch t.Solution.Kind {
 	case task.SolutionScript:
 		if err := r.docker.CopyIn(ctx, container, t.Solution.Dir+"/.", t.Solution.MountPath); err != nil {
@@ -297,11 +401,77 @@ func (r *Runner) applySolution(ctx context.Context, container string, t *task.Ta
 		return nil
 
 	case task.SolutionPatch:
-		return errors.New("patch solutions are not supported until the SWE-bench adapter lands")
+		content := patchOverride
+		if content == "" {
+			content = t.Solution.PatchContent
+		}
+		if content == "" && t.Solution.PatchFile != "" {
+			b, err := os.ReadFile(t.Solution.PatchFile)
+			if err != nil {
+				return fmt.Errorf("reading solution patch: %w", err)
+			}
+			content = string(b)
+		}
+		if content == "" {
+			return errors.New("solution patch is empty")
+		}
+		return r.applyPatch(ctx, container, t, content, out)
 
 	default:
 		return fmt.Errorf("unknown solution kind %q", t.Solution.Kind)
 	}
+}
+
+// gitApplyCmds mirrors swebench/harness/run_evaluation.py, which tries these
+// in order. Real gold patches do not always apply cleanly with plain git apply.
+var gitApplyCmds = []string{
+	"git apply --verbose",
+	"git apply --verbose --3way",
+	"patch --batch --fuzz=5 -p1 -i",
+}
+
+// applyPatch writes the diff into the container and applies it, trying each
+// strategy in turn. Failing to apply is an error, never a score of zero: an
+// unapplied patch says nothing about whether the tests are any good.
+func (r *Runner) applyPatch(ctx context.Context, container string, t *task.Task, content string, out *ControlResult) error {
+	const patchPath = "/tmp/skeptic-solution.diff"
+	if err := r.docker.WriteFile(ctx, container, patchPath, content); err != nil {
+		return fmt.Errorf("writing patch: %w", err)
+	}
+	writeFile(filepath.Join(out.LogDir, "applied.diff"), content)
+
+	var attempts []string
+	for _, cmd := range gitApplyCmds {
+		res, err := r.docker.Exec(ctx, container, cmd+" "+patchPath, docker.ExecOptions{
+			WorkDir: t.Solution.WorkDir,
+			Timeout: 5 * time.Minute,
+		})
+		if err == nil && res.ExitCode == 0 {
+			writeFile(filepath.Join(out.LogDir, "patch-apply.log"),
+				fmt.Sprintf("applied with: %s\n%s%s", cmd, res.Stdout, res.Stderr))
+			return nil
+		}
+		attempts = append(attempts, fmt.Sprintf("%s -> exit %d: %s",
+			cmd, res.ExitCode, strings.TrimSpace(firstLine(res.Stderr))))
+	}
+	writeFile(filepath.Join(out.LogDir, "patch-apply.log"), strings.Join(attempts, "\n"))
+	return fmt.Errorf("could not apply patch (%s)", strings.Join(attempts, "; "))
+}
+
+func firstLine(s string) string {
+	if i := strings.IndexByte(s, '\n'); i >= 0 {
+		return s[:i]
+	}
+	return s
+}
+
+// platform resolves the image architecture, preferring an explicit flag over
+// the adapter's derivation.
+func (r *Runner) platform(t *task.Task) string {
+	if r.opts.Platform != "" {
+		return r.opts.Platform
+	}
+	return t.Environment.Platform
 }
 
 // readScore recovers the numeric score. Candidate paths are tried in order and
@@ -311,6 +481,14 @@ func (r *Runner) applySolution(ctx context.Context, container string, t *task.Ta
 // verdict.
 func (r *Runner) readScore(ctx context.Context, container string, t *task.Task, out *ControlResult) (float64, error) {
 	switch t.Tests.Score.Kind {
+	case task.ScoreFunc:
+		if t.Tests.Score.Scorer == nil {
+			return 0, fmt.Errorf("score kind is func but no scorer was set")
+		}
+		score, detail, err := t.Tests.Score.Scorer(out.stdout, out.stderr, out.ExitCode)
+		out.Detail = detail
+		return score, err
+
 	case task.ScoreExitCode:
 		if out.ExitCode == 0 {
 			return 1, nil

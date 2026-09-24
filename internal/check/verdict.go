@@ -13,6 +13,11 @@ const (
 	// ControlOracle applies the reference solution. Its score must be 1.0:
 	// if the known-correct answer cannot pass, nothing can.
 	ControlOracle Control = "oracle"
+	// ControlPartial applies the reference solution with one hunk withheld.
+	// Its score must drop below 1.0: a suite that still awards full marks was
+	// never grading the withheld change. Unlike the other two this is a
+	// heuristic, so it warns and never fails a run. See docs/decisions.md D5.
+	ControlPartial Control = "partial"
 )
 
 // Verdict is the classification of one task.

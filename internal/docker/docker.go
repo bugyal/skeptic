@@ -294,6 +294,22 @@ func (c *Client) ReadFile(ctx context.Context, container, containerPath string) 
 	return os.ReadFile(dst)
 }
 
+// WriteFile writes content to a path inside the container, creating parent
+// directories as needed.
+func (c *Client) WriteFile(ctx context.Context, container, containerPath, content string) error {
+	dir, err := os.MkdirTemp("", "skeptic-write-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(dir)
+
+	local := filepath.Join(dir, filepath.Base(containerPath))
+	if err := os.WriteFile(local, []byte(content), 0o755); err != nil {
+		return err
+	}
+	return c.CopyIn(ctx, container, local, containerPath)
+}
+
 // Remove force-removes a container. It is safe to call on an already-gone
 // container so it can be used unconditionally in cleanup paths.
 func (c *Client) Remove(ctx context.Context, container string) error {

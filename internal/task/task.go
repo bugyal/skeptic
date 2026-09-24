@@ -31,6 +31,10 @@ type Environment struct {
 	BuildArgs    map[string]string `json:"build_args,omitempty"`
 	BuildTimeout time.Duration     `json:"build_timeout,omitempty"`
 	WorkDir      string            `json:"workdir,omitempty"`
+	// Platform pins the image architecture, e.g. "linux/amd64". Published
+	// benchmark images are often amd64-only, and running one on arm64 without
+	// saying so silently falls back to emulation or fails obscurely.
+	Platform string `json:"platform,omitempty"`
 }
 
 // Prebuilt reports whether the environment is an image reference rather than
@@ -62,6 +66,9 @@ type Solution struct {
 
 	// PatchFile is a unified diff on the host, for SolutionPatch.
 	PatchFile string `json:"patch_file,omitempty"`
+	// PatchContent is an inline unified diff, used by dataset-backed formats
+	// that carry the patch in a row rather than as a file on disk.
+	PatchContent string `json:"-"`
 	// PatchStrip is the -p level passed to patch/git apply.
 	PatchStrip int `json:"patch_strip,omitempty"`
 
@@ -75,13 +82,17 @@ func (s Solution) Available() bool { return s.Kind != SolutionNone && s.Kind != 
 
 // Tests is the hidden grading: what to copy in, what to run, how to read a score.
 type Tests struct {
-	Dir       string            `json:"dir,omitempty"`
-	MountPath string            `json:"mount_path,omitempty"`
-	Command   string            `json:"command"`
-	Env       map[string]string `json:"env,omitempty"`
-	WorkDir   string            `json:"workdir,omitempty"`
-	Timeout   time.Duration     `json:"timeout,omitempty"`
-	Score     ScoreSpec         `json:"score"`
+	Dir       string `json:"dir,omitempty"`
+	MountPath string `json:"mount_path,omitempty"`
+	Command   string `json:"command"`
+	// ScriptContent is written to ScriptPath inside the container before
+	// Command runs, for formats that carry their test script inline.
+	ScriptContent string            `json:"-"`
+	ScriptPath    string            `json:"script_path,omitempty"`
+	Env           map[string]string `json:"env,omitempty"`
+	WorkDir       string            `json:"workdir,omitempty"`
+	Timeout       time.Duration     `json:"timeout,omitempty"`
+	Score         ScoreSpec         `json:"score"`
 }
 
 // ScoreKind is how a numeric score is recovered after the test command runs.
@@ -93,7 +104,15 @@ const (
 	ScoreRewardFile ScoreKind = "reward_file"
 	// ScoreExitCode maps exit 0 to 1.0 and anything else to 0.0.
 	ScoreExitCode ScoreKind = "exit_code"
+	// ScoreFunc defers to ScoreSpec.Scorer, for formats whose score comes
+	// from parsing test output rather than reading an artifact.
+	ScoreFunc ScoreKind = "func"
 )
+
+// Scorer derives a score from captured test output. It returns the score, a
+// short human-readable detail line for the report, and an error if the output
+// could not be interpreted at all.
+type Scorer func(stdout, stderr string, exitCode int) (float64, string, error)
 
 // ScoreSpec says where the score comes from.
 type ScoreSpec struct {
@@ -105,4 +124,8 @@ type ScoreSpec struct {
 	// Empty means: a single-key object or a "reward" key is accepted, and
 	// anything more ambiguous is an error rather than a guess.
 	RewardKey string `json:"reward_key,omitempty"`
+
+	// Scorer is used when Kind is ScoreFunc. It is runtime-only: the report
+	// records the resulting score, not the function that produced it.
+	Scorer Scorer `json:"-"`
 }

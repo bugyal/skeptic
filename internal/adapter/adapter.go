@@ -21,6 +21,17 @@ type Adapter interface {
 	Load(dir string) (*task.Task, error)
 }
 
+// SetAdapter is implemented by formats that describe many tasks in one file
+// or directory -- a dataset export -- rather than one task per directory.
+type SetAdapter interface {
+	Adapter
+	// DetectSet reports whether path is a task set this adapter owns. path
+	// may be a file.
+	DetectSet(path string) bool
+	// LoadSet loads every task in the set.
+	LoadSet(path string) ([]*task.Task, error)
+}
+
 // Registry holds the adapters tried during discovery, in priority order.
 type Registry struct{ adapters []Adapter }
 
@@ -54,8 +65,24 @@ func (r *Registry) Discover(root string) ([]*task.Task, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// A dataset export is one path describing many tasks, so set adapters get
+	// first refusal -- including on directories, which may hold an export.
+	for _, a := range r.adapters {
+		sa, ok := a.(SetAdapter)
+		if !ok || !sa.DetectSet(root) {
+			continue
+		}
+		ts, err := sa.LoadSet(root)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", root, err)
+		}
+		sort.Slice(ts, func(i, j int) bool { return ts[i].ID < ts[j].ID })
+		return ts, nil
+	}
+
 	if !info.IsDir() {
-		return nil, fmt.Errorf("%s is not a directory", root)
+		return nil, fmt.Errorf("%s is not a directory or a recognised task set", root)
 	}
 
 	var out []*task.Task
