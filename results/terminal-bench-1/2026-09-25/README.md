@@ -46,8 +46,22 @@ An agent in that container can read the reference solution and the graded
 assertion, including the literal expected value. It does not have to solve the
 problem; it can write the expected answer to the output file.
 
-`cross-entropy-method` additionally copies in a directory named
-`evaluation_tests_hidden`.
+`cross-entropy-method` is the sharpest case. Its build context holds a directory
+the author named **`evaluation_tests_hidden`** — the name states the intent —
+and `COPY . /app` copies it in whole:
+
+```console
+$ docker run --rm probe sh -c 'ls /app/evaluation_tests_hidden'
+test_q1_pointenv_step.py
+test_q2_cross_entropy_optimize.py
+test_q3_evaluate_plans.py
+test_q4_caching_performance.py
+```
+
+The directory is not hidden. This is worth stating carefully: the author clearly
+meant for these to be out of reach, and the `COPY . /app` line quietly undoes
+that. It is exactly the kind of gap a static check catches and a human reading
+the same Dockerfile does not.
 
 No harness-side cleanup removes these before the agent runs. The `shutil.rmtree`
 calls in `terminal_bench/` operate on host-side cache and run directories, not

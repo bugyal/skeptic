@@ -24,7 +24,18 @@ $ docker run --rm probe sh -c 'grep expected /app/tests/test_outputs.py'
 The reference solution and the graded assertion are both readable, so the task
 can be passed by writing the expected value out rather than computing it.
 
-`cross-entropy-method` also copies a directory named `evaluation_tests_hidden`.
+`cross-entropy-method` is the clearest case: it has a directory named
+`evaluation_tests_hidden`, and that is copied in too.
+
+```console
+$ docker run --rm probe sh -c 'ls /app/evaluation_tests_hidden'
+test_q1_pointenv_step.py
+test_q2_cross_entropy_optimize.py
+test_q3_evaluate_plans.py
+test_q4_caching_performance.py
+```
+
+The name records the intent, and the `COPY . /app` line undoes it silently.
 
 I did not find harness-side cleanup that removes these before the agent runs —
 the `shutil.rmtree` calls in `terminal_bench/` act on host cache and run
