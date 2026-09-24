@@ -5,6 +5,8 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-25
+
 ### Fixed
 
 - `version` now reports the module version when a binary is built by
@@ -86,5 +88,6 @@ rather than indicating a defect.
 - Published SWE-bench images are ~4 GB each and x86_64, so a large run needs
   substantial disk and, on arm64 hosts, emulation.
 
-[Unreleased]: https://github.com/bugyal/skeptic/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/bugyal/skeptic/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/bugyal/skeptic/releases/tag/v0.1.1
 [0.1.0]: https://github.com/bugyal/skeptic/releases/tag/v0.1.0
