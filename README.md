@@ -150,6 +150,30 @@ documentation: reward resolution follows `src/harbor/verifier/verifier.py`
 Adapters implement three methods — `Name`, `Detect`, `Load` — and everything
 downstream is format-agnostic. See `internal/adapter/adapter.go`.
 
+## Results on public benchmarks
+
+A partial run, reported as such.
+
+| Benchmark | Date | Instances run | Clean | Flagged | Errors |
+|---|---|---:|---:|---:|---:|
+| [SWE-bench Verified](results/swe-bench-verified/2026-09-24) | 2026-09-24 | 4 of 500 | 4 | 0 | 8 |
+
+The subset takes one instance per repository — the smallest set that exercises
+all twelve of SWE-bench's log parsers. Four ran to completion, each producing
+the expected split (empty diff 0.00, gold patch 1.00), and between them those
+four parsers cover **423 of the 500** instances.
+
+The eight errors were a host running out of disk, **not** benchmark defects.
+Evaluation images are ~4 GB each. One instance scored CLEAN on its own and
+errored in the batch, which is precisely why `ERROR` is its own category rather
+than a zero.
+
+**This is not an audit of SWE-bench.** Four instances say the adapter reads the
+format correctly; they say nothing about whether the benchmark is sound. The
+full set needs roughly 2 TB of image traffic and a machine that is not a laptop.
+Raw reports and the exact instance list are committed under
+[`results/`](results/swe-bench-verified/2026-09-24).
+
 ## In CI
 
 ```yaml
@@ -183,6 +207,8 @@ that. It does not run agents or call any model.
 
 ## Roadmap
 
+- Run the full SWE-bench Verified set on a machine with the disk for it
+- Exercise the remaining eight log parsers against real instances
 - Multi-service compose orchestration (a whole compose stack brought up and
   cross-probed, beyond D4's single-buildable-service policy)
 - Custom `skeptic.toml` for home-grown benchmarks
