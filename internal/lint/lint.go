@@ -3,13 +3,13 @@
 package lint
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
+	"github.com/skeptic-labs/skeptic/internal/dockerfile"
 	"github.com/skeptic-labs/skeptic/internal/task"
 )
 
@@ -52,16 +52,25 @@ var (
 	prIssueURL  = regexp.MustCompile(`https?://(?:www\.)?(?:github|gitlab)\.com/[^\s)"']+/(?:pull|pulls|issues|merge_requests|commit)/\S+`)
 	diffMarkers = regexp.MustCompile(`(?m)^(?:diff --git |@@ -\d|\+\+\+ [ab]/|--- [ab]/)`)
 	patchWord   = regexp.MustCompile(`(?i)\bpatch(?:es|ed|ing)?\b`)
-	copySrc     = regexp.MustCompile(`(?i)^\s*(COPY|ADD)\s+(.*)$`)
+
+	// Shell writes whose value is the interesting part:
+	//   echo 42 > /app/answer.txt   printf '%s' 42 > /app/answer.txt
+	//   echo 42 | tee /app/answer.txt
+	writeRedirect = regexp.MustCompile(`\b(?:echo|printf)\s+(.+?)\s*>>?\s*(\S+)\s*$`)
+	writeTee      = regexp.MustCompile(`\b(?:echo|printf)\s+(.+?)\s*\|\s*tee\s+(?:-a\s+)?(\S+)\s*$`)
+	heredocWrite  = regexp.MustCompile(`\bcat\s+(?:>\s*|>>\s*)?(\S+)\s*<<\s*-?['"]?(\w+)['"]?\s*$`)
 )
+
+// reporter collects findings for one task.
+type reporter func(check string, sev Severity, format string, args ...interface{})
 
 // Check runs every static check against one task.
 func Check(t *task.Task) Result {
 	r := Result{TaskID: t.ID, Dir: t.Dir, Worst: OK}
-	add := func(check string, sev Severity, format string, args ...interface{}) {
+	add := reporter(func(check string, sev Severity, format string, args ...interface{}) {
 		r.Findings = append(r.Findings, Finding{check, sev, fmt.Sprintf(format, args...)})
 		r.Worst = worse(r.Worst, sev)
-	}
+	})
 
 	if t.Unsupported != "" {
 		add("supported", WARN, "task cannot be checked by skeptic: %s", t.Unsupported)
@@ -70,12 +79,25 @@ func Check(t *task.Task) Result {
 	checkInstruction(t, add)
 	checkSolution(t, add)
 	checkTests(t, add)
-	checkBuildContext(t, add)
+
+	// Both Dockerfile checks share one parse.
+	var df *dockerfile.File
+	if t.Environment.Dockerfile != "" {
+		var err error
+		df, err = dockerfile.ParsePath(t.Environment.Dockerfile)
+		if err != nil {
+			add("dockerfile", FAIL, "cannot parse Dockerfile: %v", err)
+		}
+	}
+	if df != nil {
+		checkBuildContext(t, df.CopySources(), add)
+		checkBuildSteps(t, df, add)
+	}
 
 	return r
 }
 
-func checkInstruction(t *task.Task, add func(string, Severity, string, ...interface{})) {
+func checkInstruction(t *task.Task, add reporter) {
 	path := filepath.Join(t.Dir, "instruction.md")
 	b, err := os.ReadFile(path)
 	if err != nil {
@@ -100,7 +122,7 @@ func checkInstruction(t *task.Task, add func(string, Severity, string, ...interf
 	}
 }
 
-func checkSolution(t *task.Task, add func(string, Severity, string, ...interface{})) {
+func checkSolution(t *task.Task, add reporter) {
 	if !t.Solution.Available() {
 		// Upstream documents solution/ as optional, so this limits what can
 		// be verified rather than breaking the task.
@@ -120,7 +142,7 @@ func checkSolution(t *task.Task, add func(string, Severity, string, ...interface
 	}
 }
 
-func checkTests(t *task.Task, add func(string, Severity, string, ...interface{})) {
+func checkTests(t *task.Task, add reporter) {
 	if t.Tests.Command == "" {
 		add("tests", FAIL, "no test command")
 		return
@@ -168,9 +190,9 @@ func testsWriteReward(t *task.Task) bool {
 // checkBuildContext is the answer-leak check: if solution/ or tests/ sit inside
 // the Docker build context and a COPY or ADD pulls them in, the agent can read
 // the answer or the exam out of its own filesystem.
-func checkBuildContext(t *task.Task, add func(string, Severity, string, ...interface{})) {
+func checkBuildContext(t *task.Task, srcs []string, add reporter) {
 	ctxDir := t.Environment.ContextDir
-	if ctxDir == "" || t.Environment.Dockerfile == "" {
+	if ctxDir == "" {
 		return
 	}
 
@@ -185,7 +207,7 @@ func checkBuildContext(t *task.Task, add func(string, Severity, string, ...inter
 		if ignoredByDockerignore(ctxDir, rel) {
 			continue
 		}
-		if srcs := copiedSources(t.Environment.Dockerfile); coversPath(srcs, rel) {
+		if coversPath(srcs, rel) {
 			sev := FAIL
 			msg := "the %s directory is inside the Docker build context and is copied into the image; an agent could read it"
 			if label == "tests" {
@@ -196,34 +218,156 @@ func checkBuildContext(t *task.Task, add func(string, Severity, string, ...inter
 	}
 }
 
-// copiedSources extracts the source arguments of every COPY and ADD.
-func copiedSources(dockerfile string) []string {
-	f, err := os.Open(dockerfile)
+// checkBuildSteps looks for the answer itself being baked into the image: a
+// RUN that echoes the value the solution writes, an ENV that carries it, or a
+// COPY heredoc that writes it. Any of these lets an agent score without
+// solving, which is the defect the nop control catches the expensive way.
+func checkBuildSteps(t *task.Task, df *dockerfile.File, add reporter) {
+	if !t.Solution.Available() {
+		return // without a solution there is no known answer to look for
+	}
+	answers := candidateAnswers(t.Solution)
+	if len(answers) == 0 {
+		return
+	}
+
+	for _, kv := range df.EnvPairs() {
+		if v := mention(kv[1], answers); v != "" {
+			add("leakage", FAIL,
+				"ENV %s=%q carries the answer the solution writes; the agent can read it from its environment without solving", kv[0], v)
+		}
+	}
+
+	for _, text := range df.RunTexts() {
+		for _, line := range strings.Split(text, "\n") {
+			if v := writtenValue(line); mention(v, answers) != "" {
+				add("leakage", FAIL,
+					"build step writes the answer into the image: %s; an agent could read the file instead of solving the task", truncate(strings.TrimSpace(line), 100))
+			}
+		}
+	}
+
+	for _, hc := range df.HeredocCopies() {
+		for _, line := range strings.Split(hc.Body, "\n") {
+			if mention(strings.TrimSpace(line), answers) != "" {
+				add("leakage", FAIL,
+					"COPY heredoc writes the answer into the image at %s; an agent could read the file instead of solving the task", hc.Dest)
+			}
+		}
+	}
+}
+
+// candidateAnswers extracts the literal values the solution script writes to
+// files — the known-correct answers the oracle plants. Only exact, plausible
+// values are kept: the check must never cry wolf on incidental strings.
+func candidateAnswers(sol task.Solution) []string {
+	if sol.Kind != task.SolutionScript {
+		return nil
+	}
+	b, err := os.ReadFile(filepath.Join(sol.Dir, sol.Script))
 	if err != nil {
 		return nil
 	}
-	defer f.Close()
 
 	var out []string
-	sc := bufio.NewScanner(f)
-	for sc.Scan() {
-		m := copySrc.FindStringSubmatch(sc.Text())
-		if m == nil {
+	seen := map[string]bool{}
+	add := func(v string) {
+		v = plausibleAnswer(v)
+		if v == "" || seen[v] {
+			return
+		}
+		seen[v] = true
+		out = append(out, v)
+	}
+
+	lines := strings.Split(string(b), "\n")
+	for i, line := range lines {
+		line = strings.TrimSpace(line)
+		if m := writeRedirect.FindStringSubmatch(line); m != nil {
+			add(shellStripQuotes(m[1]))
 			continue
 		}
-		fields := strings.Fields(m[2])
-		// Drop flags such as --from=builder, and the final destination arg.
-		var args []string
-		for _, f := range fields {
-			if !strings.HasPrefix(f, "--") {
-				args = append(args, strings.Trim(f, `"'`))
-			}
+		if m := writeTee.FindStringSubmatch(line); m != nil {
+			add(shellStripQuotes(m[1]))
+			continue
 		}
-		if len(args) > 1 {
-			out = append(out, args[:len(args)-1]...)
+		if m := heredocWrite.FindStringSubmatch(line); m != nil {
+			for _, body := range lines[i+1:] {
+				if strings.TrimSpace(body) == m[2] {
+					break
+				}
+				add(strings.TrimSpace(body))
+			}
 		}
 	}
 	return out
+}
+
+// plausibleAnswer filters echo arguments down to values that could be a task
+// answer. Scores (0, 1), paths, flags, URLs and unexpanded variables are
+// either not answers or would match far too much.
+func plausibleAnswer(v string) string {
+	v = strings.TrimSpace(shellStripQuotes(v))
+	switch {
+	case len(v) < 2 || len(v) > 256,
+		strings.HasPrefix(v, "-"),
+		strings.HasPrefix(v, "/"),
+		strings.ContainsAny(v, "$<>|;&`"),
+		strings.Contains(v, "://"),
+		isPunctuation(v):
+		return ""
+	}
+	return v
+}
+
+func isPunctuation(v string) bool {
+	for _, r := range v {
+		if ('a' <= r && r <= 'z') || ('A' <= r && r <= 'Z') || ('0' <= r && r <= '9') {
+			return false
+		}
+	}
+	return true
+}
+
+// shellStripQuotes removes one layer of surrounding shell quotes.
+func shellStripQuotes(v string) string {
+	for _, q := range []string{`"`, `'`} {
+		if len(v) >= 2 && strings.HasPrefix(v, q) && strings.HasSuffix(v, q) {
+			return strings.TrimSuffix(strings.TrimPrefix(v, q), q)
+		}
+	}
+	return v
+}
+
+// writtenValue returns the value a shell line writes to a file, if any.
+func writtenValue(line string) string {
+	line = strings.TrimSpace(line)
+	if m := writeRedirect.FindStringSubmatch(line); m != nil {
+		return shellStripQuotes(m[1])
+	}
+	if m := writeTee.FindStringSubmatch(line); m != nil {
+		return shellStripQuotes(m[1])
+	}
+	// echo -n 42 > f: the flag is not part of the value.
+	return ""
+}
+
+// mention returns the candidate that appears in value, or "". A candidate
+// matches when it is the whole value or a whole whitespace-separated token of
+// it, so `ENV ANSWER=42` matches the answer 42 while a version string like
+// go1.22 does not match the answer 22.
+func mention(value string, candidates []string) string {
+	for _, c := range candidates {
+		if value == c {
+			return c
+		}
+		for _, tok := range strings.Fields(value) {
+			if tok == c {
+				return c
+			}
+		}
+	}
+	return ""
 }
 
 // coversPath reports whether any COPY source would include rel. Sources are

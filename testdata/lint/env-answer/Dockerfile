@@ -1,0 +1,3 @@
+FROM alpine:3
+ENV ANSWER=42
+WORKDIR /app
