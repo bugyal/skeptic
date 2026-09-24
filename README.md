@@ -1,6 +1,8 @@
 # skeptic
 
-**Skeptic doesn't believe your benchmark until oracle passes and nop fails.**
+**Skeptic runs BOTH controls across EVERY task, classifies the outcome, captures evidence, and lints leaks statically — one binary, zero LLM calls.**
+
+Skeptic doesn't believe your benchmark until oracle passes and nop fails.
 
 A benchmark hands an AI coding agent a codebase and a task, runs hidden tests, and
 prints a score. That score is only worth something if the task is fair. Skeptic runs
@@ -126,9 +128,18 @@ WARN  example/leaky-instruction
 | Format | Status |
 | --- | --- |
 | Harbor / Terminal-Bench 2.x (`task.toml`) | supported |
-| SWE-bench (local JSONL + published images) | next |
-| Terminal-Bench 1.x (`task.yaml`) | planned |
+| SWE-bench (local JSONL + published images) | supported |
+| Terminal-Bench 1.x (`task.yaml`) | supported |
 | Custom `skeptic.toml` | planned |
+
+### Terminal-Bench 1.x exit-status mapping
+
+Terminal-Bench 1.x tasks carry no Harbor-style verifier: grading is `run-tests.sh`,
+whose contract is to propagate pytest's exit status, and Terminal-Bench's own harness
+treats 0 as passed. Skeptic therefore maps the test entrypoint's exit status per the
+D2 fallback — **exit 0 → 1.0, any other exit → 0.0**. A task that needs a finer-grained
+score than binary pass/fail cannot be graded this way and should ship a Harbor-style
+verifier writing `reward.json`.
 
 The Harbor adapter was written against the upstream sources, not against
 documentation: reward resolution follows `src/harbor/verifier/verifier.py`
@@ -144,7 +155,7 @@ downstream is format-agnostic. See `internal/adapter/adapter.go`.
 ```yaml
 - uses: actions/checkout@v4
 - uses: actions/setup-go@v5
-  with: { go-version: '1.22' }
+  with: { go-version: '1.25' }
 - run: go install github.com/skeptic-labs/skeptic/cmd/skeptic@latest
 - run: skeptic lint ./tasks           # fast, no Docker
 - run: skeptic check ./tasks --json skeptic-report.json
@@ -172,14 +183,13 @@ that. It does not run agents or call any model.
 
 ## Roadmap
 
-- SWE-bench adapter, plus a **`partial` control**: withhold one hunk of the gold patch
-  and re-run. Still scoring 1.0 means that hunk is untested — the weak-test failure that
-  neither `nop` nor `oracle` can see.
-- Terminal-Bench 1.x adapter (pytest-output scoring)
+- Multi-service compose orchestration (a whole compose stack brought up and
+  cross-probed, beyond D4's single-buildable-service policy)
 - Custom `skeptic.toml` for home-grown benchmarks
 - `--repeat N` for flake detection — SWE-bench itself runs tests 3× and discards
   inconsistent ones
 - `skeptic diff` between two runs, to catch benchmark rot over time
+- `skeptic sweep` as an alias for `check`, per the original naming
 - Homebrew tap
 
 See [docs/decisions.md](docs/decisions.md) for why things are the way they are.
@@ -191,7 +201,7 @@ See [docs/decisions.md](docs/decisions.md) for why things are the way they are.
 
 ## License
 
-Apache-2.0.
+MIT — see [LICENSE](LICENSE).
 
 ---
 

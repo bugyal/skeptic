@@ -1,0 +1,5 @@
+schema_version = "1.4"
+
+[task]
+name = "examples/clean"
+version = "1.0.0"
