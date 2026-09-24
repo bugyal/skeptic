@@ -1,0 +1,4 @@
+instruction: Fix the answer file so it contains the number 42.
+parser_name: pytest
+max_agent_timeout_sec: 300
+max_test_timeout_sec: 60

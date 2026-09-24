@@ -1,0 +1,4 @@
+instruction: Print hello world to stdout.
+parser_name: pytest
+max_agent_timeout_sec: 300
+max_test_timeout_sec: 60
