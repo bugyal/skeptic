@@ -96,9 +96,10 @@ func (a *Adapter) Load(dir string) (*task.Task, error) {
 	}
 
 	t := &task.Task{
-		ID:     filepath.Base(abs),
-		Dir:    abs,
-		Format: formatName,
+		ID:          filepath.Base(abs),
+		Dir:         abs,
+		Format:      formatName,
+		Instruction: c.Instruction,
 	}
 
 	// Refuse rather than mis-run, mirroring the harbor adapter's posture.

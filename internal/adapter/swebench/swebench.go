@@ -28,18 +28,22 @@ const (
 // The list fields arrive as JSON-encoded strings from a Hugging Face export and
 // as real arrays from a local dump, so they are decoded leniently.
 type Instance struct {
-	InstanceID string     `json:"instance_id"`
-	Repo       string     `json:"repo"`
-	BaseCommit string     `json:"base_commit"`
-	Version    string     `json:"version"`
-	Image      string     `json:"image"`
-	EvalScript string     `json:"eval_script"`
-	LogParser  string     `json:"log_parser"`
-	EvalType   string     `json:"eval_type"`
-	Patch      string     `json:"patch"`
-	TestPatch  string     `json:"test_patch"`
-	FailToPass stringList `json:"FAIL_TO_PASS"`
-	PassToPass stringList `json:"PASS_TO_PASS"`
+	InstanceID string `json:"instance_id"`
+	Repo       string `json:"repo"`
+	BaseCommit string `json:"base_commit"`
+	Version    string `json:"version"`
+	Image      string `json:"image"`
+	EvalScript string `json:"eval_script"`
+	LogParser  string `json:"log_parser"`
+	EvalType   string `json:"eval_type"`
+	Patch      string `json:"patch"`
+	// ProblemStatement is the issue text handed to the agent. It is what the
+	// leakage checks read: an audit of SWE-bench found the fix present here
+	// in 32.67% of apparently-successful patches.
+	ProblemStatement string     `json:"problem_statement"`
+	TestPatch        string     `json:"test_patch"`
+	FailToPass       stringList `json:"FAIL_TO_PASS"`
+	PassToPass       stringList `json:"PASS_TO_PASS"`
 }
 
 // stringList decodes either ["a","b"] or "[\"a\",\"b\"]".
@@ -195,9 +199,10 @@ func decode(b []byte) ([]Instance, error) {
 
 func (in Instance) toTask(source string) *task.Task {
 	t := &task.Task{
-		ID:     in.InstanceID,
-		Dir:    source,
-		Format: formatName,
+		ID:          in.InstanceID,
+		Dir:         source,
+		Format:      formatName,
+		Instruction: in.ProblemStatement,
 	}
 
 	// Refuse loudly rather than score with the wrong tools.

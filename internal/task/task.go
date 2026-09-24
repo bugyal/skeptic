@@ -9,9 +9,16 @@ import "time"
 // Task is one benchmark question: an environment to build, a reference
 // solution that is supposed to pass, and tests that decide the score.
 type Task struct {
-	ID          string      `json:"id"`
-	Dir         string      `json:"dir"`
-	Format      string      `json:"format"`
+	ID     string `json:"id"`
+	Dir    string `json:"dir"`
+	Format string `json:"format"`
+
+	// Instruction is the task text shown to the agent. Adapters populate it
+	// from wherever their format keeps it -- a file, a manifest field, or a
+	// dataset column -- so the leakage checks work across every format
+	// rather than only the one that happens to use instruction.md.
+	Instruction string `json:"-"`
+
 	Environment Environment `json:"environment"`
 	Solution    Solution    `json:"solution"`
 	Tests       Tests       `json:"tests"`

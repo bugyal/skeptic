@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/skeptic-labs/skeptic/internal/adapter/harbor"
+	"github.com/skeptic-labs/skeptic/internal/task"
 )
 
 func load(t *testing.T, dir string) Result {
@@ -97,5 +98,37 @@ func TestDockerignoreSuppressesLeak(t *testing.T) {
 	}
 	if ignoredByDockerignore(ctx, "tests") {
 		t.Error("tests is not in .dockerignore and must not be suppressed")
+	}
+}
+
+// Leakage detection must work on formats that carry their instruction text in
+// a manifest or dataset row rather than an instruction.md, because that is
+// where the real corpus lives. Regression test for a gap where the check read
+// only Harbor's on-disk file and so never ran on SWE-bench at all.
+func TestLeakageUsesInstructionField(t *testing.T) {
+	tk := &task.Task{
+		ID:     "demo__demo-10097",
+		Dir:    t.TempDir(), // no instruction.md here on purpose
+		Format: "swebench",
+		Instruction: "URLValidator accepts invalid characters.\n" +
+			"Pull request: https://github.com/django/django/pull/10097\n",
+		Tests:    task.Tests{Command: "true"},
+		Solution: task.Solution{Kind: task.SolutionPatch, PatchContent: "diff"},
+	}
+	r := Check(tk)
+	if !has(r, "leakage", WARN) {
+		t.Fatalf("expected a leakage warning from Instruction, got %+v", r.Findings)
+	}
+}
+
+// An empty instruction must fail rather than silently pass the leakage checks.
+func TestMissingInstructionFails(t *testing.T) {
+	tk := &task.Task{
+		ID: "demo__empty", Dir: t.TempDir(), Format: "swebench",
+		Tests:    task.Tests{Command: "true"},
+		Solution: task.Solution{Kind: task.SolutionPatch, PatchContent: "diff"},
+	}
+	if r := Check(tk); !has(r, "instruction", FAIL) {
+		t.Fatalf("expected an instruction failure, got %+v", r.Findings)
 	}
 }

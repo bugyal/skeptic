@@ -99,6 +99,9 @@ func (a *Adapter) Load(dir string) (*task.Task, error) {
 		Dir:    abs,
 		Format: formatName,
 	}
+	if b, err := os.ReadFile(filepath.Join(abs, "instruction.md")); err == nil {
+		t.Instruction = string(b)
+	}
 
 	// Refuse rather than mis-run. Each of these needs execution machinery
 	// Skeptic does not have, and guessing would produce a confident wrong

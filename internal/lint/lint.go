@@ -98,15 +98,16 @@ func Check(t *task.Task) Result {
 }
 
 func checkInstruction(t *task.Task, add reporter) {
-	path := filepath.Join(t.Dir, "instruction.md")
-	b, err := os.ReadFile(path)
-	if err != nil {
-		add("instruction", FAIL, "no readable instruction.md")
-		return
+	text := t.Instruction
+	if text == "" {
+		// Fall back to the on-disk convention for formats whose adapter does
+		// not carry the text itself.
+		if b, err := os.ReadFile(filepath.Join(t.Dir, "instruction.md")); err == nil {
+			text = string(b)
+		}
 	}
-	text := string(b)
 	if strings.TrimSpace(text) == "" {
-		add("instruction", FAIL, "instruction.md is empty")
+		add("instruction", FAIL, "no readable task instruction")
 		return
 	}
 
