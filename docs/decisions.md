@@ -172,3 +172,112 @@ Skeptic cannot reduce to a single build, the task is reported as
 Running a multi-container task as if it were single-container would produce a
 confident, wrong verdict — the exact failure Skeptic exists to prevent. Refusing
 loudly is correct; full compose orchestration is a roadmap item.
+
+---
+
+## D5. A third control, and a reordered plan
+
+**Status:** decided.
+
+### Why a third control
+
+An audit of SWE-bench ([SWE-Bench+, arXiv:2410.06992](https://arxiv.org/html/2410.06992v1))
+found that among patches the harness marked as passing:
+
+- **32.67%** were *solution leakage* — the fix was present in the issue text or
+  its comments, so the model transcribed rather than solved.
+- **31.08%** passed on *weak tests* — tests that could not distinguish a correct
+  patch from an incorrect one.
+
+Removing those instances dropped SWE-Agent+GPT-4 from **12.47% to 3.97%**.
+Reported performance was inflated roughly threefold. Neither SWE-bench Lite nor
+Verified addressed leakage, and [over 15% of Verified instances still require
+test augmentation](https://runloop.ai/blog/swe-bench-deep-dive-unmasking-the-limitations-of-a-popular-benchmark).
+
+The oracle and nop controls catch neither failure. On a leaked task the gold
+patch still scores 1.0 and the empty diff still scores 0.0; both controls report
+`CLEAN`. On a weak-tested task the same holds — a weak test still rejects an
+empty diff. Weakness is only visible when the suite is shown a *wrong* answer,
+which neither control ever produces.
+
+So the two controls in the original brief address the third and fourth most
+common documented failures while missing the first and second.
+
+### The `partial` control
+
+Apply the gold patch with one hunk withheld, then run the tests.
+
+- Expected: score **< 1.0**. The withheld hunk was part of the required change,
+  so a suite that grades the whole change must notice its absence.
+- Observed 1.0: the withheld hunk is **untested**. Report `WEAK_TESTS`, naming
+  the file and hunk that made no difference.
+
+This is mutation testing aimed at the benchmark's own reference solution. It is
+deterministic, needs no model and no API key, and costs one extra container run
+per hunk sampled (capped, see below).
+
+**Limits, stated plainly.** It requires a patch-shaped solution, because a hunk
+is the unit being withheld. SWE-bench instances are patches without exception.
+Harbor tasks are overwhelmingly `solve.sh` shell scripts — 1 of 31 example tasks
+ships a `solution.patch` — and a shell script cannot be meaningfully reduced
+without a model. The control therefore reports `NOT_APPLICABLE` on script
+solutions rather than pretending to cover them.
+
+Two further honest caveats: a single-hunk patch cannot be reduced at all, and
+some hunks legitimately are not independently observable (a refactor split across
+files). The control therefore emits **WARN, never FAIL**, and never trips
+`--fail-on-flagged`. It reports evidence for a human to judge, which is the only
+defensible posture for a heuristic.
+
+To bound cost, Skeptic withholds hunks one at a time up to a cap
+(`--partial-max-hunks`, default 3), chosen deterministically so reruns agree.
+
+### Reordered phases
+
+The original order reached SWE-bench last. But the documented breakage is
+concentrated there, the `partial` control only works there, and a public results
+table drawn from Terminal-Bench alone may be close to empty — a weak case for a
+tool whose entire claim is that benchmarks are broken.
+
+| Phase | Content |
+|---|---|
+| **1** | Core engine, `Task` model, adapter interface, Harbor/TB2 adapter, `check` / `lint` / `report`, fixtures, unit + e2e tests |
+| **2** | SWE-bench adapter and the `partial` control |
+| **3** | Public run against SWE-bench Verified; commit results; README table |
+| **4** | Terminal-Bench 1.x adapter; public run against its 241 tasks |
+| **5** | Release: goreleaser, CHANGELOG, roadmap |
+
+Phase 1 keeps the Harbor adapter first despite the reordering. It is the simpler
+of the two — local directories, a plain Dockerfile, a reward file on disk — so it
+proves the engine end to end without also depending on a dataset download and
+published images. The fixtures for every verdict class are written in that
+format for the same reason.
+
+### Deferred, with reasons
+
+- **`--repeat N`** (flake detection). Real problem: SWE-bench runs each test
+  three times and discards any that is inconsistent. Deferred to roadmap, not
+  dropped. Control runs are independent by construction, so adding repetition
+  later is a loop around an existing call rather than a redesign.
+- **`skeptic diff`** (rot between runs). Roadmap, as the brief had it. The
+  versioned report schema is what makes it possible later; that ships in phase 1.
+
+---
+
+## D1 (resolved). Positioning
+
+**Status:** decided — supersedes the open question in D1.
+
+Lead with the evidence, credit Harbor by name. The README opens with the measured
+failure rates rather than an assertion, presents the controls as one layer of an
+integrity check rather than a novelty, and states plainly that Harbor ships
+`nop` and `oracle` agents and that `harbor check` covers some of the same ground
+with an LLM judge.
+
+This is chosen over a pure controls-first pitch because the research showed the
+controls cover the *less* common failures; a headline built on them alone would
+oversell. It is chosen over a lint-first pitch because the sweep is still what a
+benchmark consumer actually wants to run.
+
+README copy is cheap to revise once real findings exist, so this is a starting
+position, not a commitment.
