@@ -10,13 +10,33 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
+
+// syncBuffer is a bytes.Buffer safe for the two concurrent writers exec uses.
+type syncBuffer struct {
+	mu  sync.Mutex
+	buf bytes.Buffer
+}
+
+func (b *syncBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.Write(p)
+}
+
+func (b *syncBuffer) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.String()
+}
 
 // Client runs docker commands.
 type Client struct {
@@ -37,6 +57,11 @@ type Result struct {
 	Stdout   string
 	Stderr   string
 	ExitCode int
+	// Combined is stdout and stderr interleaved in the order written. Some
+	// harnesses mark up their logs with shell xtrace, which goes to stderr
+	// while test output goes to stdout; only the combined stream preserves
+	// the relationship between them.
+	Combined string
 	// TimedOut distinguishes a killed command from one that exited non-zero.
 	// Conflating them would let a timeout masquerade as a test failure.
 	TimedOut bool
@@ -54,8 +79,13 @@ func (c *Client) run(ctx context.Context, timeout time.Duration, args ...string)
 	start := time.Now()
 	cmd := exec.CommandContext(runCtx, c.Bin, args...)
 	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
+	// exec copies stdout and stderr on separate goroutines whenever they are
+	// not *os.File, so the shared combined buffer must be synchronised. An
+	// unguarded bytes.Buffer here loses output nondeterministically, which
+	// showed up as a test suite that had "produced no results".
+	combined := &syncBuffer{}
+	cmd.Stdout = io.MultiWriter(&stdout, combined)
+	cmd.Stderr = io.MultiWriter(&stderr, combined)
 
 	c.Log.Debug("docker", "args", strings.Join(args, " "))
 	err := cmd.Run()
@@ -63,6 +93,7 @@ func (c *Client) run(ctx context.Context, timeout time.Duration, args ...string)
 	res := Result{
 		Stdout:   stdout.String(),
 		Stderr:   stderr.String(),
+		Combined: combined.String(),
 		Duration: time.Since(start),
 	}
 	// A deadline on the child context, with the parent still live, means the

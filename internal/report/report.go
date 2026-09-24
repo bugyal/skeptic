@@ -44,6 +44,9 @@ type Totals struct {
 	Errors      int `json:"errors"`
 	NoOracle    int `json:"no_oracle"`
 	Unsupported int `json:"unsupported"`
+	// WeakTests counts tasks with at least one unnoticed hunk. Advisory, and
+	// deliberately excluded from Flagged.
+	WeakTests int `json:"weak_tests"`
 }
 
 // TaskReport is one task's entry in the report.
@@ -61,6 +64,9 @@ type TaskReport struct {
 	ImageDigest string   `json:"image_digest,omitempty"`
 	LogDir      string   `json:"log_dir,omitempty"`
 	Error       string   `json:"error,omitempty"`
+	// WeakTests names hunks of the reference solution whose absence the test
+	// suite did not notice. Advisory: it never flags a task on its own.
+	WeakTests []string `json:"weak_tests,omitempty"`
 }
 
 // Build assembles a Report from raw results.
@@ -79,6 +85,7 @@ func Build(results []check.TaskResult, version, runDir, dockerAPI string) Report
 			NopScore: res.NopScore(), OracleScore: res.OracleScore(),
 			Seconds:     res.Duration.Seconds(),
 			ImageDigest: res.ImageDigest, LogDir: res.LogDir, Error: res.Error,
+			WeakTests: res.WeakTests,
 		}
 		if res.Nop != nil {
 			tr.NopSeconds = res.Nop.Duration.Seconds()
@@ -89,6 +96,9 @@ func Build(results []check.TaskResult, version, runDir, dockerAPI string) Report
 		r.Tasks = append(r.Tasks, tr)
 
 		r.Totals.Total++
+		if len(res.WeakTests) > 0 {
+			r.Totals.WeakTests++
+		}
 		switch res.Verdict {
 		case check.VerdictClean:
 			r.Totals.Clean++

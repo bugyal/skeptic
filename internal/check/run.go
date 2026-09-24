@@ -37,7 +37,7 @@ type ControlResult struct {
 	Hunk string `json:"hunk,omitempty"`
 
 	// Captured output, kept off the report but available to a scorer.
-	stdout, stderr string
+	stdout, stderr, combined string
 }
 
 // TaskResult is everything Skeptic concluded about one task.
@@ -220,6 +220,14 @@ func (r *Runner) runPartials(ctx context.Context, t *task.Task, image, taskLogDi
 // hash of the build context, so re-runs of an unchanged task set are cheap.
 func (r *Runner) image(ctx context.Context, t *task.Task, logDir string) (ref, digest string, err error) {
 	if t.Environment.Prebuilt() {
+		// Published benchmark images run to several gigabytes each, so an
+		// image already present is used as-is unless a rebuild was demanded.
+		if !r.opts.NoCache {
+			if id := r.docker.ImageID(ctx, t.Environment.Image); id != "" {
+				r.log.Debug("image present locally", "task", t.ID, "image", t.Environment.Image)
+				return t.Environment.Image, id, nil
+			}
+		}
 		if _, err := r.docker.Pull(ctx, t.Environment.Image, t.Environment.BuildTimeout); err != nil {
 			return "", "", err
 		}
@@ -345,10 +353,12 @@ func (r *Runner) runControl(ctx context.Context, t *task.Task, image string, c C
 	out.ExitCode = testRes.ExitCode
 	out.TimedOut = testRes.TimedOut
 	out.stdout, out.stderr = testRes.Stdout, testRes.Stderr
+	out.combined = testRes.Combined
 	// Always written, even when empty: "the test printed nothing" is itself
 	// evidence when someone disputes a flag.
 	writeFileAlways(filepath.Join(out.LogDir, "test.stdout"), testRes.Stdout)
 	writeFileAlways(filepath.Join(out.LogDir, "test.stderr"), testRes.Stderr)
+	writeFileAlways(filepath.Join(out.LogDir, "test.combined"), testRes.Combined)
 	writeFile(filepath.Join(out.LogDir, "exit-code.txt"), fmt.Sprintf("%d\n", testRes.ExitCode))
 
 	if testRes.TimedOut {
@@ -485,7 +495,10 @@ func (r *Runner) readScore(ctx context.Context, container string, t *task.Task, 
 		if t.Tests.Score.Scorer == nil {
 			return 0, fmt.Errorf("score kind is func but no scorer was set")
 		}
-		score, detail, err := t.Tests.Score.Scorer(out.stdout, out.stderr, out.ExitCode)
+		// The scorer sees the interleaved stream: a harness that brackets its
+		// test run with xtrace markers writes those to stderr and the results
+		// to stdout, and only the combined view keeps them in order.
+		score, detail, err := t.Tests.Score.Scorer(out.combined, out.stderr, out.ExitCode)
 		out.Detail = detail
 		return score, err
 

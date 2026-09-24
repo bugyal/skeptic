@@ -12,6 +12,8 @@ import (
 
 	"github.com/skeptic-labs/skeptic/internal/adapter"
 	"github.com/skeptic-labs/skeptic/internal/adapter/harbor"
+	"github.com/skeptic-labs/skeptic/internal/adapter/swebench"
+	"github.com/skeptic-labs/skeptic/internal/adapter/tbench"
 	"github.com/spf13/cobra"
 )
 
@@ -65,6 +67,8 @@ func logger() *slog.Logger {
 }
 
 // registry returns the adapters compiled into this build, in priority order.
+// The two formats key on different config filenames (harbor: task.toml,
+// tbench: task.yaml), so Detect never claims the same directory twice.
 func registry() *adapter.Registry {
-	return adapter.NewRegistry(harbor.New())
+	return adapter.NewRegistry(harbor.New(), tbench.New(), swebench.New())
 }

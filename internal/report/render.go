@@ -84,10 +84,14 @@ func (r Report) Table(w io.Writer) {
 		}
 		// The verdict is padded before colouring, so escape codes never
 		// disturb column alignment.
+		reason := t.Reason
+		if n := len(t.WeakTests); n > 0 {
+			reason += fmt.Sprintf("  [weak tests: %d hunk(s) ungraded]", n)
+		}
 		fmt.Fprintf(w, "%s  %-*s  %5s  %6s  %s\n",
 			p.verdict(pad(t.Verdict, 14)), idWidth, id,
 			score(t.NopScore), score(t.OracleScore),
-			p.paint(ansiGrey, t.Reason))
+			p.paint(ansiGrey, reason))
 	}
 
 	fmt.Fprintln(w)
@@ -114,6 +118,9 @@ func (r Report) Summary(colour bool) string {
 	if r.Totals.Unsupported > 0 {
 		parts = append(parts, p.paint(ansiGrey, fmt.Sprintf("%d unsupported", r.Totals.Unsupported)))
 	}
+	if r.Totals.WeakTests > 0 {
+		parts = append(parts, p.paint(ansiYellow, fmt.Sprintf("%d weak-tested", r.Totals.WeakTests)))
+	}
 	return strings.Join(parts, " · ")
 }
 
@@ -128,12 +135,31 @@ func (r Report) Markdown(w io.Writer) {
 	}
 	fmt.Fprintf(w, "\n\n%s\n\n", r.Summary(false))
 
-	var flagged []TaskReport
+	var flagged, weak []TaskReport
 	for _, t := range r.Tasks {
 		if check.Verdict(t.Verdict).Flagged() {
 			flagged = append(flagged, t)
 		}
+		if len(t.WeakTests) > 0 {
+			weak = append(weak, t)
+		}
 	}
+	defer func() {
+		if len(weak) == 0 {
+			return
+		}
+		fmt.Fprintf(w, "\n### Weak tests\n\n")
+		fmt.Fprintln(w, "These tasks passed both controls, but the suite still awarded full marks")
+		fmt.Fprintln(w, "with part of the reference fix withheld — so that part is never graded.")
+		fmt.Fprintln(w, "Advisory: some hunks are genuinely not observable on their own.")
+		fmt.Fprintln(w)
+		for _, t := range weak {
+			fmt.Fprintf(w, "- `%s`\n", t.ID)
+			for _, h := range t.WeakTests {
+				fmt.Fprintf(w, "  - ungraded: `%s`\n", h)
+			}
+		}
+	}()
 	if len(flagged) == 0 {
 		fmt.Fprintln(w, "No tasks were flagged. Every task's reference solution scored 1.0 and every task scored 0.0 with no changes applied.")
 		return

@@ -28,6 +28,8 @@ func newCheckCmd() *cobra.Command {
 		noFailOnFlag   bool
 		keepContainers bool
 		noCache        bool
+		partial        bool
+		partialMax     int
 	)
 
 	cmd := &cobra.Command{
@@ -67,13 +69,15 @@ func newCheckCmd() *cobra.Command {
 			}
 
 			runner := check.NewRunner(dc, check.Options{
-				RunDir:         runDir,
-				Timeout:        timeout,
-				KeepContainers: keepContainers,
-				NoCache:        noCache,
-				Only:           check.Control(only),
-				Platform:       platform,
-				Log:            log,
+				RunDir:          runDir,
+				Timeout:         timeout,
+				KeepContainers:  keepContainers,
+				NoCache:         noCache,
+				Only:            check.Control(only),
+				Platform:        platform,
+				Partial:         partial,
+				PartialMaxHunks: partialMax,
+				Log:             log,
 			})
 
 			fmt.Fprintf(os.Stderr, "checking %d task(s), %d at a time\n", len(tasks), parallel)
@@ -121,6 +125,9 @@ func newCheckCmd() *cobra.Command {
 	f.BoolVar(&noFailOnFlag, "no-fail-on-flagged", false, "never exit non-zero for flagged tasks")
 	f.BoolVar(&keepContainers, "keep-containers", false, "leave containers running for debugging")
 	f.BoolVar(&noCache, "no-cache", false, "force image rebuilds")
+	f.BoolVar(&partial, "partial", false,
+		"also probe for weak tests: withhold one hunk of the reference patch and expect the score to drop")
+	f.IntVar(&partialMax, "partial-max-hunks", 3, "how many hunks to withhold, one at a time")
 	return cmd
 }
 
