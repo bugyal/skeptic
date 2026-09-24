@@ -5,6 +5,20 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- `version` now reports the module version when a binary is built by
+  `go install` rather than by goreleaser. The documented install command
+  previously produced a binary that called itself `dev`.
+
+### Changed
+
+- Module path is `github.com/bugyal/skeptic`. The previous path did not exist
+  on GitHub, so `go install` could not have worked.
+- README opens with one pitch line instead of two, and carries CI, release and
+  pkg.go.dev badges.
+- `results/` has an index stating how to read the findings.
+
 ## [0.1.0] - 2026-09-24
 
 First release. Skeptic runs control experiments over a coding-agent benchmark
