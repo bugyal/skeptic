@@ -367,3 +367,30 @@ Observed:
 Both original controls classify this task `CLEAN`. Only the partial control
 sees the problem. The discrimination matters as much as the detection: a probe
 that flagged both hunks would be noise. `e2e/partial_test.go` asserts both.
+
+---
+
+## D10. How far the partial control actually reaches
+
+**Status:** measured.
+
+The control needs a patch with at least two hunks: withholding the only hunk of
+a single-hunk patch reproduces the nop control, which has already run.
+
+Measured across all 500 SWE-bench Verified instances:
+
+| Patch shape | Instances | Partial control |
+|---|---|---|
+| Single hunk | 280 (56%) | not applicable |
+| Two or more hunks | 220 (44%) | applies |
+
+So the probe reaches a little under half of Verified, and none of the
+Harbor/Terminal-Bench corpus, whose solutions are shell scripts.
+
+This is worth stating plainly rather than burying: the control addresses the
+weak-test failure mode, which accounts for about a third of apparently-passing
+patches, but it can only speak about 44% of instances. It is a real signal over
+a real subset, not a complete audit, and the README should say so.
+
+Raising the reach would mean mutating solutions in ways that need a model to
+stay plausible, which v0.1 rules out by design.
