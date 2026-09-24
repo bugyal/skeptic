@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/skeptic-labs/skeptic/internal/task"
+	"github.com/bugyal/skeptic/internal/task"
 )
 
 // Adapter recognises and loads one benchmark task format.

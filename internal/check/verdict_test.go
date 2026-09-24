@@ -3,7 +3,7 @@ package check
 import (
 	"testing"
 
-	"github.com/skeptic-labs/skeptic/internal/task"
+	"github.com/bugyal/skeptic/internal/task"
 )
 
 func ctl(c Control, score *float64, errMsg string) *ControlResult {

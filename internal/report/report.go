@@ -10,7 +10,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/skeptic-labs/skeptic/internal/check"
+	"github.com/bugyal/skeptic/internal/check"
 )
 
 // SchemaVersion is the version of the on-disk report format. It is bumped only

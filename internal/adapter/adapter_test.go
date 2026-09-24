@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/skeptic-labs/skeptic/internal/adapter/harbor"
+	"github.com/bugyal/skeptic/internal/adapter/harbor"
 )
 
 const fixtures = "../../testdata/tasks"

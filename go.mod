@@ -1,4 +1,4 @@
-module github.com/skeptic-labs/skeptic
+module github.com/bugyal/skeptic
 
 go 1.22
 

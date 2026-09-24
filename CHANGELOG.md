@@ -66,5 +66,5 @@ rather than indicating a defect.
 - Published SWE-bench images are ~4 GB each and x86_64, so a large run needs
   substantial disk and, on arm64 hosts, emulation.
 
-[Unreleased]: https://github.com/skeptic-labs/skeptic/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/skeptic-labs/skeptic/releases/tag/v0.1.0
+[Unreleased]: https://github.com/bugyal/skeptic/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/bugyal/skeptic/releases/tag/v0.1.0

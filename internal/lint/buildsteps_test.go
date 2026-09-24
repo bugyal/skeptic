@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/skeptic-labs/skeptic/internal/dockerfile"
-	"github.com/skeptic-labs/skeptic/internal/task"
+	"github.com/bugyal/skeptic/internal/dockerfile"
+	"github.com/bugyal/skeptic/internal/task"
 )
 
 // mustParseDockerfile parses Dockerfile text for the checkBuildSteps tests.

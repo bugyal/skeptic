@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/skeptic-labs/skeptic/internal/task"
+	"github.com/bugyal/skeptic/internal/task"
 )
 
 // Progress is called as each task finishes, for live output.

@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
-	"github.com/skeptic-labs/skeptic/internal/task"
+	"github.com/bugyal/skeptic/internal/task"
 	"gopkg.in/yaml.v3"
 )
 

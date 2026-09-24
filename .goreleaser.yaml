@@ -23,9 +23,9 @@ builds:
     flags: [-trimpath]
     ldflags:
       - -s -w
-      - -X github.com/skeptic-labs/skeptic/internal/version.Version={{.Version}}
-      - -X github.com/skeptic-labs/skeptic/internal/version.Commit={{.Commit}}
-      - -X github.com/skeptic-labs/skeptic/internal/version.Date={{.Date}}
+      - -X github.com/bugyal/skeptic/internal/version.Version={{.Version}}
+      - -X github.com/bugyal/skeptic/internal/version.Commit={{.Commit}}
+      - -X github.com/bugyal/skeptic/internal/version.Date={{.Date}}
     mod_timestamp: "{{ .CommitTimestamp }}"
 
 archives:

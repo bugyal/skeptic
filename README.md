@@ -42,10 +42,10 @@ Benchmarks are software, and software has bugs. Nobody checks the exam.
 ## Install
 
 ```sh
-go install github.com/skeptic-labs/skeptic/cmd/skeptic@latest
+go install github.com/bugyal/skeptic/cmd/skeptic@latest
 ```
 
-Or grab a binary from [Releases](https://github.com/skeptic-labs/skeptic/releases).
+Or grab a binary from [Releases](https://github.com/bugyal/skeptic/releases).
 Homebrew tap: planned.
 
 Requires Docker (or any CLI-compatible runtime) for `check`. `lint` needs nothing.
@@ -245,7 +245,7 @@ come from the static scan above, which covers all 500.
 - uses: actions/checkout@v4
 - uses: actions/setup-go@v5
   with: { go-version: '1.25' }
-- run: go install github.com/skeptic-labs/skeptic/cmd/skeptic@latest
+- run: go install github.com/bugyal/skeptic/cmd/skeptic@latest
 - run: skeptic lint ./tasks           # fast, no Docker
 - run: skeptic check ./tasks --json skeptic-report.json
 - uses: actions/upload-artifact@v4

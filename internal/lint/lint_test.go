@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/skeptic-labs/skeptic/internal/adapter/harbor"
-	"github.com/skeptic-labs/skeptic/internal/task"
+	"github.com/bugyal/skeptic/internal/adapter/harbor"
+	"github.com/bugyal/skeptic/internal/task"
 )
 
 func load(t *testing.T, dir string) Result {

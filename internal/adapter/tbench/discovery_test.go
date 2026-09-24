@@ -3,8 +3,8 @@ package tbench
 import (
 	"testing"
 
-	"github.com/skeptic-labs/skeptic/internal/adapter"
-	"github.com/skeptic-labs/skeptic/internal/task"
+	"github.com/bugyal/skeptic/internal/adapter"
+	"github.com/bugyal/skeptic/internal/task"
 )
 
 // Discovery through the registry, against the committed fixture tree — the

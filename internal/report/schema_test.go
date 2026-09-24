@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/skeptic-labs/skeptic/internal/check"
+	"github.com/bugyal/skeptic/internal/check"
 )
 
 // TestReportMatchesSchema validates a generated report against the published

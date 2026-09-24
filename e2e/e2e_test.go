@@ -12,11 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/skeptic-labs/skeptic/internal/adapter"
-	"github.com/skeptic-labs/skeptic/internal/adapter/harbor"
-	"github.com/skeptic-labs/skeptic/internal/check"
-	"github.com/skeptic-labs/skeptic/internal/docker"
-	"github.com/skeptic-labs/skeptic/internal/report"
+	"github.com/bugyal/skeptic/internal/adapter"
+	"github.com/bugyal/skeptic/internal/adapter/harbor"
+	"github.com/bugyal/skeptic/internal/check"
+	"github.com/bugyal/skeptic/internal/docker"
+	"github.com/bugyal/skeptic/internal/report"
 )
 
 const fixtures = "../testdata/tasks"

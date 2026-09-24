@@ -117,10 +117,10 @@ whether the container was OOM-killed and report `ERROR`, not a score of zero.
 
 ## 5. A Homebrew tap
 
-**Why.** `brew install skeptic-labs/tap/skeptic` is how most macOS users will
+**Why.** `brew install bugyal/tap/skeptic` is how most macOS users will
 want this, and the README currently promises a tap that does not exist.
 
-**Where.** A `skeptic-labs/homebrew-tap` repository, plus a `brews:` block in
+**Where.** A `bugyal/homebrew-tap` repository, plus a `brews:` block in
 `.goreleaser.yaml`. goreleaser can push the formula on release.
 
 **Done when.** The tap installs a working binary on both arm64 and amd64 macOS,

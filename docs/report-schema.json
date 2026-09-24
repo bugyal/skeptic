@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/skeptic-labs/skeptic/docs/report-schema.json",
+  "$id": "https://github.com/bugyal/skeptic/docs/report-schema.json",
   "title": "Skeptic run report",
   "description": "Output of `skeptic check`. The schema field is bumped only for changes that would break a consumer reading an older report.",
   "type": "object",

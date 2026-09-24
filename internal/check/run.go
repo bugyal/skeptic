@@ -16,9 +16,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/skeptic-labs/skeptic/internal/docker"
-	"github.com/skeptic-labs/skeptic/internal/patch"
-	"github.com/skeptic-labs/skeptic/internal/task"
+	"github.com/bugyal/skeptic/internal/docker"
+	"github.com/bugyal/skeptic/internal/patch"
+	"github.com/bugyal/skeptic/internal/task"
 )
 
 // ControlResult is the outcome of running one control against one task.

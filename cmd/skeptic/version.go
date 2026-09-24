@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/skeptic-labs/skeptic/internal/docker"
-	"github.com/skeptic-labs/skeptic/internal/report"
-	"github.com/skeptic-labs/skeptic/internal/version"
+	"github.com/bugyal/skeptic/internal/docker"
+	"github.com/bugyal/skeptic/internal/report"
+	"github.com/bugyal/skeptic/internal/version"
 	"github.com/spf13/cobra"
 )
 

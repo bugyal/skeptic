@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/skeptic-labs/skeptic/internal/task"
+	"github.com/bugyal/skeptic/internal/task"
 )
 
 // Container conventions of the published SWE-bench evaluation images, from

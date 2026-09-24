@@ -10,10 +10,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/skeptic-labs/skeptic/internal/adapter"
-	"github.com/skeptic-labs/skeptic/internal/adapter/harbor"
-	"github.com/skeptic-labs/skeptic/internal/adapter/swebench"
-	"github.com/skeptic-labs/skeptic/internal/adapter/tbench"
+	"github.com/bugyal/skeptic/internal/adapter"
+	"github.com/bugyal/skeptic/internal/adapter/harbor"
+	"github.com/bugyal/skeptic/internal/adapter/swebench"
+	"github.com/bugyal/skeptic/internal/adapter/tbench"
 	"github.com/spf13/cobra"
 )
 

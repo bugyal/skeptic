@@ -3,7 +3,7 @@
 ## Getting set up
 
 ```sh
-git clone https://github.com/skeptic-labs/skeptic && cd skeptic
+git clone https://github.com/bugyal/skeptic && cd skeptic
 make build
 make test          # unit tests, fast, no Docker
 make e2e           # end-to-end against real Docker

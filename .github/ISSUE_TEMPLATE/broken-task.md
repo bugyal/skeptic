@@ -36,7 +36,7 @@ ERROR        — the task could not be evaluated at all (build failure, timeout,
 ### How to reproduce
 
 ```sh
-go install github.com/skeptic-labs/skeptic/cmd/skeptic@latest
+go install github.com/bugyal/skeptic/cmd/skeptic@latest
 skeptic check <path-to-task> --no-fail-on-flagged
 ```
 

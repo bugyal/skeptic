@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/skeptic-labs/skeptic/internal/task"
+	"github.com/bugyal/skeptic/internal/task"
 )
 
 // writeTaskDir lays down task.yaml + run-tests.sh, the minimum Detect

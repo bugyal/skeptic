@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/skeptic-labs/skeptic/internal/lint"
-	"github.com/skeptic-labs/skeptic/internal/report"
+	"github.com/bugyal/skeptic/internal/lint"
+	"github.com/bugyal/skeptic/internal/report"
 	"github.com/spf13/cobra"
 )
 

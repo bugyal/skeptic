@@ -81,7 +81,7 @@ call rather than an obvious fix.
 python -c "from datasets import load_dataset; \
   load_dataset('SWE-bench/SWE-bench_Verified', split='test').to_json('verified.jsonl')"
 
-go install github.com/skeptic-labs/skeptic/cmd/skeptic@latest
+go install github.com/bugyal/skeptic/cmd/skeptic@latest
 skeptic lint verified.jsonl --json > lint-report.json
 ```
 

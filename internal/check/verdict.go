@@ -1,7 +1,7 @@
 // Package check runs the control experiments and classifies the result.
 package check
 
-import "github.com/skeptic-labs/skeptic/internal/task"
+import "github.com/bugyal/skeptic/internal/task"
 
 // Control names one experiment run against a task.
 type Control string

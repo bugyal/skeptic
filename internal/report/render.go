@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/skeptic-labs/skeptic/internal/check"
+	"github.com/bugyal/skeptic/internal/check"
 )
 
 // ANSI colours, emitted only to a terminal. No rendering library is used:

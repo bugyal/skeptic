@@ -9,8 +9,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/skeptic-labs/skeptic/internal/dockerfile"
-	"github.com/skeptic-labs/skeptic/internal/task"
+	"github.com/bugyal/skeptic/internal/dockerfile"
+	"github.com/bugyal/skeptic/internal/task"
 )
 
 // Severity is the outcome of one check.
