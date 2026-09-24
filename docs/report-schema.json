@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/skeptic-labs/skeptic/docs/report-schema.json",
+  "title": "Skeptic run report",
+  "description": "Output of `skeptic check`. The schema field is bumped only for changes that would break a consumer reading an older report.",
+  "type": "object",
+  "required": ["schema", "skeptic_version", "generated_at", "host", "run_dir", "totals", "tasks"],
+  "properties": {
+    "schema": { "type": "integer", "const": 1 },
+    "skeptic_version": { "type": "string" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "run_dir": { "type": "string", "description": "Directory holding per-task, per-control evidence." },
+    "host": {
+      "type": "object",
+      "required": ["os", "arch"],
+      "properties": {
+        "os": { "type": "string" },
+        "arch": { "type": "string" },
+        "docker_api": { "type": "string" }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "required": ["total", "clean", "flagged", "errors", "no_oracle", "unsupported"],
+      "description": "Errors, no_oracle and unsupported are counted apart from clean and flagged so that none of them can be mistaken for a pass or a failure.",
+      "properties": {
+        "total": { "type": "integer" },
+        "clean": { "type": "integer" },
+        "flagged": { "type": "integer" },
+        "errors": { "type": "integer" },
+        "no_oracle": { "type": "integer" },
+        "unsupported": { "type": "integer" }
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "format", "dir", "verdict", "reason", "nop_score", "oracle_score", "seconds"],
+        "properties": {
+          "id": { "type": "string" },
+          "format": { "type": "string", "description": "Adapter that recognised the task." },
+          "dir": { "type": "string" },
+          "verdict": {
+            "type": "string",
+            "enum": ["CLEAN", "NOP_PASSES", "ORACLE_FAILS", "BOTH", "NO_ORACLE", "UNSUPPORTED", "ERROR"]
+          },
+          "reason": { "type": "string" },
+          "nop_score": {
+            "type": ["number", "null"],
+            "minimum": 0, "maximum": 1,
+            "description": "Null when the control did not produce a score."
+          },
+          "oracle_score": {
+            "type": ["number", "null"],
+            "minimum": 0, "maximum": 1,
+            "description": "Null when no reference solution exists or the control did not run."
+          },
+          "nop_seconds": { "type": "number" },
+          "oracle_seconds": { "type": "number" },
+          "seconds": { "type": "number" },
+          "image_digest": { "type": "string" },
+          "log_dir": { "type": "string" },
+          "error": { "type": "string" }
+        }
+      }
+    }
+  }
+}

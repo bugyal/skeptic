@@ -1,0 +1,101 @@
+package lint
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/skeptic-labs/skeptic/internal/adapter/harbor"
+)
+
+func load(t *testing.T, dir string) Result {
+	t.Helper()
+	tk, err := harbor.New().Load(dir)
+	if err != nil {
+		t.Fatalf("loading %s: %v", dir, err)
+	}
+	return Check(tk)
+}
+
+func has(r Result, check string, sev Severity) bool {
+	for _, f := range r.Findings {
+		if f.Check == check && f.Severity == sev {
+			return true
+		}
+	}
+	return false
+}
+
+// A well-formed task must produce no findings at all: a linter that cries wolf
+// on clean input trains people to ignore it.
+func TestCleanTaskHasNoFindings(t *testing.T) {
+	r := load(t, "../../testdata/tasks/clean")
+	if r.Worst != OK {
+		t.Fatalf("worst = %s, want OK; findings: %+v", r.Worst, r.Findings)
+	}
+}
+
+// The most common documented benchmark defect: the answer is reachable from
+// the task text.
+func TestInstructionLeakage(t *testing.T) {
+	r := load(t, "../../testdata/lint/leaky-instruction")
+	if !has(r, "leakage", WARN) {
+		t.Fatalf("expected a leakage warning, got %+v", r.Findings)
+	}
+	if r.Worst != WARN {
+		t.Errorf("worst = %s, want WARN", r.Worst)
+	}
+}
+
+// The answer must not be readable out of the agent's own filesystem.
+func TestBuildContextLeakage(t *testing.T) {
+	r := load(t, "../../testdata/lint/leaky-context")
+	if !has(r, "leakage", FAIL) {
+		t.Fatalf("expected a leakage failure for COPY . into the image, got %+v", r.Findings)
+	}
+	if r.Worst != FAIL {
+		t.Errorf("worst = %s, want FAIL", r.Worst)
+	}
+}
+
+func TestMissingSolutionWarns(t *testing.T) {
+	r := load(t, "../../testdata/tasks/no-solution")
+	if !has(r, "solution", WARN) {
+		t.Fatalf("expected a solution warning, got %+v", r.Findings)
+	}
+}
+
+func TestCoversPath(t *testing.T) {
+	for _, tc := range []struct {
+		srcs []string
+		rel  string
+		want bool
+	}{
+		{srcs: []string{"."}, rel: "solution", want: true},
+		{srcs: []string{"./"}, rel: "tests", want: true},
+		{srcs: []string{"solution"}, rel: "solution", want: true},
+		{srcs: []string{"solution/"}, rel: "solution", want: true},
+		{srcs: []string{"src"}, rel: "solution", want: false},
+		{srcs: []string{"solutions"}, rel: "solution", want: false},
+		{srcs: nil, rel: "solution", want: false},
+	} {
+		if got := coversPath(tc.srcs, tc.rel); got != tc.want {
+			t.Errorf("coversPath(%v, %q) = %v, want %v", tc.srcs, tc.rel, got, tc.want)
+		}
+	}
+}
+
+// A .dockerignore entry makes an otherwise-dangerous COPY safe, and the
+// linter must not report a leak that docker would never perform.
+func TestDockerignoreSuppressesLeak(t *testing.T) {
+	ctx := t.TempDir()
+	if err := os.WriteFile(filepath.Join(ctx, ".dockerignore"), []byte("solution/\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if !ignoredByDockerignore(ctx, "solution") {
+		t.Error("solution/ in .dockerignore should suppress the leak")
+	}
+	if ignoredByDockerignore(ctx, "tests") {
+		t.Error("tests is not in .dockerignore and must not be suppressed")
+	}
+}
