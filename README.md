@@ -1,8 +1,13 @@
 # skeptic
 
-**Skeptic runs BOTH controls across EVERY task, classifies the outcome, captures evidence, and lints leaks statically — one binary, zero LLM calls.**
+[![ci](https://github.com/bugyal/skeptic/actions/workflows/ci.yml/badge.svg)](https://github.com/bugyal/skeptic/actions/workflows/ci.yml)
+[![release](https://img.shields.io/github/v/release/bugyal/skeptic)](https://github.com/bugyal/skeptic/releases/latest)
+[![go reference](https://pkg.go.dev/badge/github.com/bugyal/skeptic.svg)](https://pkg.go.dev/github.com/bugyal/skeptic)
 
-Skeptic doesn't believe your benchmark until oracle passes and nop fails.
+**Skeptic doesn't believe your benchmark until oracle passes and nop fails.**
+
+Both controls, every task, with the evidence — plus static leak detection.
+One binary, zero LLM calls, no API key.
 
 A benchmark hands an AI coding agent a codebase and a task, runs hidden tests, and
 prints a score. That score is only worth something if the task is fair. Skeptic runs
