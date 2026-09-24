@@ -80,9 +80,11 @@ func Check(t *task.Task) Result {
 		// not read. Blaming a benchmark for skeptic's own gap is the same
 		// error as scoring a task it could not run.
 		//
-		// The instruction is still checked: the text is real whether or not
-		// the task is runnable, and leakage is worth knowing about either way.
-		checkInstruction(t, add)
+		// Leakage is still worth reporting: the text is real whether or not
+		// the task is runnable. Its *absence* is not, because the adapter
+		// never went looking -- a multi-step task keeps its instruction in
+		// steps/<name>/instruction.md, which skeptic does not read yet.
+		checkLeakage(t.Instruction, add)
 		return r
 	}
 
@@ -118,6 +120,16 @@ func checkInstruction(t *task.Task, add reporter) {
 	}
 	if strings.TrimSpace(text) == "" {
 		add("instruction", FAIL, "no readable task instruction")
+		return
+	}
+	checkLeakage(text, add)
+}
+
+// checkLeakage scans instruction text for signs that the answer is reachable
+// from the question. Split out so it can run on a task whose instruction
+// skeptic could not locate, without also claiming the instruction is missing.
+func checkLeakage(text string, add reporter) {
+	if strings.TrimSpace(text) == "" {
 		return
 	}
 
