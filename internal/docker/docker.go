@@ -192,9 +192,16 @@ func (c *Client) ImageID(ctx context.Context, ref string) string {
 	return strings.TrimSpace(res.Stdout)
 }
 
-// Pull fetches a prebuilt image.
-func (c *Client) Pull(ctx context.Context, ref string, timeout time.Duration) (Result, error) {
-	res, err := c.run(ctx, timeout, "pull", ref)
+// Pull fetches a prebuilt image. platform may be empty; when set it must be
+// passed here as well as at run time, since a manifest list that has no entry
+// for the host architecture fails at pull, not at start.
+func (c *Client) Pull(ctx context.Context, ref, platform string, timeout time.Duration) (Result, error) {
+	args := []string{"pull"}
+	if platform != "" {
+		args = append(args, "--platform", platform)
+	}
+	args = append(args, ref)
+	res, err := c.run(ctx, timeout, args...)
 	if err != nil {
 		return res, err
 	}

@@ -228,7 +228,7 @@ func (r *Runner) image(ctx context.Context, t *task.Task, logDir string) (ref, d
 				return t.Environment.Image, id, nil
 			}
 		}
-		if _, err := r.docker.Pull(ctx, t.Environment.Image, t.Environment.BuildTimeout); err != nil {
+		if _, err := r.docker.Pull(ctx, t.Environment.Image, r.platform(t), t.Environment.BuildTimeout); err != nil {
 			return "", "", err
 		}
 		return t.Environment.Image, r.docker.ImageID(ctx, t.Environment.Image), nil

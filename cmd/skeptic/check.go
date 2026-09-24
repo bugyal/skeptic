@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/skeptic-labs/skeptic/internal/check"
@@ -80,6 +81,9 @@ func newCheckCmd() *cobra.Command {
 				Log:             log,
 			})
 
+			if parallel <= 0 {
+				parallel = min(4, runtime.NumCPU())
+			}
 			fmt.Fprintf(os.Stderr, "checking %d task(s), %d at a time\n", len(tasks), parallel)
 			results := runner.Run(ctx, tasks, parallel, func(done, total int, r check.TaskResult) {
 				fmt.Fprintf(os.Stderr, "  [%d/%d] %-12s %s\n", done, total, r.Verdict, r.ID)
