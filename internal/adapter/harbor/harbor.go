@@ -190,8 +190,17 @@ func locateDockerfile(abs, envDir string) (dockerfile, contextDir string, err er
 	return "", "", fmt.Errorf("no Dockerfile in %s or %s", envDir, abs)
 }
 
-// composeUnsupported returns a reason when a compose file describes more than
-// a single buildable service. See docs/decisions.md D4.
+// composeUnsupported returns a reason when a compose file describes something
+// Skeptic cannot faithfully run. See docs/decisions.md D4:
+//
+//   - a single service with a build unit is always supported — Skeptic starts
+//     it detached and drives both controls through docker exec, overriding
+//     whatever command it declares (Terminal-Bench boilerplate runs
+//     `sleep infinity`);
+//   - a single service with no build unit offers nothing to build or run;
+//   - multiple services need orchestrated networking (a database the task's
+//     tests talk to, for instance), which would make Skeptic's controls test
+//     a different system than the one the benchmark grades — refused.
 func composeUnsupported(envDir string) string {
 	for _, name := range []string{"docker-compose.yaml", "docker-compose.yml"} {
 		p := filepath.Join(envDir, name)
@@ -203,13 +212,25 @@ func composeUnsupported(envDir string) string {
 			return fmt.Sprintf("unreadable %s", name)
 		}
 		var doc struct {
-			Services map[string]struct{} `yaml:"services"`
+			Services map[string]struct {
+				// Build is present whenever the service declares a build
+				// unit; its shape (a string path or a mapping) does not
+				// matter here.
+				Build interface{} `yaml:"build"`
+			} `yaml:"services"`
 		}
 		if err := yaml.Unmarshal(b, &doc); err != nil {
 			return fmt.Sprintf("unparsable %s", name)
 		}
-		if len(doc.Services) > 1 {
+		switch {
+		case len(doc.Services) > 1:
 			return fmt.Sprintf("multi-container task (%d compose services)", len(doc.Services))
+		case len(doc.Services) == 1:
+			for _, svc := range doc.Services {
+				if svc.Build == nil {
+					return "compose service has no build unit; nothing to build or run"
+				}
+			}
 		}
 	}
 	return ""
