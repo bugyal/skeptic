@@ -12,8 +12,11 @@ skeptic lint terminal-bench-1/original-tasks --json > lint-report.json
 | Severity | Tasks |
 |---|---:|
 | OK | 212 |
-| WARN | 8 |
-| **FAIL** | **21** |
+| WARN | 26 |
+| **FAIL** | **3** |
+
+All three failures are the same defect, described below. Every other task is
+clean or carries a warning.
 
 ## The finding: three tasks ship the answer inside the image
 
@@ -53,18 +56,22 @@ on the container filesystem.
 **This is stronger than the SWE-bench leakage finding.** That one needs network
 access to follow a link. This one needs `cat`.
 
-## Why the other 21 FAILs are not findings
+## A bug this scan exposed in Skeptic itself
 
-18 of the 21 FAILs are `no test command`, and every one of them is a task
-Skeptic had already marked `UNSUPPORTED`. Those tasks use layouts the adapter
-does not handle, so it never populated a test command, and lint then reported
-the absence as a defect. **That is a bug in Skeptic, not in Terminal-Bench** —
-lint should not re-report a task the adapter has already declined. Tracked and
-fixed; see the commit following this one.
+The first run of this scan reported **21** failures, not 3. Eighteen of them
+were `no test command` — and every one was a task Skeptic had already marked
+`UNSUPPORTED`. The adapter stops populating a Task it has declined, and lint
+then reported the resulting absence as a defect in the benchmark.
 
-The remaining WARNs are 25 `solution` and 1 `leakage` (a task whose instruction
-says "patch", which in context means `unittest.mock.patch`). Both are weak
-signals, reported as warnings for a reason.
+That is the same error as scoring a task the runner could not execute: blaming
+the benchmark for Skeptic's own gap. Lint now stops after the instruction
+checks once a task is `UNSUPPORTED`, and those 18 are warnings about Skeptic's
+coverage rather than failures of the task.
+
+The remaining warnings are 25 `solution` (no reference solution, so no oracle
+control) and 1 `leakage` on a task whose instruction says "patch", which in
+context means `unittest.mock.patch`. Weak signals, reported as warnings for a
+reason.
 
 ## What this does not claim
 

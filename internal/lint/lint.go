@@ -74,6 +74,16 @@ func Check(t *task.Task) Result {
 
 	if t.Unsupported != "" {
 		add("supported", WARN, "task cannot be checked by skeptic: %s", t.Unsupported)
+		// An adapter that declined a task stops populating the Task, so the
+		// remaining structural checks would report absences that say nothing
+		// about the task -- "no test command" for a layout skeptic simply does
+		// not read. Blaming a benchmark for skeptic's own gap is the same
+		// error as scoring a task it could not run.
+		//
+		// The instruction is still checked: the text is real whether or not
+		// the task is runnable, and leakage is worth knowing about either way.
+		checkInstruction(t, add)
+		return r
 	}
 
 	checkInstruction(t, add)

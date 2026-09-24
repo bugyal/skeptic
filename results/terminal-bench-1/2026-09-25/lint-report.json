@@ -50,22 +50,12 @@
   {
     "task_id": "ancient-puzzle",
     "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/ancient-puzzle",
-    "worst": "FAIL",
+    "worst": "WARN",
     "findings": [
       {
         "check": "supported",
         "severity": "WARN",
         "message": "task cannot be checked by skeptic: multi-container task (2 compose services)"
-      },
-      {
-        "check": "solution",
-        "severity": "WARN",
-        "message": "no reference solution; the oracle control cannot run for this task"
-      },
-      {
-        "check": "tests",
-        "severity": "FAIL",
-        "message": "no test command"
       }
     ]
   },
@@ -264,22 +254,12 @@
   {
     "task_id": "conda-env-conflict-resolution",
     "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/conda-env-conflict-resolution",
-    "worst": "FAIL",
+    "worst": "WARN",
     "findings": [
       {
         "check": "supported",
         "severity": "WARN",
         "message": "task cannot be checked by skeptic: no Dockerfile in the task directory"
-      },
-      {
-        "check": "solution",
-        "severity": "WARN",
-        "message": "no reference solution; the oracle control cannot run for this task"
-      },
-      {
-        "check": "tests",
-        "severity": "FAIL",
-        "message": "no test command"
       }
     ]
   },
@@ -382,22 +362,12 @@
   {
     "task_id": "debug-long-program",
     "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/debug-long-program",
-    "worst": "FAIL",
+    "worst": "WARN",
     "findings": [
       {
         "check": "supported",
         "severity": "WARN",
         "message": "task cannot be checked by skeptic: multi-container task (2 compose services)"
-      },
-      {
-        "check": "solution",
-        "severity": "WARN",
-        "message": "no reference solution; the oracle control cannot run for this task"
-      },
-      {
-        "check": "tests",
-        "severity": "FAIL",
-        "message": "no test command"
       }
     ]
   },
@@ -464,22 +434,12 @@
   {
     "task_id": "extract-safely",
     "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/extract-safely",
-    "worst": "FAIL",
+    "worst": "WARN",
     "findings": [
       {
         "check": "supported",
         "severity": "WARN",
         "message": "task cannot be checked by skeptic: no Dockerfile in the task directory"
-      },
-      {
-        "check": "solution",
-        "severity": "WARN",
-        "message": "no reference solution; the oracle control cannot run for this task"
-      },
-      {
-        "check": "tests",
-        "severity": "FAIL",
-        "message": "no test command"
       }
     ]
   },
@@ -522,22 +482,12 @@
   {
     "task_id": "find-restaurant",
     "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/find-restaurant",
-    "worst": "FAIL",
+    "worst": "WARN",
     "findings": [
       {
         "check": "supported",
         "severity": "WARN",
         "message": "task cannot be checked by skeptic: multi-container task (2 compose services)"
-      },
-      {
-        "check": "solution",
-        "severity": "WARN",
-        "message": "no reference solution; the oracle control cannot run for this task"
-      },
-      {
-        "check": "tests",
-        "severity": "FAIL",
-        "message": "no test command"
       }
     ]
   },
@@ -694,22 +644,12 @@
   {
     "task_id": "home-server-https",
     "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/home-server-https",
-    "worst": "FAIL",
+    "worst": "WARN",
     "findings": [
       {
         "check": "supported",
         "severity": "WARN",
         "message": "task cannot be checked by skeptic: multi-container task (2 compose services)"
-      },
-      {
-        "check": "solution",
-        "severity": "WARN",
-        "message": "no reference solution; the oracle control cannot run for this task"
-      },
-      {
-        "check": "tests",
-        "severity": "FAIL",
-        "message": "no test command"
       }
     ]
   },
@@ -776,22 +716,12 @@
   {
     "task_id": "interactive-maze-game",
     "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/interactive-maze-game",
-    "worst": "FAIL",
+    "worst": "WARN",
     "findings": [
       {
         "check": "supported",
         "severity": "WARN",
         "message": "task cannot be checked by skeptic: multi-container task (2 compose services)"
-      },
-      {
-        "check": "solution",
-        "severity": "WARN",
-        "message": "no reference solution; the oracle control cannot run for this task"
-      },
-      {
-        "check": "tests",
-        "severity": "FAIL",
-        "message": "no test command"
       }
     ]
   },
@@ -1182,22 +1112,12 @@
   {
     "task_id": "postgres-csv-clean",
     "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/postgres-csv-clean",
-    "worst": "FAIL",
+    "worst": "WARN",
     "findings": [
       {
         "check": "supported",
         "severity": "WARN",
         "message": "task cannot be checked by skeptic: multi-container task (2 compose services)"
-      },
-      {
-        "check": "solution",
-        "severity": "WARN",
-        "message": "no reference solution; the oracle control cannot run for this task"
-      },
-      {
-        "check": "tests",
-        "severity": "FAIL",
-        "message": "no test command"
       }
     ]
   },
@@ -1372,44 +1292,24 @@
   {
     "task_id": "security-celery-redis-rce",
     "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/security-celery-redis-rce",
-    "worst": "FAIL",
+    "worst": "WARN",
     "findings": [
       {
         "check": "supported",
         "severity": "WARN",
         "message": "task cannot be checked by skeptic: multi-container task (3 compose services)"
-      },
-      {
-        "check": "solution",
-        "severity": "WARN",
-        "message": "no reference solution; the oracle control cannot run for this task"
-      },
-      {
-        "check": "tests",
-        "severity": "FAIL",
-        "message": "no test command"
       }
     ]
   },
   {
     "task_id": "security-vulhub-minio",
     "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/security-vulhub-minio",
-    "worst": "FAIL",
+    "worst": "WARN",
     "findings": [
       {
         "check": "supported",
         "severity": "WARN",
         "message": "task cannot be checked by skeptic: multi-container task (4 compose services)"
-      },
-      {
-        "check": "solution",
-        "severity": "WARN",
-        "message": "no reference solution; the oracle control cannot run for this task"
-      },
-      {
-        "check": "tests",
-        "severity": "FAIL",
-        "message": "no test command"
       }
     ]
   },
@@ -1434,44 +1334,24 @@
   {
     "task_id": "simple-sheets-put",
     "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/simple-sheets-put",
-    "worst": "FAIL",
+    "worst": "WARN",
     "findings": [
       {
         "check": "supported",
         "severity": "WARN",
         "message": "task cannot be checked by skeptic: multi-container task (3 compose services)"
-      },
-      {
-        "check": "solution",
-        "severity": "WARN",
-        "message": "no reference solution; the oracle control cannot run for this task"
-      },
-      {
-        "check": "tests",
-        "severity": "FAIL",
-        "message": "no test command"
       }
     ]
   },
   {
     "task_id": "simple-web-scraper",
     "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/simple-web-scraper",
-    "worst": "FAIL",
+    "worst": "WARN",
     "findings": [
       {
         "check": "supported",
         "severity": "WARN",
         "message": "task cannot be checked by skeptic: multi-container task (2 compose services)"
-      },
-      {
-        "check": "solution",
-        "severity": "WARN",
-        "message": "no reference solution; the oracle control cannot run for this task"
-      },
-      {
-        "check": "tests",
-        "severity": "FAIL",
-        "message": "no test command"
       }
     ]
   },
@@ -1526,44 +1406,24 @@
   {
     "task_id": "spring-messaging-vul",
     "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/spring-messaging-vul",
-    "worst": "FAIL",
+    "worst": "WARN",
     "findings": [
       {
         "check": "supported",
         "severity": "WARN",
         "message": "task cannot be checked by skeptic: multi-container task (2 compose services)"
-      },
-      {
-        "check": "solution",
-        "severity": "WARN",
-        "message": "no reference solution; the oracle control cannot run for this task"
-      },
-      {
-        "check": "tests",
-        "severity": "FAIL",
-        "message": "no test command"
       }
     ]
   },
   {
     "task_id": "sql-injection-attack",
     "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/sql-injection-attack",
-    "worst": "FAIL",
+    "worst": "WARN",
     "findings": [
       {
         "check": "supported",
         "severity": "WARN",
         "message": "task cannot be checked by skeptic: multi-container task (4 compose services)"
-      },
-      {
-        "check": "solution",
-        "severity": "WARN",
-        "message": "no reference solution; the oracle control cannot run for this task"
-      },
-      {
-        "check": "tests",
-        "severity": "FAIL",
-        "message": "no test command"
       }
     ]
   },
@@ -1594,44 +1454,24 @@
   {
     "task_id": "swe-bench-astropy-1",
     "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/swe-bench-astropy-1",
-    "worst": "FAIL",
+    "worst": "WARN",
     "findings": [
       {
         "check": "supported",
         "severity": "WARN",
         "message": "task cannot be checked by skeptic: no tests directory (or it is empty)"
-      },
-      {
-        "check": "solution",
-        "severity": "WARN",
-        "message": "no reference solution; the oracle control cannot run for this task"
-      },
-      {
-        "check": "tests",
-        "severity": "FAIL",
-        "message": "no test command"
       }
     ]
   },
   {
     "task_id": "swe-bench-astropy-2",
     "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/swe-bench-astropy-2",
-    "worst": "FAIL",
+    "worst": "WARN",
     "findings": [
       {
         "check": "supported",
         "severity": "WARN",
         "message": "task cannot be checked by skeptic: no tests directory (or it is empty)"
-      },
-      {
-        "check": "solution",
-        "severity": "WARN",
-        "message": "no reference solution; the oracle control cannot run for this task"
-      },
-      {
-        "check": "tests",
-        "severity": "FAIL",
-        "message": "no test command"
       }
     ]
   },
@@ -1644,44 +1484,24 @@
   {
     "task_id": "swe-bench-langcodes",
     "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/swe-bench-langcodes",
-    "worst": "FAIL",
+    "worst": "WARN",
     "findings": [
       {
         "check": "supported",
         "severity": "WARN",
         "message": "task cannot be checked by skeptic: no tests directory (or it is empty)"
-      },
-      {
-        "check": "solution",
-        "severity": "WARN",
-        "message": "no reference solution; the oracle control cannot run for this task"
-      },
-      {
-        "check": "tests",
-        "severity": "FAIL",
-        "message": "no test command"
       }
     ]
   },
   {
     "task_id": "tmux-advanced-workflow",
     "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/tb1/original-tasks/tmux-advanced-workflow",
-    "worst": "FAIL",
+    "worst": "WARN",
     "findings": [
       {
         "check": "supported",
         "severity": "WARN",
         "message": "task cannot be checked by skeptic: no Dockerfile in the task directory"
-      },
-      {
-        "check": "solution",
-        "severity": "WARN",
-        "message": "no reference solution; the oracle control cannot run for this task"
-      },
-      {
-        "check": "tests",
-        "severity": "FAIL",
-        "message": "no test command"
       }
     ]
   },

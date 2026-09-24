@@ -132,3 +132,40 @@ func TestMissingInstructionFails(t *testing.T) {
 		t.Fatalf("expected an instruction failure, got %+v", r.Findings)
 	}
 }
+
+// A task the adapter declined must not also collect structural failures for
+// fields the adapter never populated. Reporting "no test command" for a layout
+// skeptic does not read blames the benchmark for skeptic's own gap.
+func TestUnsupportedTaskSkipsStructuralChecks(t *testing.T) {
+	tk := &task.Task{
+		ID: "demo__unsupported", Dir: t.TempDir(), Format: "tbench",
+		Unsupported: "layout not supported",
+		Instruction: "Do the thing.",
+		// Tests and Solution deliberately empty, as an adapter leaves them.
+	}
+	r := Check(tk)
+	if has(r, "tests", FAIL) {
+		t.Errorf("unsupported task should not report a tests failure: %+v", r.Findings)
+	}
+	if has(r, "solution", WARN) {
+		t.Errorf("unsupported task should not report a solution warning: %+v", r.Findings)
+	}
+	if !has(r, "supported", WARN) {
+		t.Errorf("expected the unsupported warning, got %+v", r.Findings)
+	}
+	if r.Worst == FAIL {
+		t.Errorf("worst = FAIL, want WARN for an unsupported task")
+	}
+}
+
+// Leakage is still worth reporting on a task skeptic cannot run.
+func TestUnsupportedTaskStillChecksLeakage(t *testing.T) {
+	tk := &task.Task{
+		ID: "demo__unsupported-leak", Dir: t.TempDir(), Format: "tbench",
+		Unsupported: "layout not supported",
+		Instruction: "See https://github.com/example/proj/pull/42 for the fix.",
+	}
+	if !has(Check(tk), "leakage", WARN) {
+		t.Error("leakage should still be reported for an unsupported task")
+	}
+}
