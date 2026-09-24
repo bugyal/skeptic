@@ -12,6 +12,22 @@ var (
 	Date = ""
 )
 
+// String returns the release version. A binary built by goreleaser has it
+// stamped via ldflags; one produced by `go install module@v0.1.0` does not, so
+// fall back to the module version the toolchain records. Otherwise the
+// documented install command yields a binary that calls itself "dev".
+func String() string {
+	if Version != "dev" && Version != "" {
+		return Version
+	}
+	if info, ok := debug.ReadBuildInfo(); ok {
+		if v := info.Main.Version; v != "" && v != "(devel)" {
+			return v
+		}
+	}
+	return Version
+}
+
 // Revision returns the commit, falling back to VCS data Go embeds in the
 // binary so a `go install` build still reports something useful.
 func Revision() string {

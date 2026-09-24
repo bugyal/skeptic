@@ -89,7 +89,7 @@ func newCheckCmd() *cobra.Command {
 				fmt.Fprintf(os.Stderr, "  [%d/%d] %-12s %s\n", done, total, r.Verdict, r.ID)
 			})
 
-			rep := report.Build(results, version.Version, runDir, dc.APIVersion(ctx))
+			rep := report.Build(results, version.String(), runDir, dc.APIVersion(ctx))
 
 			// The report is written before any non-zero exit, so an
 			// interrupted or failing run still leaves evidence behind.

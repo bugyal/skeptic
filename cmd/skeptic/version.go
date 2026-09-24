@@ -16,7 +16,7 @@ func newVersionCmd() *cobra.Command {
 		Short: "Print version, toolchain and detected Docker API",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Printf("skeptic %s\n", version.Version)
+			fmt.Printf("skeptic %s\n", version.String())
 			fmt.Printf("  commit:        %s\n", version.Revision())
 			if version.Date != "" {
 				fmt.Printf("  built:         %s\n", version.Date)
