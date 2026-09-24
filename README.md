@@ -152,6 +152,31 @@ downstream is format-agnostic. See `internal/adapter/adapter.go`.
 
 ## Results on public benchmarks
 
+### Three Terminal-Bench tasks ship the answer inside the image
+
+`skeptic lint` scans all 241 Terminal-Bench 1.x tasks in **0.18 seconds** and
+fails three of them: `cross-entropy-method`, `multistep-definite-integral` and
+`play-lord`. Each builds with `COPY . /app` and no `.dockerignore`, so
+`solution.sh` and `tests/` are copied into the image the agent works in.
+
+Confirmed by building the image and looking, not by reading the Dockerfile:
+
+```console
+$ docker run --rm probe sh -c 'ls /app'
+Dockerfile  docker-compose.yaml  run-tests.sh  solution.sh  task.yaml  tests
+
+$ docker run --rm probe sh -c 'grep expected /app/tests/test_outputs.py'
+    expected = sympy.E - 2
+```
+
+The agent can read the reference solution and the graded assertion, including
+the expected value. It can pass without solving anything — and unlike a leaked
+link, this needs no network, just `cat`.
+
+Three tasks of 241 is 1.2%: a real, fixable defect in a few tasks, not an
+indictment of the benchmark. Details and a draft report in
+[`results/terminal-bench-1/2026-09-25`](results/terminal-bench-1/2026-09-25).
+
 ### Answer leakage in SWE-bench Verified
 
 `skeptic lint` scans all 500 instances in **0.44 seconds** — no containers, no
