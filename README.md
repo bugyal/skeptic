@@ -182,6 +182,8 @@ Three tasks of 241 is 1.2%: a real, fixable defect in a few tasks, not an
 indictment of the benchmark. Details and a draft report in
 [`results/terminal-bench-1/2026-09-25`](results/terminal-bench-1/2026-09-25).
 
+All runs and raw reports are indexed in [`results/`](results/).
+
 ### Static scan coverage
 
 | Corpus | Tasks | OK | WARN | FAIL |
