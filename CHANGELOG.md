@@ -5,6 +5,13 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `skeptic report <dir>` merges a directory of per-task report fragments when
+  there is no `report.json`. A long sweep writes one file per instance as it
+  finishes, so a run still in progress, or interrupted, is readable as a
+  partial result instead of useless until the end.
+
 ## [0.1.1] - 2026-09-25
 
 ### Fixed

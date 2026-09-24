@@ -161,16 +161,32 @@ func (r Report) WriteJSON(path string) error {
 	return os.WriteFile(path, append(b, '\n'), 0o644)
 }
 
-// Load reads a report from a JSON file, or from a run directory containing one.
+// Load reads a report from a JSON file, or from a run directory.
+//
+// A directory holding report.json loads that. A directory holding many
+// per-task reports instead merges them, which is what a long sweep produces:
+// one file per instance, written as each finishes. Merging means a sweep that
+// is still running, or was interrupted, is still readable as a partial result
+// rather than being useless until the end.
 func Load(path string) (Report, error) {
 	var r Report
 	info, err := os.Stat(path)
 	if err != nil {
 		return r, err
 	}
+
 	if info.IsDir() {
-		path = filepath.Join(path, "report.json")
+		single := filepath.Join(path, "report.json")
+		if _, err := os.Stat(single); err == nil {
+			return loadFile(single)
+		}
+		return loadDir(path)
 	}
+	return loadFile(path)
+}
+
+func loadFile(path string) (Report, error) {
+	var r Report
 	b, err := os.ReadFile(path)
 	if err != nil {
 		return r, err
@@ -178,9 +194,86 @@ func Load(path string) (Report, error) {
 	if err := json.Unmarshal(b, &r); err != nil {
 		return r, fmt.Errorf("parsing %s: %w", path, err)
 	}
-	if r.Schema != SchemaVersion {
+	// Schema 0 means the file carried tasks without a full report envelope,
+	// which is how per-task fragments are written during a sweep.
+	if r.Schema != 0 && r.Schema != SchemaVersion {
 		return r, fmt.Errorf("report schema %d is not supported (this build reads schema %d)",
 			r.Schema, SchemaVersion)
 	}
 	return r, nil
+}
+
+// loadDir merges every report fragment in a directory into one report,
+// recomputing the totals so a partial sweep still tallies correctly.
+func loadDir(dir string) (Report, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return Report{}, err
+	}
+
+	merged := Report{
+		Schema:      SchemaVersion,
+		GeneratedAt: time.Now().UTC(),
+		Host:        Host{OS: runtime.GOOS, Arch: runtime.GOARCH},
+		RunDir:      dir,
+	}
+	seen := map[string]bool{}
+	var parsed int
+
+	for _, e := range entries {
+		if e.IsDir() || filepath.Ext(e.Name()) != ".json" {
+			continue
+		}
+		part, err := loadFile(filepath.Join(dir, e.Name()))
+		if err != nil {
+			// One unreadable fragment must not sink the whole partial result.
+			continue
+		}
+		parsed++
+		if merged.SkepticVersion == "" {
+			merged.SkepticVersion = part.SkepticVersion
+		}
+		if merged.Host.DockerAPI == "" {
+			merged.Host.DockerAPI = part.Host.DockerAPI
+		}
+		for _, t := range part.Tasks {
+			if seen[t.ID] {
+				continue
+			}
+			seen[t.ID] = true
+			merged.Tasks = append(merged.Tasks, t)
+		}
+	}
+
+	if parsed == 0 {
+		return merged, fmt.Errorf("no report files found in %s", dir)
+	}
+
+	merged.Totals = tally(merged.Tasks)
+	sortFlaggedFirst(merged.Tasks)
+	return merged, nil
+}
+
+// tally recomputes totals from a task list.
+func tally(ts []TaskReport) Totals {
+	var t Totals
+	for _, x := range ts {
+		t.Total++
+		if len(x.WeakTests) > 0 {
+			t.WeakTests++
+		}
+		switch check.Verdict(x.Verdict) {
+		case check.VerdictClean:
+			t.Clean++
+		case check.VerdictError:
+			t.Errors++
+		case check.VerdictNoOracle:
+			t.NoOracle++
+		case check.VerdictUnsupported:
+			t.Unsupported++
+		default:
+			t.Flagged++
+		}
+	}
+	return t
 }

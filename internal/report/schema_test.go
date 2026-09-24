@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -181,5 +182,81 @@ func sampleResults() []check.TaskResult {
 			Reason:   "no reference solution; oracle not run",
 			Nop:      &check.ControlResult{Control: check.ControlNop, Score: &zero, Duration: sec},
 			Duration: sec},
+	}
+}
+
+// A long sweep writes one report per instance as it finishes. Loading the
+// directory must merge them, so a run that is still going -- or was
+// interrupted -- is readable as a partial result instead of useless.
+func TestLoadMergesFragments(t *testing.T) {
+	dir := t.TempDir()
+	for i, res := range sampleResults() {
+		part := Build([]check.TaskResult{res}, "test", dir, "1.47")
+		if err := part.WriteJSON(filepath.Join(dir, fmt.Sprintf("frag-%d.json", i))); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	got, err := Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	want := len(sampleResults())
+	if got.Totals.Total != want {
+		t.Fatalf("Total = %d, want %d", got.Totals.Total, want)
+	}
+	// Totals must be recomputed across fragments, not taken from one of them.
+	if got.Totals.Clean != 1 || got.Totals.Flagged != 2 || got.Totals.Errors != 1 || got.Totals.NoOracle != 1 {
+		t.Errorf("totals = %+v, want 1 clean / 2 flagged / 1 error / 1 no-oracle", got.Totals)
+	}
+	// Flagged tasks sort first so a partial sweep leads with what matters.
+	if check.Verdict(got.Tasks[0].Verdict) == check.VerdictClean {
+		t.Errorf("first task is CLEAN; flagged tasks should sort first")
+	}
+}
+
+// A duplicate instance across fragments must be counted once.
+func TestLoadMergeDeduplicates(t *testing.T) {
+	dir := t.TempDir()
+	res := sampleResults()[0]
+	for i := 0; i < 3; i++ {
+		part := Build([]check.TaskResult{res}, "test", dir, "1.47")
+		if err := part.WriteJSON(filepath.Join(dir, fmt.Sprintf("dup-%d.json", i))); err != nil {
+			t.Fatal(err)
+		}
+	}
+	got, err := Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Totals.Total != 1 {
+		t.Fatalf("Total = %d, want 1 after deduplication", got.Totals.Total)
+	}
+}
+
+// A directory holding report.json keeps loading exactly that.
+func TestLoadPrefersReportJSON(t *testing.T) {
+	dir := t.TempDir()
+	full := Build(sampleResults(), "test", dir, "1.47")
+	if err := full.WriteJSON(filepath.Join(dir, "report.json")); err != nil {
+		t.Fatal(err)
+	}
+	// A stray fragment must not be merged in on top of it.
+	stray := Build(sampleResults()[:1], "test", dir, "1.47")
+	if err := stray.WriteJSON(filepath.Join(dir, "stray.json")); err != nil {
+		t.Fatal(err)
+	}
+	got, err := Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Totals.Total != len(sampleResults()) {
+		t.Fatalf("Total = %d, want the report.json totals (%d)", got.Totals.Total, len(sampleResults()))
+	}
+}
+
+func TestLoadEmptyDir(t *testing.T) {
+	if _, err := Load(t.TempDir()); err == nil {
+		t.Fatal("expected an error for a directory with no reports")
 	}
 }

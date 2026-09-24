@@ -98,6 +98,10 @@ disputes a flag.
 `skeptic report <run-dir> --format md` re-renders any past run as markdown ready to
 paste into an upstream issue.
 
+For a long sweep, point `report` at a directory of per-task reports and it merges
+them — so a run still in progress is readable at any point, not only once it
+finishes.
+
 ## Commands
 
 ```sh
