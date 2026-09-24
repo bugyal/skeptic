@@ -46,9 +46,9 @@ used any of this. Showing that needs an ablation, which has not been run.
 
 ## Draft reports
 
-Reports written for upstream maintainers live under `issues/` and are **not
-filed**. Read the evidence before sending anything, and keep the criticism on
-the artefact rather than its authors.
+Reports written for upstream maintainers live under `issues/`. Both have now
+been filed; each records what was verified and when, and which existing issues
+were checked first.
 
-- [SWE-bench: self-referential PR links](swe-bench-verified/2026-09-25-leakage/issues/)
+- [SWE-bench: solution reachable from problem_statement](swe-bench-verified/2026-09-25-leakage/issues/) — **filed** as [SWE-bench#669](https://github.com/SWE-bench/SWE-bench/issues/669)
 - [Terminal-Bench: tests baked into the image](terminal-bench-1/2026-09-25/issues/) — **filed** as [terminal-bench-1#1474](https://github.com/harbor-framework/terminal-bench-1/issues/1474)
