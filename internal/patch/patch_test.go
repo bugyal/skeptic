@@ -279,3 +279,63 @@ func TestHunkDeletionOnly(t *testing.T) {
 		t.Error("a hunk that adds and removes is not deletion-only")
 	}
 }
+
+// Regression for django__django-15368: the fix made an import unused, and a
+// second hunk removed it. Withholding that hunk leaves an unused import, which
+// no test can observe. DeletionOnly misses it because rewriting an import line
+// both adds and removes.
+func TestHunkImportOnly(t *testing.T) {
+	importCleanup := `diff --git a/query.py b/query.py
+--- a/query.py
++++ b/query.py
+@@ -17,7 +17,7 @@
+ from django.db.models import AutoField
+-from django.db.models.expressions import Case, Expression, F
++from django.db.models.expressions import Case, F
+ from django.db.models.functions import Cast
+`
+	p, err := Parse(importCleanup)
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := p.Files[0].Hunks[0]
+	if h.DeletionOnly() {
+		t.Error("rewriting an import line is not deletion-only")
+	}
+	if !h.ImportOnly() {
+		t.Error("a hunk changing only an import line is import-only")
+	}
+	if ok, why := h.Unobservable(); !ok || why != "import statements only" {
+		t.Errorf("Unobservable = %v/%q, want true/import statements only", ok, why)
+	}
+}
+
+// A hunk touching real code is observable even if it also moves an import.
+func TestHunkImportOnlyMixed(t *testing.T) {
+	mixed := `diff --git a/q.py b/q.py
+--- a/q.py
++++ b/q.py
+@@ -1,4 +1,4 @@
+ import os
+-from x import Expression
+-    if not isinstance(attr, Expression):
++    if not hasattr(attr, 'resolve_expression'):
+`
+	p, err := Parse(mixed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.Files[0].Hunks[0].ImportOnly() {
+		t.Error("a hunk containing a code change is not import-only")
+	}
+	if ok, _ := p.Files[0].Hunks[0].Unobservable(); ok {
+		t.Error("a hunk containing a code change is observable")
+	}
+}
+
+func TestUnobservableClassifies(t *testing.T) {
+	real, _ := Parse(twoHunks)
+	if ok, _ := real.Files[0].Hunks[0].Unobservable(); ok {
+		t.Error("a genuine code change must be observable")
+	}
+}

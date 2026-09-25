@@ -312,3 +312,57 @@ func (h Hunk) DeletionOnly() bool {
 	}
 	return removed > 0 && added == 0
 }
+
+// importLine matches the import syntax of the languages benchmark repositories
+// use. Deliberately conservative: it must match the whole changed line.
+var importLine = regexp.MustCompile(
+	`^(?:from\s+[\w./]+\s+import\s+.*|import\s+.*|` + // python, js, go, java
+		`const\s+\w+\s*=\s*require\(.*\)|use\s+[\w:]+.*;)$`) // node, rust
+
+// ImportOnly reports whether every changed line in a hunk is an import.
+//
+// Gold patches routinely bundle the fix with the cleanup the fix enables, and
+// removing a now-unused import is the commonest form. django__django-15368 is
+// the example: the real hunk replaced isinstance(attr, Expression) with
+// hasattr(attr, 'resolve_expression'), and a second hunk dropped Expression
+// from the import list. Withholding that second hunk leaves an unused import,
+// which no test can observe.
+//
+// DeletionOnly does not catch it, because rewriting an import line both adds
+// and removes.
+func (h Hunk) ImportOnly() bool {
+	changed := 0
+	for _, l := range h.Lines {
+		if len(l) == 0 || (l[0] != '+' && l[0] != '-') {
+			continue
+		}
+		body := strings.TrimSpace(l[1:])
+		if body == "" || isComment(body) {
+			continue
+		}
+		if !importLine.MatchString(body) {
+			return false
+		}
+		changed++
+	}
+	return changed > 0
+}
+
+// Unobservable reports whether withholding a hunk could not, by construction,
+// be detected by any test: comments and blank lines, pure deletions of code
+// the rest of the patch stops calling, and imports left unused by the fix.
+//
+// It is a heuristic over a real pattern -- gold patches bundle the fix with
+// the cleanup the fix enables -- not a proof. It informs how a result is
+// reported; it never suppresses one.
+func (h Hunk) Unobservable() (bool, string) {
+	switch {
+	case !h.Semantic():
+		return true, "comments or blank lines only"
+	case h.ImportOnly():
+		return true, "import statements only"
+	case h.DeletionOnly():
+		return true, "deletion only; likely cleanup"
+	}
+	return false, ""
+}

@@ -209,10 +209,16 @@ func (r *Runner) runPartials(ctx context.Context, t *task.Task, image, taskLogDi
 		if ctx.Err() != nil {
 			return
 		}
-		// A hunk that only edits comments or blank lines cannot be graded by
-		// any test, so withholding it says nothing about the suite. Probing it
-		// would report a weak test that is not there.
-		if fi, hi, ok := p.Locate(i); ok && !p.Files[fi].Hunks[hi].Semantic() {
+		// A hunk whose absence no test could detect proves nothing about the
+		// suite. Comment-only hunks are skipped outright; the other kinds are
+		// still probed but reported apart from genuine weak tests, because a
+		// deletion of code that IS still called would be a real finding.
+		fi, hi, located := p.Locate(i)
+		unobservable, why := false, ""
+		if located {
+			unobservable, why = p.Files[fi].Hunks[hi].Unobservable()
+		}
+		if located && !p.Files[fi].Hunks[hi].Semantic() {
 			r.log.Debug("partial control: skipping non-semantic hunk",
 				"task", t.ID, "hunk", p.Describe(i))
 			continue
@@ -229,14 +235,13 @@ func (r *Runner) runPartials(ctx context.Context, t *task.Task, image, taskLogDi
 
 		// Full marks without the hunk means the suite never graded it.
 		if out.Error == "" && out.Score != nil && *out.Score == 1 {
-			// A deletion-only hunk is usually cleanup: code nothing calls any
-			// more once another hunk landed. Leaving it in place is
-			// unobservable by construction, so the suite passing says nothing
-			// about its quality. Recorded, but marked, so it is not counted
-			// as evidence of a weak test.
-			if fi, hi, ok := p.Locate(i); ok && p.Files[fi].Hunks[hi].DeletionOnly() {
-				out.Hunk = desc + " (deletion-only; likely cleanup)"
-				res.UngradedCleanup = append(res.UngradedCleanup, desc)
+			// Gold patches bundle the fix with the cleanup the fix enables --
+			// an unused import dropped, a dead method removed. That cleanup
+			// is unobservable by construction, so full marks say nothing
+			// about the suite. Recorded apart from genuine weak tests.
+			if unobservable {
+				out.Hunk = desc + " (" + why + ")"
+				res.UngradedCleanup = append(res.UngradedCleanup, desc+" ("+why+")")
 				continue
 			}
 			res.WeakTests = append(res.WeakTests, desc)
