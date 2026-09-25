@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "skeptic_version": "v0.1.2-0.20260925053442-7e9580f18ed9+dirty",
+  "generated_at": "2026-09-25T06:32:19.501042Z",
+  "host": {
+    "os": "darwin",
+    "arch": "arm64",
+    "docker_api": "1.54"
+  },
+  "run_dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/full/runs/sympy__sympy-13878",
+  "totals": {
+    "total": 1,
+    "clean": 1,
+    "flagged": 0,
+    "errors": 0,
+    "no_oracle": 0,
+    "unsupported": 0,
+    "weak_tests": 1
+  },
+  "tasks": [
+    {
+      "id": "sympy__sympy-13878",
+      "format": "swebench",
+      "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/verified.jsonl",
+      "verdict": "CLEAN",
+      "reason": "oracle 1.00, nop 0.00",
+      "nop_score": 0,
+      "oracle_score": 1,
+      "nop_seconds": 77.237545667,
+      "oracle_seconds": 74.048078792,
+      "seconds": 349.654259417,
+      "image_digest": "sha256:d0796de4f7c4749e36e32b043edc2c98b3c6f7127691af37c325944726aa7d0a",
+      "log_dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/full/runs/sympy__sympy-13878/sympy__sympy-13878",
+      "weak_tests": [
+        "sympy/stats/crv_types.py lines 47-53"
+      ]
+    }
+  ]
+}
