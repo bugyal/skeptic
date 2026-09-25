@@ -233,22 +233,24 @@ flagged instances, and the caveats are in
 
 | Benchmark | Date | Instances | Clean | Flagged | Errors |
 |---|---|---:|---:|---:|---:|
-| [SWE-bench Verified](results/swe-bench-verified/2026-09-25-controls) | 2026-09-25 | 12 | 12 | 0 | 0 |
+| [SWE-bench Verified](results/swe-bench-verified/2026-09-25-batch60) | 2026-09-25 | 60 (stratified) | 55 | **0** | 5 |
+| [SWE-bench Verified](results/swe-bench-verified/2026-09-25-controls) | 2026-09-25 | 12 (all parsers) | 12 | 0 | 0 |
 
-One instance per repository — the smallest subset exercising **all twelve** of
-SWE-bench's log parsers, which between them cover all 500 instances. Every one
-produced the expected split: empty diff 0.00, gold patch 1.00. Nothing was
-flagged, reported as plainly as a failure would be.
+**The two headline controls found nothing.** Across a sample stratified over all
+twelve repositories, every gold patch scored 1.0 and every empty diff scored
+0.0. That is the right answer for a benchmark curated to remove unsolvable and
+trivially-solvable instances, and it is reported as plainly as a failure would
+be. The five errors were Docker Hub rate limiting, counted apart.
 
-The partial control ran on the one multi-hunk patch in the set
-(`mwaskom__seaborn-3187`). Withholding either hunk drops exactly one
-FAIL_TO_PASS test while all 248 regression tests hold — each hunk has its own
-test, so that suite grades the whole change. A negative result, and a useful
-one: the probe discriminates rather than flagging whatever it can reduce.
+The weak-test probe flagged 10 instances and **2 held up** after reading each by
+hand — [`matplotlib__matplotlib-24637`](results/swe-bench-verified/2026-09-25-weak-tests)
+and `sympy__sympy-13878`. The other eight were gold patches bundling the fix
+with changes no test can observe: comments, unused imports, dead code,
+docstrings, gallery scripts.
 
-**This validates the adapter, not the benchmark.** Twelve instances of 500. The
-full set needs roughly 2 TB of image traffic. Findings about SWE-bench itself
-come from the static scan above, which covers all 500.
+Take the precision seriously: **2 of 10**, and only because every flag was
+verified individually. The probe points at things worth reading, not at
+conclusions.
 
 ## In CI
 
