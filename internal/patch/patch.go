@@ -319,6 +319,27 @@ var importLine = regexp.MustCompile(
 	`^(?:from\s+[\w./]+\s+import\s+.*|import\s+.*|` + // python, js, go, java
 		`const\s+\w+\s*=\s*require\(.*\)|use\s+[\w:]+.*;)$`) // node, rust
 
+// importContinuation matches a line inside a parenthesised import list:
+// identifiers, commas, whitespace and an optional closing paren, nothing else.
+// A line with a call, operator or assignment is not one.
+var importContinuation = regexp.MustCompile(`^[\w\s,]+\)?,?$`)
+
+// hasImportContext reports whether any line of the hunk, changed or context,
+// opens an import. Used to decide whether a bare identifier list is a
+// continuation of one rather than, say, a tuple literal.
+func (h Hunk) hasImportContext() bool {
+	for _, l := range h.Lines {
+		body := l
+		if len(l) > 0 && (l[0] == '+' || l[0] == '-' || l[0] == ' ') {
+			body = l[1:]
+		}
+		if importLine.MatchString(strings.TrimSpace(body)) {
+			return true
+		}
+	}
+	return false
+}
+
 // ImportOnly reports whether every changed line in a hunk is an import.
 //
 // Gold patches routinely bundle the fix with the cleanup the fix enables, and
@@ -340,7 +361,16 @@ func (h Hunk) ImportOnly() bool {
 		if body == "" || isComment(body) {
 			continue
 		}
-		if !importLine.MatchString(body) {
+		// A parenthesised import spans several lines, and the changed line is
+		// often a continuation rather than the statement itself:
+		//
+		//   from sympy import (log, sqrt, pi,
+		//  -                   Lambda, erf, I)
+		//  +                   Lambda, erf, I, uppergamma, hyper)
+		//
+		// sympy__sympy-13878 turned on exactly that shape.
+		if !importLine.MatchString(body) &&
+			!(h.hasImportContext() && importContinuation.MatchString(body)) {
 			return false
 		}
 		changed++

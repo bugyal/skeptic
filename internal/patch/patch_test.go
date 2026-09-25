@@ -396,3 +396,50 @@ func TestSampleHunksSmallPatch(t *testing.T) {
 		t.Errorf("SampleHunks(0) = %v, want nil", got)
 	}
 }
+
+// Regression for sympy__sympy-13878: a parenthesised import spans lines, and
+// the changed line is a continuation, not the import statement itself.
+func TestHunkImportOnlyMultiline(t *testing.T) {
+	multiline := `diff --git a/crv.py b/crv.py
+--- a/crv.py
++++ b/crv.py
+@@ -47,7 +47,7 @@
+ from sympy import (log, sqrt, pi, S, Dummy, Interval, sympify, gamma,
+                    Piecewise, And, Eq, binomial, factorial, Sum, floor, Abs,
+-                   Lambda, Basic, lowergamma, erf, erfc, I)
++                   Lambda, Basic, lowergamma, erf, erfc, I, uppergamma, hyper)
+ from sympy import beta as beta_fn
+`
+	p, err := Parse(multiline)
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := p.Files[0].Hunks[0]
+	if !h.ImportOnly() {
+		t.Error("a changed continuation line of a parenthesised import is import-only")
+	}
+	if ok, why := h.Unobservable(); !ok || why != "import statements only" {
+		t.Errorf("Unobservable = %v/%q, want true/import statements only", ok, why)
+	}
+}
+
+// An identifier list with no import anywhere in the hunk is not an import
+// continuation -- it could be a tuple, an __all__ entry, a call argument.
+func TestImportContinuationNeedsImportContext(t *testing.T) {
+	tupleEdit := `diff --git a/x.py b/x.py
+--- a/x.py
++++ b/x.py
+@@ -1,3 +1,3 @@
+ CHOICES = (
+-    alpha, beta
++    alpha, beta, gamma
+ )
+`
+	p, err := Parse(tupleEdit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.Files[0].Hunks[0].ImportOnly() {
+		t.Error("a tuple edit with no import context must not count as import-only")
+	}
+}
