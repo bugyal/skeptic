@@ -394,3 +394,61 @@ a real subset, not a complete audit, and the README should say so.
 
 Raising the reach would mean mutating solutions in ways that need a model to
 stay plausible, which v0.1 rules out by design.
+
+---
+
+## D11. What the partial control actually finds on real patches
+
+**Status:** observed, and it revises D5 downward.
+
+D5 introduced the partial control on the strength of a synthetic fixture and a
+published figure: withhold one hunk of the gold patch, and a score that stays at
+1.0 means the suite never graded that hunk.
+
+The fixture works. Real SWE-bench gold patches behave differently.
+
+### Four flags, four artifacts
+
+| Instance | Withheld hunk | Why the suite could not notice |
+|---|---|---|
+| `astropy__astropy-13398` | `siderial` → `sidereal` | a comment |
+| `django__django-13121` | `date_interval_sql()` removed from 3 backends | dead code once another hunk landed |
+| `django__django-15368` | `Expression` dropped from an import list | the import was left unused by the fix |
+| `astropy__astropy-14182` | (scored by a build with the first bug) | unreliable, quarantined |
+
+Not one was a weak test. All were the same phenomenon:
+
+> **A gold patch bundles the fix with the cleanup the fix enables.**
+
+The real change makes something redundant — a helper, an import, a comment —
+and the same commit tidies it away. That tidying is unobservable to any test by
+construction, so a suite awarding full marks without it is behaving correctly.
+
+### What was done about it
+
+`Hunk.Unobservable()` classifies three kinds: comments or blank lines only,
+imports only, deletion only. Comment-only hunks are skipped; the others are
+still probed and reported as `ungraded_cleanup`, kept apart from `weak_tests`.
+
+They are classified rather than filtered on purpose. Deleting code that **is**
+still called, with the suite not noticing, would be a real finding, and
+suppressing the category outright would hide it.
+
+### The honest limitation
+
+Each fix narrows the false positives; none removes the underlying problem.
+Skeptic cannot tell "this change is untested" from "this change is
+unobservable" in general — that needs to know whether the withheld code is
+reachable from the tests, which is program analysis, not diffing.
+
+So the control's output is best read as: *these hunks were not graded*, with
+most of them benign. That is a weaker claim than D5 made, and the README should
+match it rather than the fixture.
+
+### What still holds
+
+The discrimination is real and worth keeping. On every instance where the fix
+itself was withheld, the score dropped — `django__django-15368` went to
+F2P 0/1, `mwaskom__seaborn-3187` to F2P 1/2, `astropy__astropy-13398` to
+P2P 67/68. The control reliably separates the fix from the cleanup around it.
+It is the label on the cleanup that was wrong, not the measurement.
