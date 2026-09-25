@@ -392,6 +392,8 @@ func (h Hunk) Unobservable() (bool, string) {
 		return true, "comments or blank lines only"
 	case h.ImportOnly():
 		return true, "import statements only"
+	case h.DocstringOnly():
+		return true, "documentation prose only"
 	case h.DeletionOnly():
 		return true, "deletion only; likely cleanup"
 	}
@@ -488,4 +490,65 @@ func (f File) NonExecutable() bool {
 		}
 	}
 	return false
+}
+
+var (
+	// rstDirective matches ".. versionadded:: 0.21" and friends.
+	rstDirective = regexp.MustCompile(`^\.\.\s+[\w-]+::`)
+	// numpydocField matches "warm_start : bool, optional (default=False)".
+	numpydocField = regexp.MustCompile(`^[\w*]+\s+:\s+\S`)
+	// sectionUnderline matches the "----------" under a numpydoc heading.
+	sectionUnderline = regexp.MustCompile(`^[-=~^"]{3,}$`)
+	// bareCall matches a statement that is only a call: renderer.close_group(x).
+	// Guarded against explicitly, because a hunk adding one is real code and
+	// matplotlib__matplotlib-24637 -- a confirmed finding -- is exactly that
+	// shape.
+	bareCall = regexp.MustCompile(`^[\w.\[\]]+\(.*\)\s*$`)
+	// statementStart matches lines opening a Python statement.
+	statementStart = regexp.MustCompile(`^(def |class |return\b|if |elif |else\b|for |while |import |from |try\b|except|finally|with |raise |assert |yield|pass\b|break\b|continue\b|@\w)`)
+)
+
+// looksLikeCode reports whether a line would plausibly execute.
+func looksLikeCode(s string) bool {
+	switch {
+	case statementStart.MatchString(s), bareCall.MatchString(s):
+		return true
+	case strings.Contains(s, "=") && !strings.Contains(s, "=="):
+		// An assignment, but not a numpydoc default like "(default=False)".
+		return !numpydocField.MatchString(s)
+	}
+	return false
+}
+
+// DocstringOnly reports whether a hunk changes only documentation prose.
+//
+// Deliberately narrow: it requires a documentation construct to be present --
+// an RST directive, a numpydoc field, a section underline -- and refuses if any
+// changed line looks like code. A loose "is this prose" test would classify a
+// hunk of bare calls as documentation, and matplotlib__matplotlib-24637, a
+// confirmed weak test, is precisely a pair of bare calls.
+//
+// Three instances in the sampled batch turned on this shape:
+// sympy__sympy-13852 (a doctest's expected output),
+// scikit-learn__scikit-learn-12682 and -13496 (parameter documentation).
+func (h Hunk) DocstringOnly() bool {
+	hasDocConstruct, changed := false, 0
+	for _, l := range h.Lines {
+		if len(l) == 0 || (l[0] != '+' && l[0] != '-') {
+			continue
+		}
+		body := strings.TrimSpace(l[1:])
+		if body == "" {
+			continue
+		}
+		changed++
+		if looksLikeCode(body) {
+			return false
+		}
+		if rstDirective.MatchString(body) || numpydocField.MatchString(body) ||
+			sectionUnderline.MatchString(body) || strings.HasPrefix(body, ">>>") {
+			hasDocConstruct = true
+		}
+	}
+	return changed > 0 && hasDocConstruct
 }

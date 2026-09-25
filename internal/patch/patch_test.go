@@ -459,3 +459,75 @@ func TestFileNonExecutable(t *testing.T) {
 		}
 	}
 }
+
+// The guard that matters most: matplotlib__matplotlib-24637 is a confirmed
+// weak test whose hunks are bare calls. A prose heuristic that swept those up
+// would hide the best finding the tool has produced.
+func TestDocstringOnlyDoesNotSwallowBareCalls(t *testing.T) {
+	matplotlibShape := `diff --git a/lib/matplotlib/offsetbox.py b/lib/matplotlib/offsetbox.py
+--- a/lib/matplotlib/offsetbox.py
++++ b/lib/matplotlib/offsetbox.py
+@@ -1453,6 +1454,7 @@ def draw(self, renderer):
+         self.patch.draw(renderer)
+         self.offsetbox.draw(renderer)
++        renderer.close_group(self.__class__.__name__)
+         self.stale = False
+`
+	p, err := Parse(matplotlibShape)
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := p.Files[0].Hunks[0]
+	if h.DocstringOnly() {
+		t.Fatal("a bare call must never classify as documentation")
+	}
+	if ok, why := h.Unobservable(); ok {
+		t.Fatalf("Unobservable = true (%q); this hunk is a real finding", why)
+	}
+}
+
+// scikit-learn__scikit-learn-13496: a numpydoc parameter block.
+func TestDocstringOnlyNumpydoc(t *testing.T) {
+	doc := `diff --git a/sklearn/ensemble/iforest.py b/sklearn/ensemble/iforest.py
+--- a/sklearn/ensemble/iforest.py
++++ b/sklearn/ensemble/iforest.py
+@@ -120,6 +120,12 @@ class IsolationForest(BaseBagging, OutlierMixin):
+     verbose : int, optional (default=0)
+         Controls the verbosity of the tree building process.
+ 
++    warm_start : bool, optional (default=False)
++        When set to True, reuse the solution of the previous call to fit
++        and add more estimators to the ensemble, otherwise, just fit a whole
++        new forest.
++
++        .. versionadded:: 0.21
+ 
+     Attributes
+`
+	p, err := Parse(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !p.Files[0].Hunks[0].DocstringOnly() {
+		t.Error("a numpydoc parameter block is documentation")
+	}
+	if ok, why := p.Files[0].Hunks[0].Unobservable(); !ok || why != "documentation prose only" {
+		t.Errorf("Unobservable = %v/%q", ok, why)
+	}
+}
+
+// Prose with no documentation construct is not classified, to stay narrow.
+func TestDocstringOnlyNeedsAConstruct(t *testing.T) {
+	plain := `diff --git a/x.py b/x.py
+--- a/x.py
++++ b/x.py
+@@ -1,3 +1,3 @@
+ def f():
+-    some free text line
++    other free text line
+`
+	p, _ := Parse(plain)
+	if p.Files[0].Hunks[0].DocstringOnly() {
+		t.Error("prose without an RST or numpydoc construct must not classify")
+	}
+}
