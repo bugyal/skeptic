@@ -51,13 +51,18 @@ type TaskResult struct {
 	Oracle  *ControlResult `json:"oracle"`
 	// Partials holds one result per hunk withheld by the partial control.
 	Partials []*ControlResult `json:"partials,omitempty"`
-	// WeakTests names hunks whose absence the test suite failed to notice.
-	WeakTests   []string      `json:"weak_tests,omitempty"`
-	ImageDigest string        `json:"image_digest,omitempty"`
-	Duration    time.Duration `json:"duration_ns"`
-	Error       string        `json:"error,omitempty"`
-	Unsupported string        `json:"unsupported,omitempty"`
-	LogDir      string        `json:"log_dir,omitempty"`
+	// WeakTests names hunks whose absence the test suite failed to notice and
+	// which add or change behaviour, so the gap is more likely to be real.
+	WeakTests []string `json:"weak_tests,omitempty"`
+	// UngradedCleanup names ungraded hunks that only delete lines. Usually
+	// dead-code removal, which no test can observe; kept apart so it does not
+	// inflate the weak-test count.
+	UngradedCleanup []string      `json:"ungraded_cleanup,omitempty"`
+	ImageDigest     string        `json:"image_digest,omitempty"`
+	Duration        time.Duration `json:"duration_ns"`
+	Error           string        `json:"error,omitempty"`
+	Unsupported     string        `json:"unsupported,omitempty"`
+	LogDir          string        `json:"log_dir,omitempty"`
 }
 
 // NopScore returns the nop control's score, or nil when it did not produce one.
@@ -224,6 +229,16 @@ func (r *Runner) runPartials(ctx context.Context, t *task.Task, image, taskLogDi
 
 		// Full marks without the hunk means the suite never graded it.
 		if out.Error == "" && out.Score != nil && *out.Score == 1 {
+			// A deletion-only hunk is usually cleanup: code nothing calls any
+			// more once another hunk landed. Leaving it in place is
+			// unobservable by construction, so the suite passing says nothing
+			// about its quality. Recorded, but marked, so it is not counted
+			// as evidence of a weak test.
+			if fi, hi, ok := p.Locate(i); ok && p.Files[fi].Hunks[hi].DeletionOnly() {
+				out.Hunk = desc + " (deletion-only; likely cleanup)"
+				res.UngradedCleanup = append(res.UngradedCleanup, desc)
+				continue
+			}
 			res.WeakTests = append(res.WeakTests, desc)
 		}
 	}

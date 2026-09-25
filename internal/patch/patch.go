@@ -276,3 +276,39 @@ func (p *Patch) SemanticHunks() int {
 	}
 	return n
 }
+
+// DeletionOnly reports whether a hunk only removes lines.
+//
+// Withholding such a hunk leaves the removed code in place. When the change is
+// a cleanup -- deleting a method that nothing calls any more after another
+// hunk landed -- that is unobservable by construction, and the tests passing
+// says nothing about their quality.
+//
+// django__django-13121 is the case in point: a refactor removing
+// date_interval_sql() from three database backends. Every deletion hunk could
+// be withheld with the suite still at full marks, because dead code is dead.
+// Reporting that as a weak test would be wrong.
+//
+// It is a heuristic, not a proof: deleting code that IS still called would
+// break things, and the tests failing to notice would be a real finding. So
+// this classifies rather than filters, and the caller reports the distinction.
+func (h Hunk) DeletionOnly() bool {
+	var removed, added int
+	for _, l := range h.Lines {
+		if len(l) == 0 {
+			continue
+		}
+		body := strings.TrimSpace(l[1:])
+		switch l[0] {
+		case '-':
+			if body != "" {
+				removed++
+			}
+		case '+':
+			if body != "" {
+				added++
+			}
+		}
+	}
+	return removed > 0 && added == 0
+}

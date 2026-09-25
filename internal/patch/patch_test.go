@@ -248,3 +248,34 @@ func TestHunkSemanticMixed(t *testing.T) {
 		t.Error("a hunk containing a code change is semantic even if it also edits comments")
 	}
 }
+
+func TestHunkDeletionOnly(t *testing.T) {
+	deletion := `diff --git a/a.py b/a.py
+--- a/a.py
++++ b/a.py
+@@ -1,6 +1,2 @@
+ class A:
+-    def dead(self):
+-        return 1
+-
+     def live(self):
+`
+	p, err := Parse(deletion)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !p.Files[0].Hunks[0].Semantic() {
+		t.Error("removing code is a semantic change")
+	}
+	if !p.Files[0].Hunks[0].DeletionOnly() {
+		t.Error("a hunk that only removes lines is deletion-only")
+	}
+
+	mixed, err := Parse(twoHunks)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if mixed.Files[0].Hunks[0].DeletionOnly() {
+		t.Error("a hunk that adds and removes is not deletion-only")
+	}
+}

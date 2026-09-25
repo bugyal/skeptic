@@ -64,9 +64,13 @@ type TaskReport struct {
 	ImageDigest string   `json:"image_digest,omitempty"`
 	LogDir      string   `json:"log_dir,omitempty"`
 	Error       string   `json:"error,omitempty"`
-	// WeakTests names hunks of the reference solution whose absence the test
-	// suite did not notice. Advisory: it never flags a task on its own.
+	// WeakTests names behaviour-changing hunks whose absence the test suite
+	// did not notice. Advisory: it never flags a task on its own.
 	WeakTests []string `json:"weak_tests,omitempty"`
+	// UngradedCleanup names ungraded deletion-only hunks, usually dead-code
+	// removal that no test could observe. Kept apart from WeakTests so it
+	// does not read as a finding.
+	UngradedCleanup []string `json:"ungraded_cleanup,omitempty"`
 }
 
 // Build assembles a Report from raw results.
@@ -85,7 +89,7 @@ func Build(results []check.TaskResult, version, runDir, dockerAPI string) Report
 			NopScore: res.NopScore(), OracleScore: res.OracleScore(),
 			Seconds:     res.Duration.Seconds(),
 			ImageDigest: res.ImageDigest, LogDir: res.LogDir, Error: res.Error,
-			WeakTests: res.WeakTests,
+			WeakTests: res.WeakTests, UngradedCleanup: res.UngradedCleanup,
 		}
 		if res.Nop != nil {
 			tr.NopSeconds = res.Nop.Duration.Seconds()
