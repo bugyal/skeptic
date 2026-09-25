@@ -6,6 +6,7 @@ package patch
 
 import (
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -463,4 +464,28 @@ func (p *Patch) SampleHunks(n int) []int {
 		}
 	}
 	return uniq
+}
+
+// nonExecutablePrefixes are directories whose contents a project's unit tests
+// do not import: gallery examples, documentation, benchmarks, tooling.
+var nonExecutablePrefixes = []string{
+	"examples/", "example/", "doc/", "docs/", "benchmarks/", "benchmark/",
+	"tools/", "scripts/", "changelog/", "changes/",
+}
+
+// NonExecutable reports whether a file lives somewhere the test suite does not
+// import from, so a change to it cannot be graded by unit tests.
+//
+// scikit-learn__scikit-learn-12682 flagged a hunk in
+// examples/decomposition/plot_sparse_coding.py. Gallery scripts are rendered
+// by the documentation build, not imported by tests, so withholding a change
+// to one proves nothing about the suite.
+func (f File) NonExecutable() bool {
+	p := strings.TrimPrefix(filepath.ToSlash(f.Path), "./")
+	for _, pre := range nonExecutablePrefixes {
+		if strings.HasPrefix(p, pre) || strings.Contains(p, "/"+pre) {
+			return true
+		}
+	}
+	return false
 }

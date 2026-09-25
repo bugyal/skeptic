@@ -443,3 +443,19 @@ func TestImportContinuationNeedsImportContext(t *testing.T) {
 		t.Error("a tuple edit with no import context must not count as import-only")
 	}
 }
+
+// Regression for scikit-learn__scikit-learn-12682: a hunk in a gallery example.
+func TestFileNonExecutable(t *testing.T) {
+	for path, want := range map[string]bool{
+		"examples/decomposition/plot_sparse_coding.py": true,
+		"doc/whatsnew/v0.21.rst":                       true,
+		"benchmarks/bench_plot.py":                     true,
+		"sklearn/decomposition/dict_learning.py":       false,
+		"lib/matplotlib/offsetbox.py":                  false,
+		"src/examples_handler.go":                      false,
+	} {
+		if got := (File{Path: path}).NonExecutable(); got != want {
+			t.Errorf("NonExecutable(%q) = %v, want %v", path, got, want)
+		}
+	}
+}

@@ -217,6 +217,11 @@ func (r *Runner) runPartials(ctx context.Context, t *task.Task, image, taskLogDi
 		unobservable, why := false, ""
 		if located {
 			unobservable, why = p.Files[fi].Hunks[hi].Unobservable()
+			// A gallery example or doc file is not imported by the tests, so
+			// withholding a change to it says nothing about the suite.
+			if !unobservable && p.Files[fi].NonExecutable() {
+				unobservable, why = true, "file not imported by tests"
+			}
 		}
 		if located && !p.Files[fi].Hunks[hi].Semantic() {
 			r.log.Debug("partial control: skipping non-semantic hunk",
