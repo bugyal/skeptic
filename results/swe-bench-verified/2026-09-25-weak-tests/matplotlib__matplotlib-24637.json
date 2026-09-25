@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "skeptic_version": "v0.1.2-0.20260925063500-18644aedfde8+dirty",
+  "generated_at": "2026-09-25T07:14:34.036129Z",
+  "host": {
+    "os": "darwin",
+    "arch": "arm64",
+    "docker_api": "1.54"
+  },
+  "run_dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/full/runs/matplotlib__matplotlib-24637",
+  "totals": {
+    "total": 1,
+    "clean": 1,
+    "flagged": 0,
+    "errors": 0,
+    "no_oracle": 0,
+    "unsupported": 0,
+    "weak_tests": 1
+  },
+  "tasks": [
+    {
+      "id": "matplotlib__matplotlib-24637",
+      "format": "swebench",
+      "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/verified.jsonl",
+      "verdict": "CLEAN",
+      "reason": "oracle 1.00, nop 0.00",
+      "nop_score": 0,
+      "oracle_score": 1,
+      "nop_seconds": 117.674291625,
+      "oracle_seconds": 178.221792625,
+      "seconds": 889.210637209,
+      "image_digest": "sha256:bb2ad4cfe0a3f605f875a0f65c4f110cefecde547dd9a1edb3d1c992f4ac8698",
+      "log_dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/full/runs/matplotlib__matplotlib-24637/matplotlib__matplotlib-24637",
+      "weak_tests": [
+        "lib/matplotlib/offsetbox.py lines 1454-1460"
+      ]
+    }
+  ]
+}

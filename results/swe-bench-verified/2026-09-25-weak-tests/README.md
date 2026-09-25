@@ -1,7 +1,56 @@
-# A weak test in SWE-bench Verified — `sympy__sympy-13878`
+# Weak tests in SWE-bench Verified
 
-The first genuine weak-test finding, after six false positives. It is
-checkable without running Skeptic at all.
+Two confirmed instances where the graded tests do not cover the reference
+solution. Both are checkable without running Skeptic.
+
+---
+
+# 1. `matplotlib__matplotlib-24637` — a matched pair, half tested
+
+The clearest case, and the one the partial control pointed at directly.
+
+The gold patch adds two lines to `AnnotationBbox.draw`:
+
+```diff
++        renderer.open_group(self.__class__.__name__, gid=self.get_gid())
+         self.update_positions(renderer)
+         ...
+         self.offsetbox.draw(renderer)
++        renderer.close_group(self.__class__.__name__)
+```
+
+`open_group` and `close_group` are a matched pair: every opened SVG group must
+be closed, or the output is malformed.
+
+The instance is graded by one test,
+`test_backend_svg.py::test_annotationbbox_gid`, which checks that the `gid`
+appears in the rendered SVG.
+
+| Withheld | Score | Graded? |
+|---|---|---|
+| `open_group` line | 0.00 (F2P 0/1) | yes |
+| `close_group` line | **1.00 (F2P 1/1, P2P 29/29)** | **no** |
+
+The test verifies the group is *opened* with the right gid. Nothing verifies it
+is *closed*. An agent that adds only the `open_group` call scores 1.0 and
+resolves the instance, while emitting SVG with an unbalanced group — the precise
+defect the second line exists to prevent.
+
+## Reproducing
+
+```sh
+skeptic check verified.jsonl --task matplotlib__matplotlib-24637 --partial
+```
+
+Or read it directly: the patch is two lines, and the test asserts on gid
+presence only.
+
+---
+
+# 2. `sympy__sympy-13878` — eleven implementations, one test
+
+Found after six false positives, and reached indirectly. It is checkable
+without running Skeptic at all.
 
 ## The claim
 
@@ -69,3 +118,30 @@ field, then read its `FAIL_TO_PASS`.
 One instance. This says nothing about how many others are like it — answering
 that needs the full 500-instance run. What it does show is that the failure
 mode is present in SWE-bench Verified and is detectable.
+
+
+---
+
+# Also flagged, not claimed
+
+`sphinx-doc__sphinx-9229` withheld a real behavioural change in
+`ClassDocumenter.get_doc` — returning `[]` rather than `None` when a variable
+comment exists — and scored F2P 1/1. The companion hunk, which adds
+`get_variable_comment()` and changes `add_content`, was correctly graded
+(F2P 0/1).
+
+It may well be a third weak test, but the `get_doc` branch could equally be
+defensive code that is redundant for the tested scenario. Distinguishing the
+two needs reading sphinx's autodoc flow more closely than has been done here,
+so it is recorded rather than claimed.
+
+# Tally, stated plainly
+
+Nine hunks flagged across the sampled instances. Two are confirmed weak tests,
+one is unresolved, six were artifacts of Skeptic's own heuristics — comment
+edits, dead-code removal, unused imports, and one biased sample. Each artifact
+class has since been fixed or classified apart.
+
+That is a low hit rate. Every flag has to be read by hand before it means
+anything, which is why this directory contains the reasoning rather than a
+count.
