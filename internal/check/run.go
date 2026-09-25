@@ -201,11 +201,11 @@ func (r *Runner) runPartials(ctx context.Context, t *task.Task, image, taskLogDi
 	if max <= 0 {
 		max = 3
 	}
-	if max > total {
-		max = total
-	}
 
-	for i := 0; i < max; i++ {
+	// Spread the sample across files. Taking the first n clusters the probe
+	// in whichever file sorts first, which on a multi-file patch can miss the
+	// only file the tests actually execute.
+	for _, i := range p.SampleHunks(max) {
 		if ctx.Err() != nil {
 			return
 		}

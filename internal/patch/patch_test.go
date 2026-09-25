@@ -1,6 +1,7 @@
 package patch
 
 import (
+	"fmt"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -337,5 +338,61 @@ func TestUnobservableClassifies(t *testing.T) {
 	real, _ := Parse(twoHunks)
 	if ok, _ := real.Files[0].Hunks[0].Unobservable(); ok {
 		t.Error("a genuine code change must be observable")
+	}
+}
+
+// Regression for django__django-16560: 18 hunks across two files, and taking
+// the first three sampled only the file the tests never execute.
+func TestSampleHunksCoversFiles(t *testing.T) {
+	var b strings.Builder
+	for _, f := range []struct {
+		name  string
+		hunks int
+	}{{"a.py", 5}, {"b.py", 13}} {
+		fmt.Fprintf(&b, "diff --git a/%s b/%s\n--- a/%s\n+++ b/%s\n", f.name, f.name, f.name, f.name)
+		for i := 0; i < f.hunks; i++ {
+			fmt.Fprintf(&b, "@@ -%d,2 +%d,2 @@\n-old%d\n+new%d\n", i*10+1, i*10+1, i, i)
+		}
+	}
+	p, err := Parse(b.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.HunkCount() != 18 {
+		t.Fatalf("HunkCount = %d, want 18", p.HunkCount())
+	}
+
+	got := p.SampleHunks(3)
+	if len(got) != 3 {
+		t.Fatalf("SampleHunks(3) = %v, want 3 indices", got)
+	}
+	files := map[string]bool{}
+	for _, i := range got {
+		fi, _, ok := p.Locate(i)
+		if !ok {
+			t.Fatalf("index %d does not locate", i)
+		}
+		files[p.Files[fi].Path] = true
+	}
+	if len(files) != 2 {
+		t.Errorf("sampled files = %v, want both files represented", files)
+	}
+
+	// Deterministic across calls, or reruns would disagree.
+	again := p.SampleHunks(3)
+	for i := range got {
+		if got[i] != again[i] {
+			t.Fatalf("SampleHunks is not deterministic: %v then %v", got, again)
+		}
+	}
+}
+
+func TestSampleHunksSmallPatch(t *testing.T) {
+	p, _ := Parse(twoHunks)
+	if got := p.SampleHunks(5); len(got) != 2 {
+		t.Errorf("SampleHunks(5) on a 2-hunk patch = %v, want both", got)
+	}
+	if got := p.SampleHunks(0); got != nil {
+		t.Errorf("SampleHunks(0) = %v, want nil", got)
 	}
 }

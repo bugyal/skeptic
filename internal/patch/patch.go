@@ -366,3 +366,71 @@ func (h Hunk) Unobservable() (bool, string) {
 	}
 	return false, ""
 }
+
+// SampleHunks picks up to n hunk indices spread across the patch rather than
+// taking the first n.
+//
+// Taking the first n biases the sample to whichever file sorts first.
+// django__django-16560 is the case: 18 hunks across two files, and the first
+// three all landed in django/contrib/postgres/constraints.py — code the
+// SQLite-backed test environment never executes. Three "ungraded" hunks that
+// said nothing about the suite, because the sample never reached the file the
+// tests actually exercise.
+//
+// Files are visited round-robin so every file is represented before any file
+// is sampled twice, and within a file the hunks are spread evenly. The result
+// is deterministic, so reruns agree.
+func (p *Patch) SampleHunks(n int) []int {
+	if n <= 0 {
+		return nil
+	}
+
+	// Flat index of the first hunk of each file.
+	offsets := make([]int, len(p.Files))
+	at := 0
+	for i, f := range p.Files {
+		offsets[i] = at
+		at += len(f.Hunks)
+	}
+
+	var out []int
+	taken := make([]int, len(p.Files)) // hunks taken per file so far
+	for len(out) < n {
+		progressed := false
+		for fi, f := range p.Files {
+			if len(out) >= n {
+				break
+			}
+			if taken[fi] >= len(f.Hunks) {
+				continue
+			}
+			// Spread within the file: the k-th pick of m total lands at
+			// k*len/m, so picks are distributed rather than clustered.
+			quota := n/len(p.Files) + 1
+			if quota > len(f.Hunks) {
+				quota = len(f.Hunks)
+			}
+			idx := taken[fi] * len(f.Hunks) / quota
+			if idx >= len(f.Hunks) {
+				idx = len(f.Hunks) - 1
+			}
+			out = append(out, offsets[fi]+idx)
+			taken[fi]++
+			progressed = true
+		}
+		if !progressed {
+			break // every hunk exhausted
+		}
+	}
+
+	// Deduplicate while preserving order; uneven spreads can collide.
+	seen := map[int]bool{}
+	var uniq []int
+	for _, i := range out {
+		if !seen[i] {
+			seen[i] = true
+			uniq = append(uniq, i)
+		}
+	}
+	return uniq
+}
