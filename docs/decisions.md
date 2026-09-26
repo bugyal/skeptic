@@ -505,3 +505,67 @@ A reviewer pointed at ten hunks, two of which matter, is better served than one
 pointed at nothing — but only if the output says which kind of claim it is
 making. `weak_tests` versus `ungraded_cleanup` exists for that reason, and the
 README says 2-of-10 rather than 10.
+
+---
+
+## D13. The partial control has a ceiling, and this is it
+
+**Status:** observed. Bounds D12 rather than extending it.
+
+`pytest-dev__pytest-7236` was re-run under the classifier with all five
+artifact fixes in place. It still flagged two hunks, and both are artifacts of a
+kind no pattern can catch.
+
+The patch introduces a helper:
+
+```python
+def _is_skipped(obj) -> bool:
+    """Return True if the given object has been marked with @unittest.skip"""
+    return bool(getattr(obj, "__unittest_skip__", False))
+```
+
+and replaces three call sites. The third is the fix — adding
+`and not _is_skipped(self.obj)` to a pdb teardown condition — and the control
+graded it correctly (withholding it scored F2P 0/1).
+
+The first two are:
+
+```diff
+-        skipped = getattr(cls, "__unittest_skip__", False)
++        skipped = _is_skipped(cls)
+
+-        if getattr(self, "__unittest_skip__", None):
++        if _is_skipped(self):
+```
+
+Both are **behaviour-preserving refactors**: `_is_skipped(cls)` is by
+construction the same truth value as the expression it replaces. No test can
+distinguish them, because there is nothing to distinguish.
+
+### Why this is the ceiling
+
+The five fixes in v0.1.2 each recognise a *syntactic* signal — a comment, an
+import, a deletion, a path, a documentation construct. A refactor has no
+syntactic signal. Establishing that `getattr(x, "y", False)` and
+`bool(getattr(x, "y", False))` are equivalent is semantic analysis, and doing it
+in general is undecidable.
+
+Gold patches contain refactors often, because the natural way to write a fix
+that needs a predicate three times is to extract the predicate. So:
+
+> The partial control's precision is bounded above by how frequently reference
+> solutions bundle refactoring with their fix, and that bound cannot be raised
+> by better pattern matching.
+
+### What follows
+
+Nothing to fix. Three things to say honestly:
+
+1. The control is a **reading aid**, not a detector. Its output is "the graded
+   tests did not notice these hunks", and the reader decides which of fix,
+   cleanup and refactor each one is.
+2. The 2-of-10 precision in D12 is not a bug awaiting a fix. It is close to what
+   this technique can do on real gold patches.
+3. Raising it would need a different technique — coverage instrumentation, to
+   ask whether the withheld lines are executed by the graded tests at all.
+   That is a real option and a much larger one; it is not v0.1.
