@@ -5,6 +5,51 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-09-26
+
+Everything here came from running the tool against real corpora rather than
+fixtures. The `partial` control in v0.1.1 over-reports badly on real gold
+patches; this release is mostly about that.
+
+### Fixed
+
+- **The `partial` control no longer reports unobservable hunks as weak tests.**
+  Gold patches routinely bundle the fix with cleanup the fix enables, and
+  withholding that cleanup proves nothing about the test suite. Five classes
+  are now recognised: comment and blank-line edits, import-only changes
+  (including continuation lines of a parenthesised import), deletion-only
+  hunks, files under `examples/`, `doc/`, `benchmarks/`, `tools/` and
+  `scripts/`, and documentation prose (RST directives, numpydoc fields,
+  doctests). They are reported as `ungraded_cleanup`, kept apart from
+  `weak_tests` rather than suppressed — deleting code that *is* still called,
+  unnoticed by the suite, would be a real finding.
+- **Hunks are now sampled across files instead of taking the first N.** On a
+  multi-file patch the old behaviour clustered the whole probe in whichever
+  file sorted first; on `django__django-16560` that meant 3 of 18 hunks, all in
+  a database backend the test environment never executes. This changes results
+  for every multi-file patch, negatives included.
+- Prebuilt images already present locally are no longer re-pulled.
+- `docker pull` now receives `--platform`, so an amd64-only image resolves on
+  an arm64 host instead of failing at pull time.
+- Test output is merged inside the container. Reassembling stdout and stderr on
+  the host lost their interleaving, so a harness marking its output with shell
+  xtrace intermittently appeared to have produced no results — around three
+  runs in four on the fixture.
+- `version` reports the module version for binaries built by `go install`.
+
+### Added
+
+- `skeptic report <dir>` merges a directory of per-task report fragments when
+  there is no `report.json`, so a long sweep is readable while it runs.
+
+### Known limitation
+
+The `partial` control cannot distinguish "this change is untested" from "this
+change is unobservable" in general; that needs to know whether the withheld
+code is reachable from the tests, which is program analysis rather than
+diffing. Measured precision on a 60-instance stratified sample was 2 of 10
+flags. Read every flag before believing it. See `docs/decisions.md` D11.
+
 ### Added
 
 - `skeptic report <dir>` merges a directory of per-task report fragments when
@@ -99,6 +144,7 @@ rather than indicating a defect.
 - Published SWE-bench images are ~4 GB each and x86_64, so a large run needs
   substantial disk and, on arm64 hosts, emulation.
 
-[Unreleased]: https://github.com/bugyal/skeptic/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/bugyal/skeptic/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/bugyal/skeptic/releases/tag/v0.1.2
 [0.1.1]: https://github.com/bugyal/skeptic/releases/tag/v0.1.1
 [0.1.0]: https://github.com/bugyal/skeptic/releases/tag/v0.1.0
