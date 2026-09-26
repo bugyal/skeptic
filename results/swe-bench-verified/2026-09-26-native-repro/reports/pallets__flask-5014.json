@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "skeptic_version": "v0.1.2-0.20260926152355-cb2c12482bd0",
+  "generated_at": "2026-09-26T16:05:42.718294695Z",
+  "host": {
+    "os": "linux",
+    "arch": "amd64",
+    "docker_api": "1.54"
+  },
+  "run_dir": ".skeptic/runs/20260926-160437",
+  "totals": {
+    "total": 1,
+    "clean": 1,
+    "flagged": 0,
+    "errors": 0,
+    "no_oracle": 0,
+    "unsupported": 0,
+    "weak_tests": 0
+  },
+  "tasks": [
+    {
+      "id": "pallets__flask-5014",
+      "format": "swebench",
+      "dir": "/home/user/skeptic/results/swe-bench-verified/2026-09-25-controls/subset-instances.jsonl",
+      "verdict": "CLEAN",
+      "reason": "oracle 1.00, nop 0.00",
+      "nop_score": 0,
+      "oracle_score": 1,
+      "nop_seconds": 14.201852688,
+      "oracle_seconds": 11.199135653,
+      "seconds": 64.950091824,
+      "image_digest": "sha256:bde4fbdafa36141d4396944da88ec37aabdef612ed36920090675bccd0ca5d72",
+      "log_dir": ".skeptic/runs/20260926-160437/pallets__flask-5014"
+    }
+  ]
+}

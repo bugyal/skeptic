@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "skeptic_version": "v0.1.2-0.20260926152355-cb2c12482bd0",
+  "generated_at": "2026-09-26T15:49:07.076301562Z",
+  "host": {
+    "os": "linux",
+    "arch": "amd64",
+    "docker_api": "1.54"
+  },
+  "run_dir": ".skeptic/runs/20260926-154812",
+  "totals": {
+    "total": 1,
+    "clean": 1,
+    "flagged": 0,
+    "errors": 0,
+    "no_oracle": 0,
+    "unsupported": 0,
+    "weak_tests": 0
+  },
+  "tasks": [
+    {
+      "id": "sphinx-doc__sphinx-8621",
+      "format": "swebench",
+      "dir": "/home/user/skeptic/results/swe-bench-verified/2026-09-25-controls/subset-instances.jsonl",
+      "verdict": "CLEAN",
+      "reason": "oracle 1.00, nop 0.00",
+      "nop_score": 0,
+      "oracle_score": 1,
+      "nop_seconds": 9.438037127,
+      "oracle_seconds": 7.38648007,
+      "seconds": 54.337358303,
+      "image_digest": "sha256:6920990997f285a23170dfb17f61f14f80ce31f608b9f061d1bdc3a32aec983a",
+      "log_dir": ".skeptic/runs/20260926-154812/sphinx-doc__sphinx-8621"
+    }
+  ]
+}

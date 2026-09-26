@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "skeptic_version": "v0.1.2-0.20260926152355-cb2c12482bd0",
+  "generated_at": "2026-09-26T15:40:00.106022236Z",
+  "host": {
+    "os": "linux",
+    "arch": "amd64",
+    "docker_api": "1.54"
+  },
+  "run_dir": ".skeptic/runs/20260926-153819",
+  "totals": {
+    "total": 1,
+    "clean": 1,
+    "flagged": 0,
+    "errors": 0,
+    "no_oracle": 0,
+    "unsupported": 0,
+    "weak_tests": 0
+  },
+  "tasks": [
+    {
+      "id": "astropy__astropy-12907",
+      "format": "swebench",
+      "dir": "/home/user/skeptic/results/swe-bench-verified/2026-09-25-controls/subset-instances.jsonl",
+      "verdict": "CLEAN",
+      "reason": "oracle 1.00, nop 0.00",
+      "nop_score": 0,
+      "oracle_score": 1,
+      "nop_seconds": 15.042330941,
+      "oracle_seconds": 14.669288862,
+      "seconds": 100.976257397,
+      "image_digest": "sha256:e082963099ed7d5a5f75a0be46e338be36faae33b2cba5289a9ddbd505997f1f",
+      "log_dir": ".skeptic/runs/20260926-153819/astropy__astropy-12907"
+    }
+  ]
+}

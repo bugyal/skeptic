@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "skeptic_version": "v0.1.2-0.20260926152355-cb2c12482bd0",
+  "generated_at": "2026-09-26T16:04:35.989816732Z",
+  "host": {
+    "os": "linux",
+    "arch": "amd64",
+    "docker_api": "1.54"
+  },
+  "run_dir": ".skeptic/runs/20260926-155747",
+  "totals": {
+    "total": 1,
+    "clean": 1,
+    "flagged": 0,
+    "errors": 0,
+    "no_oracle": 0,
+    "unsupported": 0,
+    "weak_tests": 0
+  },
+  "tasks": [
+    {
+      "id": "mwaskom__seaborn-3187",
+      "format": "swebench",
+      "dir": "/home/user/skeptic/results/swe-bench-verified/2026-09-25-controls/subset-instances.jsonl",
+      "verdict": "CLEAN",
+      "reason": "oracle 1.00, nop 0.00",
+      "nop_score": 0,
+      "oracle_score": 1,
+      "nop_seconds": 90.728538801,
+      "oracle_seconds": 91.84112575,
+      "seconds": 408.081653867,
+      "image_digest": "sha256:aea7e43b20703256f5cb807b54cd78a12601f21086d3a62a41de18c254771f4e",
+      "log_dir": ".skeptic/runs/20260926-155747/mwaskom__seaborn-3187"
+    }
+  ]
+}

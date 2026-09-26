@@ -98,6 +98,34 @@ on someone who only wants the static checks is the wrong trade.
 
 ---
 
+## 6. Do not flag a benchmark for the host's network
+
+**Why.** On a host with restricted egress, `psf__requests-1921` scored
+`ORACLE_FAILS`: its graded tests make live HTTPS calls, and they failed on TLS
+interception, not on the gold patch. With working network it is `CLEAN`. See
+`results/swe-bench-verified/2026-09-26-native-repro/README.md`. Skeptic reported
+a broken benchmark when the only broken thing was the machine, the failure
+`CONTRIBUTING.md` rules out.
+
+**Where.** `internal/check/run.go` (`runControl`, and where the verdict is
+formed in `internal/check/verdict.go`), plus `docker.StartOptions`.
+
+**Done when.** A control whose tests failed for want of network is reported as
+`ERROR` with a reason naming the network, not as a score. One sound approach:
+when the oracle fails, re-run it with `--network none`. If it fails *the same
+way*, the network cannot have been the difference, and the failure stands. If
+the only difference is the network, the result is `ERROR`. A cheaper first step
+is to recognise the signature (`CERTIFICATE_VERIFY_FAILED`, name resolution
+failures, connection refused to a public host) in graded-test output and refuse
+to score.
+
+**The trap.** Signature matching is a filter, and every filter that removes
+noise can remove signal. A benchmark whose tests *depend* on the internet is
+itself fragile, and that is worth reporting. Report it as its own finding, not
+as a pass, and write a test naming the case the filter must not swallow.
+
+---
+
 ## Larger, not yet specified
 
 - **Multi-service compose orchestration.** Today a task whose compose file

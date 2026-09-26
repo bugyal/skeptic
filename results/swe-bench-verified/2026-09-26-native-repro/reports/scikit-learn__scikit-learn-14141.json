@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "skeptic_version": "v0.1.2-0.20260926152355-cb2c12482bd0",
+  "generated_at": "2026-09-26T15:50:16.123945594Z",
+  "host": {
+    "os": "linux",
+    "arch": "amd64",
+    "docker_api": "1.54"
+  },
+  "run_dir": ".skeptic/runs/20260926-154908",
+  "totals": {
+    "total": 1,
+    "clean": 1,
+    "flagged": 0,
+    "errors": 0,
+    "no_oracle": 0,
+    "unsupported": 0,
+    "weak_tests": 0
+  },
+  "tasks": [
+    {
+      "id": "scikit-learn__scikit-learn-14141",
+      "format": "swebench",
+      "dir": "/home/user/skeptic/results/swe-bench-verified/2026-09-25-controls/subset-instances.jsonl",
+      "verdict": "CLEAN",
+      "reason": "oracle 1.00, nop 0.00",
+      "nop_score": 0,
+      "oracle_score": 1,
+      "nop_seconds": 8.714237182,
+      "oracle_seconds": 6.157427546,
+      "seconds": 67.507342146,
+      "image_digest": "sha256:c0f6a733154dad51cb8f617ca2ea09d095a6f56a1576740c2d43f9020294f2e0",
+      "log_dir": ".skeptic/runs/20260926-154908/scikit-learn__scikit-learn-14141"
+    }
+  ]
+}

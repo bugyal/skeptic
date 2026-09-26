@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "skeptic_version": "v0.1.2-0.20260926152355-cb2c12482bd0",
+  "generated_at": "2026-09-26T15:42:11.85738177Z",
+  "host": {
+    "os": "linux",
+    "arch": "amd64",
+    "docker_api": "1.54"
+  },
+  "run_dir": ".skeptic/runs/20260926-154121",
+  "totals": {
+    "total": 1,
+    "clean": 0,
+    "flagged": 1,
+    "errors": 0,
+    "no_oracle": 0,
+    "unsupported": 0,
+    "weak_tests": 0
+  },
+  "tasks": [
+    {
+      "id": "psf__requests-1921",
+      "format": "swebench",
+      "dir": "/home/user/skeptic/results/swe-bench-verified/2026-09-25-controls/subset-instances.jsonl",
+      "verdict": "ORACLE_FAILS",
+      "reason": "reference solution does not pass (oracle 0.00)",
+      "nop_score": 0,
+      "oracle_score": 0,
+      "nop_seconds": 7.550568226,
+      "oracle_seconds": 5.563785619,
+      "seconds": 49.958369224,
+      "image_digest": "sha256:2ee0a4c706f04d2926a1622ec51b53d4ce6010b80d3ee10d414ea2a276c26cc9",
+      "log_dir": ".skeptic/runs/20260926-154121/psf__requests-1921"
+    }
+  ]
+}

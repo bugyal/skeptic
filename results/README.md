@@ -16,6 +16,7 @@ found, what was not, and what the finding does not prove.
 
 | Date | Benchmark | Kind | Outcome |
 |---|---|---|---|
+| [2026-09-26](swe-bench-verified/2026-09-26-native-repro) | SWE-bench Verified | controls, re-run native x86_64 | 11 of 12 reproduce; 1 was the host's network |
 | [2026-09-25](swe-bench-verified/2026-09-25-controls) | SWE-bench Verified | controls | 12 of 12 parsers verified, all CLEAN |
 | [2026-09-25](swe-bench-verified/2026-09-25-leakage) | SWE-bench Verified | static scan | 500 scanned, 69 flagged |
 | [2026-09-25](terminal-bench-1/2026-09-25) | Terminal-Bench 1.x | static scan | 241 scanned, **3 failed** |

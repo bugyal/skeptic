@@ -104,3 +104,18 @@ reason.
 | `lint-report.json` | Full output for all 241 tasks |
 | `baked-in-tests.json` | The three affected task ids |
 | `issues/` | Draft report, not filed |
+
+## Reproduced 2026-09-26
+
+Re-run on a separate x86_64 Linux host against upstream `harbor-framework/terminal-bench-1`
+at `d28711d` (2026-07-10), with the build of `cb2c124`:
+
+- `skeptic lint original-tasks --json` gives the same 212 OK, 26 WARN, 3 FAIL
+  in 0.37 s. The three failing tasks are the same, and every finding on all
+  241 tasks is identical to `lint-report.json` here.
+- The leak was confirmed again by building `multistep-definite-integral` and
+  listing `/app`. The image contains `solution.sh` and `tests/`, and
+  `tests/test_outputs.py` line 24 reads `expected = sympy.E - 2`. The task's own
+  base image could not be pulled from that host (ghcr.io blob storage was
+  blocked), so it was built on `python:3.12`. What `COPY . /app` copies does not
+  depend on the base image.
