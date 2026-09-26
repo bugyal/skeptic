@@ -1,0 +1,23 @@
+# A patch-shaped solution scored by exit status. The suite grades both
+# functions the patch fixes, so the partial control should find nothing.
+format_version = 1
+
+[task]
+instruction = "instruction.md"
+
+[environment]
+dockerfile = "environment/Dockerfile"
+context    = "environment"
+workdir    = "/src"
+
+[solution]
+kind  = "patch"
+patch = "solution/fix.diff"
+
+[tests]
+command = "sh /grader/test.sh"
+dir     = "tests"
+mount   = "/grader"
+
+[tests.score]
+kind = "exit_code"

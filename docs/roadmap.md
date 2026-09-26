@@ -2,52 +2,18 @@
 
 What is planned, and where to start if you want to help.
 
-The five issues below are written to be picked up cold. Each names the files
+The issues below are written to be picked up cold. Each names the files
 involved, what "done" looks like, and the trap to avoid. They are ordered by how
 useful they are, not by difficulty.
 
 ---
 
-## 1. A custom `skeptic.toml` format — good first issue
+## 1. A custom `skeptic.toml` format — done
 
-**Why.** Anyone with a home-grown benchmark currently has to adopt Harbor's
-layout to use Skeptic. A small declarative format would let them describe what
-they already have. This is the most requested thing that does not exist yet.
-
-**Shape.** One file per task directory:
-
-```toml
-[environment]
-dockerfile = "Dockerfile"
-context    = "."
-workdir    = "/app"
-
-[solution]
-kind   = "script"          # or "patch"
-script = "solution/fix.sh"
-
-[tests]
-command = "./tests/run.sh"
-dir     = "tests"
-
-[tests.score]
-kind  = "reward_file"      # or "exit_code"
-paths = ["/logs/reward.json", "/logs/reward.txt"]
-```
-
-**Where.** Add `internal/adapter/custom/`, implementing `Name`, `Detect` and
-`Load` from `internal/adapter/adapter.go`; register it in
-`cmd/skeptic/main.go`. `internal/adapter/harbor/harbor.go` is the model to
-copy — it is the simplest existing adapter.
-
-**Done when.** A fixture under `testdata/` loads, `skeptic check` runs it, unit
-tests cover a valid and an invalid manifest, and the format is documented in the
-README's Supported formats table.
-
-**The trap.** Do not let an unknown or missing field quietly default to
-something plausible. A manifest the adapter does not fully understand should
-`Unsupported` the task. Guessing here produces a confident wrong verdict, which
-is the one thing this tool must never do.
+Built in `internal/adapter/custom/`, documented in the README under
+"Custom `skeptic.toml`", with fixtures in `testdata/custom/` and an e2e test in
+`e2e/custom_test.go`. Where it departs from the sketch that stood here, and
+why, is in `docs/decisions.md` D15.
 
 ---
 

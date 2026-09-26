@@ -139,7 +139,51 @@ WARN  example/leaky-instruction
 | Harbor / Terminal-Bench 2.x (`task.toml`) | supported |
 | SWE-bench (local JSONL + published images) | supported |
 | Terminal-Bench 1.x (`task.yaml`) | supported |
-| Custom `skeptic.toml` | planned |
+| Custom `skeptic.toml` | supported — see below |
+
+### Custom `skeptic.toml`
+
+For a home-grown benchmark that does not use Harbor's layout: put a
+`skeptic.toml` in each task directory. Paths are relative to that directory and
+may not leave it.
+
+```toml
+format_version = 1
+
+[task]
+id          = "my-bench/fix-parser"   # optional; defaults to the directory name
+instruction = "instruction.md"        # optional; read by the leakage checks
+
+[environment]
+dockerfile = "environment/Dockerfile" # or: image = "registry/name:tag"
+context    = "environment"            # required with dockerfile
+workdir    = "/app"                   # required; solution and tests run here
+# platform = "linux/amd64"            # build_args, build_timeout_sec also accepted
+
+[solution]
+kind   = "script"                     # "script", "patch" or "none"
+script = "solution/solve.sh"          # its directory is uploaded to /solution
+# patch = "solution/fix.diff"         # for kind = "patch", applied in workdir
+# env, timeout_sec                    # optional
+
+[tests]
+command = "sh /grader/run.sh"         # run in workdir, after the solution
+dir     = "tests"                     # optional; copied in after the solution
+mount   = "/grader"                   # required with dir
+# env, timeout_sec                    # optional
+
+[tests.score]
+kind  = "reward_file"                 # or "exit_code": 0 is 1.0, anything else 0.0
+paths = ["/logs/verifier/reward.json", "/logs/verifier/reward.txt"]  # tried in order
+# reward_key = "reward"               # for a multi-key reward.json
+```
+
+The format is strict on purpose. An unknown key, a missing required field, or a
+field that does not fit the chosen `kind` makes the task `UNSUPPORTED` with the
+reason, rather than running it on a guess — a typo such as `workdri` is
+reported, not silently dropped. `kind = "none"` has to be written out; it gives
+the `NO_ORACLE` verdict. A `patch` solution also gets the partial control.
+Working examples are in [`testdata/custom`](testdata/custom).
 
 ### Terminal-Bench 1.x exit-status mapping
 
@@ -295,7 +339,6 @@ that. It does not run agents or call any model.
 - Exercise the remaining eight log parsers against real instances
 - Multi-service compose orchestration (a whole compose stack brought up and
   cross-probed, beyond D4's single-buildable-service policy)
-- Custom `skeptic.toml` for home-grown benchmarks
 - `--repeat N` for flake detection — SWE-bench itself runs tests 3× and discards
   inconsistent ones
 - `skeptic diff` between two runs, to catch benchmark rot over time

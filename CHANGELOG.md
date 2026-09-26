@@ -5,6 +5,17 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **A custom `skeptic.toml` format** for benchmarks that do not use Harbor's
+  layout. One manifest per task directory names the environment (a Dockerfile
+  or a prebuilt image), the reference solution (a script, a patch, or
+  explicitly none) and how the tests are scored (a reward file or the exit
+  status). The format is strict: an unknown key, a missing required field or
+  an unparsable manifest makes the task `UNSUPPORTED` with the reason, rather
+  than running it on a guessed default. Patch solutions get the partial
+  control. See `docs/decisions.md` D15.
+
 ## [0.1.2] - 2026-09-26
 
 Everything here came from running the tool against real corpora rather than

@@ -1,0 +1,18 @@
+diff --git a/calc.sh b/calc.sh
+index 820927b..eed8ade 100644
+--- a/calc.sh
++++ b/calc.sh
+@@ -1,5 +1,5 @@
+ add() {
+-  echo $(( $1 - $2 ))
++  echo $(( $1 + $2 ))
+ }
+ 
+ # Unrelated padding so the two functions land in separate hunks.
+@@ -12,5 +12,5 @@ add() {
+ # seven
+ 
+ mul() {
+-  echo $(( $1 + $2 ))
++  echo $(( $1 * $2 ))
+ }

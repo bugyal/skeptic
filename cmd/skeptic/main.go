@@ -11,6 +11,7 @@ import (
 	"syscall"
 
 	"github.com/bugyal/skeptic/internal/adapter"
+	"github.com/bugyal/skeptic/internal/adapter/custom"
 	"github.com/bugyal/skeptic/internal/adapter/harbor"
 	"github.com/bugyal/skeptic/internal/adapter/swebench"
 	"github.com/bugyal/skeptic/internal/adapter/tbench"
@@ -67,8 +68,10 @@ func logger() *slog.Logger {
 }
 
 // registry returns the adapters compiled into this build, in priority order.
-// The two formats key on different config filenames (harbor: task.toml,
-// tbench: task.yaml), so Detect never claims the same directory twice.
+// The formats key on different config filenames (custom: skeptic.toml,
+// harbor: task.toml, tbench: task.yaml). custom goes first: a skeptic.toml is
+// an explicit statement of how to run the task, and it should win over a
+// task.toml that happens to sit beside it.
 func registry() *adapter.Registry {
-	return adapter.NewRegistry(harbor.New(), tbench.New(), swebench.New())
+	return adapter.NewRegistry(custom.New(), harbor.New(), tbench.New(), swebench.New())
 }

@@ -587,3 +587,56 @@ Precision is therefore **2 of 11**: two confirmed weak tests, one unresolved
 (`sphinx-doc__sphinx-9229`), eight artifacts. The README already said 11; the
 CHANGELOG and the batch README said 10 and now say 11. The conclusion in D13
 does not change: the ratio is close to the technique's ceiling.
+
+---
+
+## D15. The `skeptic.toml` format is strict, and where it departs from the sketch
+
+**Status:** decided.
+
+The custom format is the only one with no upstream to read, so there is no
+source of truth to derive defaults from. Every default would be Skeptic's
+guess about someone else's benchmark. The adapter therefore makes the task
+`UNSUPPORTED`, with the reason, whenever the manifest is anything short of
+complete and unambiguous:
+
+- **Unknown keys.** Read through the TOML decoder's `Undecoded` list. The
+  common failure this catches is a typo: `workdri = "/src"` would otherwise
+  vanish and the task would run in the image's default directory.
+- **An unparsable manifest is `UNSUPPORTED`, not a load error.** `Discover`
+  reports load errors only when *no* task in the set loads, so an erroring
+  task in an otherwise healthy set would silently disappear from the report.
+  An `UNSUPPORTED` task stays visible.
+- **`format_version = 1` is required.** A manifest written for a later version
+  may mean something this build cannot see.
+- **`solution.kind = "none"` must be written out.** No reference solution is
+  legitimate (D3), but an omitted `[solution]` table is likelier a mistake than
+  a decision.
+- **Fields that do not fit the chosen kind are refused**, e.g. `paths` with
+  `exit_code`, or `env` on a patch. Accepting and ignoring them would let an
+  author believe a setting is in force when it is not.
+- **Paths must stay inside the task directory.** A task should move as one
+  directory, and the leak check reasons about what is inside the build
+  context; a path that climbs out breaks both.
+
+### Departures from the roadmap sketch
+
+- **`tests.mount` is required whenever `tests.dir` is set.** The sketch had
+  `command = "./tests/run.sh"` beside `workdir = "/app"` and `dir = "tests"`,
+  which only works if the tests land at `/app/tests`, and nothing said they
+  would. The command is the author's, so where the tests are copied is
+  something it depends on and Skeptic cannot choose.
+- **`environment.context` is required with a Dockerfile.** "The task
+  directory" is the obvious default, but whether `solution/` and `tests/` sit
+  inside the context is exactly what the leak check reads. It has to be what
+  the author meant.
+- **Reward paths must end in `.json` or `.txt`.** The runner picks the parser by
+  extension and reads anything that is not `.json` as a bare float, so
+  `/logs/score.yaml` would be read one way and meant another.
+
+The solution script's directory is uploaded to a fixed `/solution`. Unlike the
+test location this is not configurable, because Skeptic builds the command that
+runs the script, so the path never appears in anything the author writes.
+
+The adapter is registered first. A directory holding both `skeptic.toml` and a
+Harbor `task.toml` is claimed by the explicit manifest.

@@ -1,0 +1,25 @@
+# A task in Skeptic's own format. Every field that changes how the task runs is
+# stated; see "Custom skeptic.toml" in the README.
+format_version = 1
+
+[task]
+id          = "custom-fixtures/clean"
+instruction = "instruction.md"
+
+[environment]
+dockerfile = "environment/Dockerfile"
+context    = "environment"
+workdir    = "/app"
+
+[solution]
+kind   = "script"
+script = "solution/solve.sh"
+
+[tests]
+command = "sh /grader/run.sh"
+dir     = "tests"
+mount   = "/grader"
+
+[tests.score]
+kind  = "reward_file"
+paths = ["/logs/verifier/reward.json", "/logs/verifier/reward.txt"]
