@@ -4,14 +4,64 @@
 [![release](https://img.shields.io/github/v/release/bugyal/skeptic)](https://github.com/bugyal/skeptic/releases/latest)
 [![go reference](https://pkg.go.dev/badge/github.com/bugyal/skeptic.svg)](https://pkg.go.dev/github.com/bugyal/skeptic)
 
-**Skeptic doesn't believe your benchmark until oracle passes and nop fails.**
+**Skeptic checks whether an AI coding benchmark is a fair test.**
 
-Both controls, every task, with the evidence — plus static leak detection.
-One binary, zero LLM calls, no API key.
+## In plain terms
 
-A benchmark hands an AI coding agent a codebase and a task, runs hidden tests, and
-prints a score. That score is only worth something if the task is fair. Skeptic runs
-control experiments on every task in a benchmark and tells you which ones aren't.
+AI coding agents are compared with *benchmarks*. A benchmark is an exam: a
+few hundred programming tasks, each with hidden tests that mark the agent's
+answer right or wrong. The score on that exam ends up on leaderboards, in
+papers and in product announcements.
+
+But an exam can be broken. The answer key might be wrong. A blank answer might
+get full marks. The grader might only check half the answer. The answer might
+be lying on the desk. When that happens the score measures something other
+than skill, and nobody notices, because nobody checks the exam.
+
+Skeptic checks the exam. For every task, it asks:
+
+| Question | How Skeptic checks | If the answer is no |
+| --- | --- | --- |
+| Does the official answer pass? | Hands in the task's own reference solution | No agent can pass this task |
+| Does a blank answer fail? | Hands in nothing at all | The tests aren't testing anything |
+| Is the whole answer graded? | Hands in the official answer with one piece removed | Part of the answer was never checked |
+| Is the answer hidden in the exam room? | Reads the task's files without running anything | An agent can copy the answer instead of solving the task |
+| Does it grade the same way twice? | Runs the same checks several times | The score is partly luck |
+
+It then says which tasks failed which question, and keeps the logs that show
+why, so anyone can check its work.
+
+**When it can't check a task properly, it says so** (`ERROR`) instead of
+guessing. The machine it runs on can fail: a full disk, no internet, too
+little memory. A tool that blamed the benchmark for its own machine would be
+doing the very thing it exists to catch.
+
+### What it has found so far
+
+- **Three Terminal-Bench tasks ship with their answers inside.** An agent can
+  just read the solution file. ([details](results/terminal-bench-1/2026-09-25))
+- **One SWE-bench Verified task contains its own fix in the question,** and
+  eight link to the pull request that fixed them.
+  ([details](results/swe-bench-verified/2026-09-25-leakage))
+- **Two SWE-bench Verified tasks grade only part of the required change.**
+  ([details](results/swe-bench-verified/2026-09-25-weak-tests))
+- And an honest negative: across 59 sampled SWE-bench Verified tasks, every
+  official answer passed and every blank answer failed. On the basics, that
+  benchmark is sound.
+
+### Who it is for
+
+- **People who build benchmarks:** run it before publishing, and on every
+  change, the way you run tests on code.
+- **People who read leaderboards:** a way to ask whether a score means what
+  it claims.
+- **Teams with private evaluations:** describe your tasks in a small
+  `skeptic.toml` file and check them the same way.
+
+It is one program, uses no AI itself, needs no API key, and costs nothing to
+run beyond your own machine.
+
+## What it looks like
 
 ```console
 $ skeptic check ./tasks
@@ -26,23 +76,26 @@ CLEAN           skeptic-fixtures/clean          0.00    1.00  oracle 1.00, nop 0
 1 clean · 3 flagged · 1 errors · 1 no-oracle
 ```
 
-Exit status is non-zero when anything is flagged, so it drops into CI unchanged.
-No API key. No model calls. One static binary.
+`NOP` is the blank answer's score (it should be 0.00), and `ORACLE` is the
+official answer's (it should be 1.00). `CLEAN` means the task passed both.
+The exit status is non-zero when anything is flagged, so it drops into CI
+unchanged.
 
-## Why this exists
+## Why this matters
 
-When researchers audited SWE-bench, of the patches the harness had marked as passing:
+This is not hypothetical. When researchers audited SWE-bench, among the
+answers the benchmark had marked correct:
 
 | Finding | Share |
 | --- | --- |
-| The fix was already in the issue text — the model transcribed it | **32.67%** |
-| Tests too weak to tell a correct patch from an incorrect one | **31.08%** |
+| The fix was already written in the task description; the model copied it | **32.67%** |
+| The tests were too weak to tell a right answer from a wrong one | **31.08%** |
 
-Removing those instances dropped SWE-Agent + GPT-4 from **12.47% to 3.97%**. Reported
-performance was inflated roughly threefold.<sup>[1]</sup> Over 15% of SWE-bench
-*Verified* instances still need test augmentation.<sup>[2]</sup>
+Removing those tasks dropped one leading agent's score from **12.47% to
+3.97%**, about a third of what was reported.<sup>[1]</sup> Over 15% of
+SWE-bench *Verified* tasks still need better tests.<sup>[2]</sup>
 
-Benchmarks are software, and software has bugs. Nobody checks the exam.
+Benchmarks are software, and software has bugs.
 
 ## Install
 
@@ -55,15 +108,25 @@ Homebrew tap: planned.
 
 Requires Docker (or any CLI-compatible runtime) for `check`. `lint` needs nothing.
 
-## The two controls
+## How the checks work
 
-Think of sanity-checking an exam. Hand in the official answer sheet: it must score
-100%. Hand in a blank page: it must score 0%. Skeptic does exactly that to every task.
-The **oracle** control applies the task's reference solution and requires a score of
-1.0 — if the known-correct answer can't pass, no agent can. The **nop** control changes
-nothing and requires a score of 0.0 — if an untouched workspace scores, the tests
-aren't grading the change. Any task failing either control is flagged with its scores
-and the captured output behind them.
+The checks are *control experiments*: inputs whose right score is known in
+advance, so any other score is a defect in the task rather than in an agent.
+
+- **Oracle:** apply the task's reference solution. It must score 1.0; if the
+  known-correct answer cannot pass, no agent can.
+- **Nop:** change nothing. It must score 0.0; if an untouched workspace
+  scores, the tests are not grading the change.
+- **Partial:** apply the reference solution with one piece (one hunk of the
+  patch) withheld. The score should drop; if it does not, that piece was
+  never graded. This one is a hint, not a verdict: most such pieces turn out
+  to be harmless cleanup, so every flag needs reading by a person
+  (`docs/decisions.md` D11–D14).
+- **Lint:** read the task's files, without running anything, for the answer
+  or the tests being copied into the agent's environment, and for task text
+  that links to the fix.
+- **Repeat:** run the checks several times (`--repeat N`) and flag a task
+  whose score changes with nothing else changed.
 
 ## Verdicts
 
