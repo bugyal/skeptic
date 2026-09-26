@@ -73,6 +73,7 @@ and the captured output behind them.
 | `NOP_PASSES` | tests reward an untouched workspace | ✓ |
 | `ORACLE_FAILS` | the reference solution doesn't pass | ✓ |
 | `BOTH` | both controls wrong | ✓ |
+| `FLAKY` | scores differ between identical runs (`--repeat N`) | ✓ |
 | `ERROR` | build failed, timed out, killed for memory, tests could not reach the network, or score unreadable | ✓ |
 | `NO_ORACLE` | no reference solution ships; oracle can't run | |
 | `UNSUPPORTED` | recognised but not runnable faithfully | |
@@ -114,7 +115,15 @@ skeptic version
 
 Useful `check` flags: `--task ID` (repeatable), `--limit N`, `--parallel N`,
 `--timeout 30m`, `--only nop|oracle`, `--json out.json`, `--no-fail-on-flagged`,
-`--keep-containers`, `--no-cache`, `--override-cpus N`, `--override-memory-mb N`.
+`--keep-containers`, `--no-cache`, `--override-cpus N`, `--override-memory-mb N`,
+`--repeat N`.
+
+`--repeat N` runs the nop and oracle controls N times each, every run in a
+fresh container, and reports a task whose scores disagree as `FLAKY`, listing
+every score. One run cannot see a task that passes seven times in ten, and the
+run it happens to get is reported as the truth. A run that errors, is killed
+for memory or loses the network makes the task `ERROR`, never `FLAKY`: a
+disagreement the host caused is not the benchmark's.
 
 A task's declared CPU and memory limits are applied to every control's
 container as hard limits, as Harbor's Docker environment does:
@@ -348,8 +357,6 @@ that. It does not run agents or call any model.
 - Exercise the remaining eight log parsers against real instances
 - Multi-service compose orchestration (a whole compose stack brought up and
   cross-probed, beyond D4's single-buildable-service policy)
-- `--repeat N` for flake detection — SWE-bench itself runs tests 3× and discards
-  inconsistent ones
 - `skeptic diff` between two runs, to catch benchmark rot over time
 - `skeptic sweep` as an alias for `check`, per the original naming
 - Homebrew tap

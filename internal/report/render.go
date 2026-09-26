@@ -90,7 +90,7 @@ func (r Report) Table(w io.Writer) {
 		}
 		fmt.Fprintf(w, "%s  %-*s  %5s  %6s  %s\n",
 			p.verdict(pad(t.Verdict, 14)), idWidth, id,
-			score(t.NopScore), score(t.OracleScore),
+			scores(t.NopScore, t.NopScores), scores(t.OracleScore, t.OracleScores),
 			p.paint(ansiGrey, reason))
 	}
 
@@ -169,7 +169,7 @@ func (r Report) Markdown(w io.Writer) {
 	fmt.Fprintln(w, "| --- | --- | --- | --- |")
 	for _, t := range flagged {
 		fmt.Fprintf(w, "| `%s` | **%s** | %s | %s |\n",
-			t.ID, t.Verdict, score(t.NopScore), score(t.OracleScore))
+			t.ID, t.Verdict, scores(t.NopScore, t.NopScores), scores(t.OracleScore, t.OracleScores))
 	}
 
 	for _, t := range flagged {
@@ -201,6 +201,10 @@ func explain(t TaskReport) string {
 		return fmt.Sprintf("Both controls failed: an untouched workspace scored **%s** (expected 0.00) "+
 			"and the reference solution scored **%s** (expected 1.00).",
 			score(t.NopScore), score(t.OracleScore))
+	case check.VerdictFlaky:
+		return "The same controls, run repeatedly in fresh containers, did not score the same (" +
+			strings.TrimPrefix(t.Reason, "scores differ between identical runs: ") +
+			"). A task whose score changes with nothing else changed cannot grade an agent reliably."
 	case check.VerdictError:
 		return "This task could not be checked. It is reported separately so it is not miscounted as passing or failing."
 	}
@@ -218,6 +222,28 @@ func tail(path string, n int) string {
 		lines = lines[len(lines)-n:]
 	}
 	return strings.Join(lines, "\n")
+}
+
+// scores renders a control's score for a table cell. When repeated runs
+// disagree it shows the range, since the first run alone would present one
+// side of a flake as the result.
+func scores(first *float64, runs []*float64) string {
+	lo, hi := first, first
+	for _, r := range runs {
+		if r == nil || lo == nil {
+			return score(first)
+		}
+		if *r < *lo {
+			lo = r
+		}
+		if *r > *hi {
+			hi = r
+		}
+	}
+	if lo == nil || *lo == *hi {
+		return score(first)
+	}
+	return score(lo) + "–" + score(hi)
 }
 
 func score(p *float64) string {

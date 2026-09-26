@@ -17,25 +17,12 @@ why, is in `docs/decisions.md` D15.
 
 ---
 
-## 2. `--repeat N` for flake detection — good first issue
+## 2. `--repeat N` for flake detection — done
 
-**Why.** A task that passes seven times in ten is broken, and one run cannot
-see it. SWE-bench considers this real enough that its own pipeline runs each
-test three times and discards any that is inconsistent.
-
-**Where.** `internal/check/run.go` and `internal/check/parallel.go`. Control
-runs are already independent and side-effect-free — each gets a fresh container
-— so this is a loop around an existing call rather than a redesign.
-
-**Done when.** `--repeat 3` runs each control three times, the report records
-every score, and a task whose scores disagree is reported as flaky with the
-spread. Add the count to `docs/report-schema.json` and bump the schema version
-if the shape changes.
-
-**The trap.** Decide deliberately what a flaky task's *verdict* is. A task
-scoring 1.0, 1.0, 0.0 on oracle is not `CLEAN` and not quite `ORACLE_FAILS`
-either. A new verdict is probably right; whatever you choose, say why in
-`docs/decisions.md`.
+`--repeat N` runs each control N times and reports disagreement as the new
+`FLAKY` verdict. The report schema went to 2 for it. `docs/decisions.md` D18
+says why a flaky task gets its own verdict and why a host failure in any run
+is `ERROR` instead.
 
 ---
 

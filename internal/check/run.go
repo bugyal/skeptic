@@ -50,6 +50,10 @@ type TaskResult struct {
 	Reason  string         `json:"reason"`
 	Nop     *ControlResult `json:"nop"`
 	Oracle  *ControlResult `json:"oracle"`
+	// NopRuns and OracleRuns hold every run of each control under --repeat;
+	// Nop and Oracle are their first entries. With one run they are unset.
+	NopRuns    []*ControlResult `json:"nop_runs,omitempty"`
+	OracleRuns []*ControlResult `json:"oracle_runs,omitempty"`
 	// Partials holds one result per hunk withheld by the partial control.
 	Partials []*ControlResult `json:"partials,omitempty"`
 	// WeakTests names hunks whose absence the test suite failed to notice and
@@ -107,7 +111,11 @@ type Options struct {
 	// --override-memory-mb.
 	OverrideCPUs     float64
 	OverrideMemoryMB int
-	Log              *slog.Logger
+	// Repeat runs the nop and oracle controls this many times each, in fresh
+	// containers, and reports a task whose scores disagree as FLAKY. Values
+	// below 2 mean one run.
+	Repeat int
+	Log    *slog.Logger
 }
 
 // Runner executes controls against tasks.
@@ -150,20 +158,39 @@ func (r *Runner) CheckTask(ctx context.Context, t *task.Task) TaskResult {
 	}
 	res.ImageDigest = digest
 
-	if r.opts.Only == "" || r.opts.Only == ControlNop {
-		res.Nop = r.runControl(ctx, t, image, ControlNop, taskLogDir, "")
+	runs := max(r.opts.Repeat, 1)
+	var nops, oracles []*ControlResult
+	for i := 1; i <= runs && ctx.Err() == nil; i++ {
+		// The first run keeps the usual evidence layout; later runs sit in
+		// run-N/ beside it.
+		dir := taskLogDir
+		if i > 1 {
+			dir = filepath.Join(taskLogDir, fmt.Sprintf("run-%d", i))
+		}
+		if r.opts.Only == "" || r.opts.Only == ControlNop {
+			nops = append(nops, r.runControl(ctx, t, image, ControlNop, dir, ""))
+		}
+		if (r.opts.Only == "" || r.opts.Only == ControlOracle) && t.Solution.Available() {
+			oracles = append(oracles, r.runControl(ctx, t, image, ControlOracle, dir, ""))
+		}
 	}
-	if (r.opts.Only == "" || r.opts.Only == ControlOracle) && t.Solution.Available() {
-		res.Oracle = r.runControl(ctx, t, image, ControlOracle, taskLogDir, "")
+	if len(nops) > 0 {
+		res.Nop = nops[0]
+	}
+	if len(oracles) > 0 {
+		res.Oracle = oracles[0]
+	}
+	if runs > 1 {
+		res.NopRuns, res.OracleRuns = nops, oracles
 	}
 
 	// The partial control only means anything once the full solution is known
-	// to score 1.0; otherwise a lower score says nothing about the tests.
-	if r.opts.Partial && res.Oracle != nil && res.Oracle.Score != nil && *res.Oracle.Score == 1 {
+	// to score 1.0 -- on every run, or a probe's drop could be the flake.
+	if r.opts.Partial && len(oracles) > 0 && allScore(oracles, 1) {
 		r.runPartials(ctx, t, image, taskLogDir, &res)
 	}
 
-	res.Verdict, res.Error = classify(t, res.Nop, res.Oracle)
+	res.Verdict, res.Error = classifyRuns(t, nops, oracles)
 	res.Reason = res.Verdict.Reason(res)
 	res.Duration = time.Since(start)
 	return res

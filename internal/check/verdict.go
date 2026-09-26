@@ -3,6 +3,7 @@ package check
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bugyal/skeptic/internal/task"
 )
@@ -32,6 +33,10 @@ const (
 	VerdictNopPasses   Verdict = "NOP_PASSES"
 	VerdictOracleFails Verdict = "ORACLE_FAILS"
 	VerdictBoth        Verdict = "BOTH"
+	// VerdictFlaky marks a task whose score changed between identical runs
+	// under --repeat. Its grading is not a function of the answer alone, so
+	// no single score from it can be trusted. See docs/decisions.md D18.
+	VerdictFlaky Verdict = "FLAKY"
 	// VerdictNoOracle marks a task shipping no reference solution. Upstream
 	// documents solution/ as optional, so this is a reported fact, not a
 	// defect, and it does not fail a run. See docs/decisions.md D3.
@@ -49,7 +54,7 @@ const (
 // of what could be checked, not a defect found.
 func (v Verdict) Flagged() bool {
 	switch v {
-	case VerdictNopPasses, VerdictOracleFails, VerdictBoth, VerdictError:
+	case VerdictNopPasses, VerdictOracleFails, VerdictBoth, VerdictFlaky, VerdictError:
 		return true
 	}
 	return false
@@ -66,6 +71,8 @@ func (v Verdict) Reason(r TaskResult) string {
 		return "reference solution does not pass (oracle " + fmtScore(r.OracleScore()) + ")"
 	case VerdictBoth:
 		return "nop " + fmtScore(r.NopScore()) + ", oracle " + fmtScore(r.OracleScore())
+	case VerdictFlaky:
+		return "scores differ between identical runs: " + runScores(r)
 	case VerdictNoOracle:
 		return "no reference solution; oracle not run"
 	case VerdictUnsupported:
@@ -124,4 +131,74 @@ func classify(t *task.Task, nop, oracle *ControlResult) (Verdict, string) {
 		return VerdictNoOracle, ""
 	}
 	return VerdictClean, ""
+}
+
+// classifyRuns classifies a task from every run of its controls. Each run is
+// first classified on its own, so anything that makes one run unreadable --
+// an error, a memory kill, a starved network -- makes the task ERROR rather
+// than FLAKY: a score that disagrees because the host failed is the host's
+// finding, not the benchmark's. Only then are the scores compared.
+func classifyRuns(t *task.Task, nops, oracles []*ControlResult) (Verdict, string) {
+	n := max(len(nops), len(oracles), 1)
+	at := func(rs []*ControlResult, i int) *ControlResult {
+		if i < len(rs) {
+			return rs[i]
+		}
+		return nil
+	}
+	first, firstErr := classify(t, at(nops, 0), at(oracles, 0))
+	if first == VerdictUnsupported || first == VerdictError {
+		return first, firstErr
+	}
+	for i := 1; i < n; i++ {
+		if v, err := classify(t, at(nops, i), at(oracles, i)); v == VerdictError {
+			return v, err
+		}
+	}
+	if !sameScores(nops) || !sameScores(oracles) {
+		return VerdictFlaky, ""
+	}
+	return first, firstErr
+}
+
+// sameScores reports whether every run produced the same score. Exact
+// comparison is deliberate: scores are ratios of test counts, and 0.98
+// against 1.00 is one test that passed once and failed once.
+func sameScores(rs []*ControlResult) bool {
+	for _, r := range rs[min(len(rs), 1):] {
+		a, b := r.Score, rs[0].Score
+		if (a == nil) != (b == nil) || (a != nil && *a != *b) {
+			return false
+		}
+	}
+	return true
+}
+
+func allScore(rs []*ControlResult, want float64) bool {
+	for _, r := range rs {
+		if r.Error != "" || r.Score == nil || *r.Score != want {
+			return false
+		}
+	}
+	return true
+}
+
+// runScores renders every run's score per control, e.g.
+// "nop 0.00, 0.00, 0.00; oracle 1.00, 0.00, 1.00".
+func runScores(r TaskResult) string {
+	var parts []string
+	for _, c := range []struct {
+		name string
+		runs []*ControlResult
+	}{{"nop", r.NopRuns}, {"oracle", r.OracleRuns}} {
+		if len(c.runs) == 0 {
+			continue
+		}
+		scores := make([]string, len(c.runs))
+		for i, run := range c.runs {
+			scores[i] = fmtScore(run.Score)
+		}
+		parts = append(parts, c.name+" "+strings.Join(scores, ", "))
+	}
+	return strings.Join(parts, "; ")
 }

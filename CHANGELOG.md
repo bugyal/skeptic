@@ -5,6 +5,13 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **Report schema 2.** It adds the `FLAKY` verdict and the per-run
+  `nop_scores` and `oracle_scores`. A consumer validating against schema 1's
+  verdict list would reject a `FLAKY` task, so the version is bumped.
+  `skeptic report` still reads schema 1.
+
 ### Fixed
 
 - **A reference solution that fails because the host has no working network
@@ -24,6 +31,10 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **`--repeat N` and the `FLAKY` verdict.** Each control runs N times in fresh
+  containers; a task whose scores disagree is reported as `FLAKY` with every
+  score, and fails CI. A run that errors, is killed for memory or loses the
+  network makes the task `ERROR`, not `FLAKY`. See `docs/decisions.md` D18.
 - `--override-cpus` and `--override-memory-mb` replace every task's declared
   limits, mirroring Harbor's flags of the same names.
 

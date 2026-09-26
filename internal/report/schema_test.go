@@ -178,6 +178,15 @@ func sampleResults() []check.TaskResult {
 			Duration: sec},
 		{ID: "s/err", Format: "harbor", Dir: "/t/err", Verdict: check.VerdictError,
 			Reason: "build failed", Error: "build failed", Duration: sec},
+		{ID: "s/flaky", Format: "harbor", Dir: "/t/flaky", Verdict: check.VerdictFlaky,
+			Reason: "scores differ between identical runs: nop 0.00, 0.00; oracle 1.00, 0.00",
+			Nop:    &check.ControlResult{Control: check.ControlNop, Score: &zero, Duration: sec},
+			Oracle: &check.ControlResult{Control: check.ControlOracle, Score: &one, Duration: sec},
+			NopRuns: []*check.ControlResult{
+				{Control: check.ControlNop, Score: &zero}, {Control: check.ControlNop, Score: &zero}},
+			OracleRuns: []*check.ControlResult{
+				{Control: check.ControlOracle, Score: &one}, {Control: check.ControlOracle, Score: &zero}},
+			Duration: sec},
 		{ID: "s/noorc", Format: "harbor", Dir: "/t/noorc", Verdict: check.VerdictNoOracle,
 			Reason:   "no reference solution; oracle not run",
 			Nop:      &check.ControlResult{Control: check.ControlNop, Score: &zero, Duration: sec},
@@ -206,8 +215,8 @@ func TestLoadMergesFragments(t *testing.T) {
 		t.Fatalf("Total = %d, want %d", got.Totals.Total, want)
 	}
 	// Totals must be recomputed across fragments, not taken from one of them.
-	if got.Totals.Clean != 1 || got.Totals.Flagged != 2 || got.Totals.Errors != 1 || got.Totals.NoOracle != 1 {
-		t.Errorf("totals = %+v, want 1 clean / 2 flagged / 1 error / 1 no-oracle", got.Totals)
+	if got.Totals.Clean != 1 || got.Totals.Flagged != 3 || got.Totals.Errors != 1 || got.Totals.NoOracle != 1 {
+		t.Errorf("totals = %+v, want 1 clean / 3 flagged / 1 error / 1 no-oracle", got.Totals)
 	}
 	// Flagged tasks sort first so a partial sweep leads with what matters.
 	if check.Verdict(got.Tasks[0].Verdict) == check.VerdictClean {
@@ -258,5 +267,47 @@ func TestLoadPrefersReportJSON(t *testing.T) {
 func TestLoadEmptyDir(t *testing.T) {
 	if _, err := Load(t.TempDir()); err == nil {
 		t.Fatal("expected an error for a directory with no reports")
+	}
+}
+
+// Reports written before --repeat existed carry schema 1. They must still
+// load: every run under results/ is one of them.
+func TestSchemaOneStillLoads(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "report.json")
+	old := `{"schema": 1, "skeptic_version": "0.1.1", "generated_at": "2026-09-25T00:00:00Z",
+		"host": {"os": "darwin", "arch": "arm64"}, "run_dir": "x",
+		"totals": {"total": 1, "clean": 1, "flagged": 0, "errors": 0, "no_oracle": 0, "unsupported": 0},
+		"tasks": [{"id": "a", "format": "swebench", "dir": "d", "verdict": "CLEAN", "reason": "",
+			"nop_score": 0, "oracle_score": 1, "seconds": 1}]}`
+	if err := os.WriteFile(p, []byte(old), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	r, err := Load(p)
+	if err != nil {
+		t.Fatalf("schema 1 report did not load: %v", err)
+	}
+	if r.Schema != 1 || len(r.Tasks) != 1 || r.Tasks[0].Verdict != "CLEAN" {
+		t.Errorf("loaded %+v", r)
+	}
+
+	future := filepath.Join(t.TempDir(), "report.json")
+	if err := os.WriteFile(future, []byte(`{"schema": 99, "tasks": []}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Load(future); err == nil {
+		t.Error("a schema newer than this build must be refused, not half-read")
+	}
+}
+
+func TestScoresShowRangeOnlyWhenRunsDisagree(t *testing.T) {
+	zero, one := 0.0, 1.0
+	if got := scores(&one, []*float64{&one, &zero, &one}); got != "0.00–1.00" {
+		t.Errorf("disagreeing runs = %q, want the range", got)
+	}
+	if got := scores(&one, []*float64{&one, &one}); got != "1.00" {
+		t.Errorf("agreeing runs = %q, want 1.00", got)
+	}
+	if got := scores(&zero, nil); got != "0.00" {
+		t.Errorf("single run = %q, want 0.00", got)
 	}
 }

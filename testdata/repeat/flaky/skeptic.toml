@@ -1,0 +1,24 @@
+# A task whose grading is a coin flip once the answer is right. One run
+# cannot tell; --repeat can. The nop never passes (there is no answer), so
+# only the oracle disagrees with itself.
+format_version = 1
+
+[task]
+id          = "repeat-fixtures/flaky"
+instruction = "instruction.md"
+
+[environment]
+image   = "alpine:3"
+workdir = "/app"
+
+[solution]
+kind   = "script"
+script = "solution/solve.sh"
+
+[tests]
+command = "sh /grader/test.sh"
+dir     = "tests"
+mount   = "/grader"
+
+[tests.score]
+kind = "exit_code"

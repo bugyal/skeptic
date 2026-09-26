@@ -170,3 +170,73 @@ func TestNetworkFailureSignatures(t *testing.T) {
 		})
 	}
 }
+
+func runsOf(c Control, scores ...float64) []*ControlResult {
+	out := make([]*ControlResult, len(scores))
+	for i, v := range scores {
+		out[i] = ctl(c, f(v), "")
+	}
+	return out
+}
+
+func TestClassifyRuns(t *testing.T) {
+	tk := &task.Task{Solution: task.Solution{Kind: task.SolutionScript}}
+	for _, tc := range []struct {
+		name          string
+		nops, oracles []*ControlResult
+		want          Verdict
+	}{
+		{"one run behaves as before", runsOf(ControlNop, 0), runsOf(ControlOracle, 1), VerdictClean},
+		{"consistent clean", runsOf(ControlNop, 0, 0, 0), runsOf(ControlOracle, 1, 1, 1), VerdictClean},
+		{"consistent oracle failure", runsOf(ControlNop, 0, 0, 0), runsOf(ControlOracle, 0, 0, 0), VerdictOracleFails},
+		{"consistent nop pass", runsOf(ControlNop, 1, 1), runsOf(ControlOracle, 1, 1), VerdictNopPasses},
+		// The roadmap's example: neither CLEAN nor ORACLE_FAILS.
+		{"oracle 1, 1, 0", runsOf(ControlNop, 0, 0, 0), runsOf(ControlOracle, 1, 1, 0), VerdictFlaky},
+		{"flake on a later run is still seen", runsOf(ControlNop, 0, 0, 0.5), runsOf(ControlOracle, 1, 1, 1), VerdictFlaky},
+		{"one test's worth of difference", runsOf(ControlNop, 0, 0), runsOf(ControlOracle, 1, 0.98), VerdictFlaky},
+		// A flake says the grading is unreliable, so it outranks a
+		// consistent-looking finding from the same unreliable grader.
+		{"flaky beats a nop that passes", runsOf(ControlNop, 1, 1), runsOf(ControlOracle, 1, 0), VerdictFlaky},
+		{"no solution, flaky nop", runsOf(ControlNop, 0, 1), nil, VerdictFlaky},
+		{"no solution, steady nop", runsOf(ControlNop, 0, 0), nil, VerdictNoOracle},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tk := tk
+			if tc.oracles == nil {
+				tk = &task.Task{Solution: task.Solution{Kind: task.SolutionNone}}
+			}
+			if got, _ := classifyRuns(tk, tc.nops, tc.oracles); got != tc.want {
+				t.Fatalf("classifyRuns = %s, want %s", got, tc.want)
+			}
+		})
+	}
+}
+
+// Disagreement caused by the host is the host's finding, not the benchmark's.
+// Any run that could not be read makes the task ERROR, never FLAKY.
+func TestHostFailuresAreNotFlakes(t *testing.T) {
+	tk := &task.Task{Solution: task.Solution{Kind: task.SolutionScript}}
+
+	errored := runsOf(ControlOracle, 1, 1)
+	errored = append(errored, ctl(ControlOracle, nil, "out of memory: a process was killed at the 64 MB limit"))
+	if got, reason := classifyRuns(tk, runsOf(ControlNop, 0, 0, 0), errored); got != VerdictError || !strings.Contains(reason, "out of memory") {
+		t.Errorf("a run killed for memory: got %s (%s), want ERROR", got, reason)
+	}
+
+	starved := runsOf(ControlOracle, 1, 1)
+	starved = append(starved, withOutput(ctl(ControlOracle, f(0), ""), requestsBehindProxy))
+	if got, _ := classifyRuns(tk, runsOf(ControlNop, 0, 0, 0), starved); got != VerdictError {
+		t.Errorf("a run that lost the network: got %s, want ERROR", got)
+	}
+}
+
+func TestFlakyReasonListsEveryRun(t *testing.T) {
+	r := TaskResult{NopRuns: runsOf(ControlNop, 0, 0, 0), OracleRuns: runsOf(ControlOracle, 1, 0, 1)}
+	want := "scores differ between identical runs: nop 0.00, 0.00, 0.00; oracle 1.00, 0.00, 1.00"
+	if got := VerdictFlaky.Reason(r); got != want {
+		t.Errorf("Reason = %q, want %q", got, want)
+	}
+	if !VerdictFlaky.Flagged() {
+		t.Error("FLAKY must fail CI: a task that cannot grade consistently is a defect")
+	}
+}

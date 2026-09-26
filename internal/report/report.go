@@ -15,7 +15,12 @@ import (
 
 // SchemaVersion is the version of the on-disk report format. It is bumped only
 // for changes that would break a consumer reading an older report.
-const SchemaVersion = 1
+//
+// 2 added the FLAKY verdict and the per-run nop_scores and oracle_scores. A
+// consumer validating against schema 1's closed verdict enum would reject a
+// FLAKY task, hence the bump. Schema 1 reports are a subset of 2 and still
+// load.
+const SchemaVersion = 2
 
 // Report is the full, versioned result of one run.
 type Report struct {
@@ -58,12 +63,16 @@ type TaskReport struct {
 	Reason      string   `json:"reason"`
 	NopScore    *float64 `json:"nop_score"`
 	OracleScore *float64 `json:"oracle_score"`
-	NopSeconds  float64  `json:"nop_seconds"`
-	OrcSeconds  float64  `json:"oracle_seconds"`
-	Seconds     float64  `json:"seconds"`
-	ImageDigest string   `json:"image_digest,omitempty"`
-	LogDir      string   `json:"log_dir,omitempty"`
-	Error       string   `json:"error,omitempty"`
+	// NopScores and OracleScores list every run's score under --repeat, in
+	// run order. NopScore and OracleScore are their first entries.
+	NopScores    []*float64 `json:"nop_scores,omitempty"`
+	OracleScores []*float64 `json:"oracle_scores,omitempty"`
+	NopSeconds   float64    `json:"nop_seconds"`
+	OrcSeconds   float64    `json:"oracle_seconds"`
+	Seconds      float64    `json:"seconds"`
+	ImageDigest  string     `json:"image_digest,omitempty"`
+	LogDir       string     `json:"log_dir,omitempty"`
+	Error        string     `json:"error,omitempty"`
 	// WeakTests names behaviour-changing hunks whose absence the test suite
 	// did not notice. Advisory: it never flags a task on its own.
 	WeakTests []string `json:"weak_tests,omitempty"`
@@ -90,6 +99,12 @@ func Build(results []check.TaskResult, version, runDir, dockerAPI string) Report
 			Seconds:     res.Duration.Seconds(),
 			ImageDigest: res.ImageDigest, LogDir: res.LogDir, Error: res.Error,
 			WeakTests: res.WeakTests, UngradedCleanup: res.UngradedCleanup,
+		}
+		for _, c := range res.NopRuns {
+			tr.NopScores = append(tr.NopScores, c.Score)
+		}
+		for _, c := range res.OracleRuns {
+			tr.OracleScores = append(tr.OracleScores, c.Score)
 		}
 		if res.Nop != nil {
 			tr.NopSeconds = res.Nop.Duration.Seconds()
@@ -129,14 +144,16 @@ func rank(v string) int {
 		return 1
 	case check.VerdictOracleFails:
 		return 2
-	case check.VerdictError:
+	case check.VerdictFlaky:
 		return 3
-	case check.VerdictNoOracle:
+	case check.VerdictError:
 		return 4
-	case check.VerdictUnsupported:
+	case check.VerdictNoOracle:
 		return 5
-	default:
+	case check.VerdictUnsupported:
 		return 6
+	default:
+		return 7
 	}
 }
 
@@ -200,8 +217,8 @@ func loadFile(path string) (Report, error) {
 	}
 	// Schema 0 means the file carried tasks without a full report envelope,
 	// which is how per-task fragments are written during a sweep.
-	if r.Schema != 0 && r.Schema != SchemaVersion {
-		return r, fmt.Errorf("report schema %d is not supported (this build reads schema %d)",
+	if r.Schema != 0 && (r.Schema < 1 || r.Schema > SchemaVersion) {
+		return r, fmt.Errorf("report schema %d is not supported (this build reads schemas 1 to %d)",
 			r.Schema, SchemaVersion)
 	}
 	return r, nil

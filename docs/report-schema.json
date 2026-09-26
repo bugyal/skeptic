@@ -6,7 +6,7 @@
   "type": "object",
   "required": ["schema", "skeptic_version", "generated_at", "host", "run_dir", "totals", "tasks"],
   "properties": {
-    "schema": { "type": "integer", "const": 1 },
+    "schema": { "type": "integer", "const": 2, "description": "2 added the FLAKY verdict and nop_scores/oracle_scores. Readers of schema 2 can read schema 1, which lacks both." },
     "skeptic_version": { "type": "string" },
     "generated_at": { "type": "string", "format": "date-time" },
     "run_dir": { "type": "string", "description": "Directory holding per-task, per-control evidence." },
@@ -43,7 +43,7 @@
           "dir": { "type": "string" },
           "verdict": {
             "type": "string",
-            "enum": ["CLEAN", "NOP_PASSES", "ORACLE_FAILS", "BOTH", "NO_ORACLE", "UNSUPPORTED", "ERROR"]
+            "enum": ["CLEAN", "NOP_PASSES", "ORACLE_FAILS", "BOTH", "FLAKY", "NO_ORACLE", "UNSUPPORTED", "ERROR"]
           },
           "reason": { "type": "string" },
           "nop_score": {
@@ -55,6 +55,16 @@
             "type": ["number", "null"],
             "minimum": 0, "maximum": 1,
             "description": "Null when no reference solution exists or the control did not run."
+          },
+          "nop_scores": {
+            "type": "array",
+            "items": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "description": "Every run's nop score under --repeat, in run order. Absent with one run."
+          },
+          "oracle_scores": {
+            "type": "array",
+            "items": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "description": "Every run's oracle score under --repeat, in run order. Absent with one run."
           },
           "nop_seconds": { "type": "number" },
           "oracle_seconds": { "type": "number" },

@@ -33,6 +33,7 @@ func newCheckCmd() *cobra.Command {
 		partialMax     int
 		overrideCPUs   float64
 		overrideMemMB  int
+		repeat         int
 	)
 
 	cmd := &cobra.Command{
@@ -50,6 +51,9 @@ func newCheckCmd() *cobra.Command {
 				return fmt.Errorf("--only must be nop or oracle, got %q", only)
 			}
 
+			if repeat < 1 {
+				return fmt.Errorf("--repeat must be at least 1, got %d", repeat)
+			}
 			if overrideCPUs < 0 || overrideMemMB < 0 {
 				return fmt.Errorf("--override-cpus and --override-memory-mb must be positive")
 			}
@@ -86,6 +90,7 @@ func newCheckCmd() *cobra.Command {
 				PartialMaxHunks:  partialMax,
 				OverrideCPUs:     overrideCPUs,
 				OverrideMemoryMB: overrideMemMB,
+				Repeat:           repeat,
 				Log:              log,
 			})
 
@@ -142,6 +147,8 @@ func newCheckCmd() *cobra.Command {
 	f.IntVar(&partialMax, "partial-max-hunks", 3, "how many hunks to withhold, one at a time")
 	f.Float64Var(&overrideCPUs, "override-cpus", 0, "CPU limit for every task, replacing what tasks declare")
 	f.IntVar(&overrideMemMB, "override-memory-mb", 0, "memory limit in MB for every task, replacing what tasks declare")
+	f.IntVar(&repeat, "repeat", 1,
+		"run the nop and oracle controls N times each and report a task whose scores disagree as FLAKY")
 	return cmd
 }
 

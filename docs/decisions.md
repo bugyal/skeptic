@@ -762,3 +762,58 @@ kill.
 A task declaring nothing runs without limits, as before. `storage_mb` and
 GPUs are not applied; Docker cannot enforce the first portably, and Skeptic
 has no GPU path.
+
+---
+
+## D18. A task that disagrees with itself is FLAKY
+
+**Status:** decided.
+
+`--repeat N` runs the nop and oracle controls N times each, every run in a
+fresh container. Roadmap issue 2 asked for a deliberate answer to one
+question: what is the verdict of a task whose oracle scores 1.0, 1.0, 0.0?
+
+### A verdict of its own, and it fails CI
+
+It is not `CLEAN`: one run in three says the reference solution fails. It is
+not `ORACLE_FAILS` either: two runs say it passes. Any single score from such a
+task is a sample, and reporting one as the result is the confident wrong
+answer this tool exists to prevent. So `FLAKY` is its own verdict, and the
+reason lists every score of both controls.
+
+It is flagged. A task whose grade changes with nothing else changed cannot
+rank agents, which is the same judgement SWE-bench makes when its own
+pipeline runs each test three times and discards the inconsistent ones.
+
+The fixture that verified this made the point unprompted. On its first real
+run, the coin-flip task's *first* oracle run scored 0.00. Without `--repeat`,
+it would have been reported as `ORACLE_FAILS`.
+
+### Precedence
+
+1. **Any run that cannot be read makes the task `ERROR`.** Each run is
+   classified on its own first, so an error, a memory kill (D17) or a starved
+   network (D16) in any one run wins. A score that disagrees because the host
+   failed is the host's finding, and calling it `FLAKY` would blame the
+   benchmark for this machine.
+2. **Then any disagreement is `FLAKY`,** even when the runs also agree on
+   something damning, such as a nop that passes every time. The grader has
+   shown itself unreliable, so its consistent-looking outputs are no firmer
+   than its inconsistent ones. The reason line still carries every score, so
+   nothing is hidden.
+3. **Otherwise the runs agree,** and the task is classified exactly as a
+   single run would be.
+
+Scores are compared exactly. They are ratios of test counts, so 0.98 against
+1.00 is one test that passed once and failed once. That is the flake.
+
+### Partial probes and the schema
+
+The partial control runs once, and only when every oracle run scored 1.0.
+Otherwise a probe's drop could be the flake, not the withheld hunk.
+
+The report schema goes to 2. The verdict enum is closed, so a consumer
+validating against schema 1 would reject `FLAKY`. Schema 2 also adds
+`nop_scores` and `oracle_scores`, present only when there was more than one
+run. Schema 1 reports are a subset and still load, since everything under
+`results/` is one.
