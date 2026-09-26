@@ -1,0 +1,65 @@
+{
+  "schema": 2,
+  "skeptic_version": "v0.1.2-0.20260926165101-0a4805474280+dirty",
+  "generated_at": "2026-09-26T18:05:39.100484045Z",
+  "host": {
+    "os": "linux",
+    "arch": "amd64",
+    "docker_api": "1.54"
+  },
+  "run_dir": ".skeptic/runs/20260926-180356",
+  "totals": {
+    "total": 3,
+    "clean": 2,
+    "flagged": 0,
+    "errors": 1,
+    "no_oracle": 0,
+    "unsupported": 0,
+    "weak_tests": 0
+  },
+  "tasks": [
+    {
+      "id": "psf__requests-1921",
+      "format": "swebench",
+      "dir": "/home/user/skeptic/results/swe-bench-verified/2026-09-25-controls/subset-instances.jsonl",
+      "verdict": "ERROR",
+      "reason": "oracle scored 0.00, but its tests could not reach the network, so the score says nothing about the solution: E               requests.exceptions.SSLError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1147)",
+      "nop_score": 0,
+      "oracle_score": 0,
+      "nop_seconds": 27.177021732,
+      "oracle_seconds": 6.621504628,
+      "seconds": 36.97798621,
+      "image_digest": "sha256:2ee0a4c706f04d2926a1622ec51b53d4ce6010b80d3ee10d414ea2a276c26cc9",
+      "log_dir": ".skeptic/runs/20260926-180356/psf__requests-1921",
+      "error": "oracle scored 0.00, but its tests could not reach the network, so the score says nothing about the solution: E               requests.exceptions.SSLError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1147)"
+    },
+    {
+      "id": "astropy__astropy-12907",
+      "format": "swebench",
+      "dir": "/home/user/skeptic/results/swe-bench-verified/2026-09-25-controls/subset-instances.jsonl",
+      "verdict": "CLEAN",
+      "reason": "oracle 1.00, nop 0.00",
+      "nop_score": 0,
+      "oracle_score": 1,
+      "nop_seconds": 14.497705192,
+      "oracle_seconds": 13.479486335,
+      "seconds": 103.001544292,
+      "image_digest": "sha256:e082963099ed7d5a5f75a0be46e338be36faae33b2cba5289a9ddbd505997f1f",
+      "log_dir": ".skeptic/runs/20260926-180356/astropy__astropy-12907"
+    },
+    {
+      "id": "pytest-dev__pytest-6202",
+      "format": "swebench",
+      "dir": "/home/user/skeptic/results/swe-bench-verified/2026-09-25-controls/subset-instances.jsonl",
+      "verdict": "CLEAN",
+      "reason": "oracle 1.00, nop 0.00",
+      "nop_score": 0,
+      "oracle_score": 1,
+      "nop_seconds": 17.722459466,
+      "oracle_seconds": 16.439413553,
+      "seconds": 82.627886185,
+      "image_digest": "sha256:d2d9f0bf1ed8a5f50799291be86144768c3f7ad9400482d6dab7f05830f3e226",
+      "log_dir": ".skeptic/runs/20260926-180356/pytest-dev__pytest-6202"
+    }
+  ]
+}
