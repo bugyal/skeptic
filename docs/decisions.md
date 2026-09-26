@@ -452,3 +452,56 @@ itself was withheld, the score dropped — `django__django-15368` went to
 F2P 0/1, `mwaskom__seaborn-3187` to F2P 1/2, `astropy__astropy-13398` to
 P2P 67/68. The control reliably separates the fix from the cleanup around it.
 It is the label on the cleanup that was wrong, not the measurement.
+
+---
+
+## D12. The partial control, measured
+
+**Status:** measured on a 60-instance stratified sample. Supersedes the
+estimates in D5 and D11.
+
+### Result
+
+Ten flags. Two were real.
+
+| Instance | Verdict |
+|---|---|
+| `matplotlib__matplotlib-24637` | **weak test** — `close_group` withheld, suite still 1.0 |
+| `sympy__sympy-13878` | **weak test** — 11 `_cdf` methods, one graded test |
+| `sphinx-doc__sphinx-9229` | unresolved |
+| seven others | artifacts: comments, imports, dead code, docstrings, a gallery script, one biased sample |
+
+Precision **2 of 10**, and only because every flag was read by hand. A user who
+trusted the flag count would have chased eight non-problems.
+
+The two original controls, over the same 55 scored instances, found **nothing**.
+That is the expected result for a benchmark curated to remove unsolvable and
+trivially-solvable instances, and it means the findings in this project all came
+from checks added after the brief: the partial control and the static leak scan.
+
+### Every filter that removes noise can remove signal
+
+This is the part worth remembering. `sympy__sympy-13878` was reached through the
+hunk that adds `uppergamma` and `hyper` to an import list — symbols the ungraded
+CDFs need. After the import-continuation fix, that hunk classifies as cleanup,
+so **the current build would not surface that finding**.
+
+The fix is still right: seven artifacts against one indirect hit is the wrong
+trade, and the finding survives because it was written down. But the cost is
+real and belongs in the open, not in a commit message.
+
+The general shape: a probe that flags a symptom can be silenced by a rule about
+symptoms. The defence is not to avoid the rules — it is to name, in a test, the
+specific signal each rule must not eat. `TestDocstringOnlyDoesNotSwallowBareCalls`
+exists because the clearest finding here is a pair of bare calls, and a plausible
+prose heuristic would have swallowed it.
+
+### What the control is for
+
+Not "this benchmark has weak tests". It is: *here are hunks of the reference
+solution that the graded tests did not notice; most will be cleanup, read them.*
+
+A reviewer pointed at ten hunks, two of which matter, is better served than one
+pointed at nothing — but only if the output says which kind of claim it is
+making. `weak_tests` versus `ungraded_cleanup` exists for that reason, and the
+README says 2-of-10 rather than 10.
