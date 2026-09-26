@@ -1,7 +1,11 @@
 // Package check runs the control experiments and classifies the result.
 package check
 
-import "github.com/bugyal/skeptic/internal/task"
+import (
+	"fmt"
+
+	"github.com/bugyal/skeptic/internal/task"
+)
 
 // Control names one experiment run against a task.
 type Control string
@@ -89,6 +93,21 @@ func classify(t *task.Task, nop, oracle *ControlResult) (Verdict, string) {
 
 	nopBad := nop != nil && nop.Score != nil && *nop.Score > 0
 	oracleBad := oracle != nil && oracle.Score != nil && *oracle.Score < 1
+
+	// A reference solution whose tests could not reach the network has not
+	// been shown to fail; the host has. Reporting ORACLE_FAILS there would
+	// flag a benchmark for this machine's firewall. A nop that passes is still
+	// earned -- a missing network cannot make a test pass -- so it stands.
+	if oracleBad {
+		if line := networkFailure(oracle.combined); line != "" {
+			if nopBad {
+				return VerdictNopPasses, ""
+			}
+			return VerdictError, fmt.Sprintf(
+				"oracle scored %s, but its tests could not reach the network, so the score says nothing about the solution: %s",
+				fmtScore(oracle.Score), line)
+		}
+	}
 
 	switch {
 	case nopBad && oracleBad:

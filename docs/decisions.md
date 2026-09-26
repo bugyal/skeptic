@@ -640,3 +640,60 @@ runs the script, so the path never appears in anything the author writes.
 
 The adapter is registered first. A directory holding both `skeptic.toml` and a
 Harbor `task.toml` is claimed by the explicit manifest.
+
+---
+
+## D16. A reference solution that failed for want of network is ERROR
+
+**Status:** decided, after a false flag.
+
+On a host with restricted egress, `psf__requests-1921` scored `ORACLE_FAILS`.
+Its graded tests make live HTTPS calls, and they failed because a proxy
+intercepted TLS. The gold patch was never at fault; with working network the
+instance is `CLEAN` (`results/swe-bench-verified/2026-09-26-native-repro`).
+Skeptic had flagged a benchmark for the host's firewall, which is exactly what
+the first rule in `CONTRIBUTING.md` forbids.
+
+### The rule
+
+When the oracle scores below 1.0 **and** its test output carries a
+network-failure signature, the verdict is `ERROR`, with the score and the
+matching line as the reason. Everything else is unchanged:
+
+- An oracle at 1.0 is never questioned: the rule can only withdraw a bad score,
+  never invent one.
+- A nop that scores above 0 stands as `NOP_PASSES` even when the oracle hit
+  the network. A missing network does not make a test pass.
+- The worst the rule can do is turn a flag into `ERROR`, "could not check this
+  task here". It never produces `CLEAN`.
+
+### The signatures, and what is left out
+
+Only messages the runtime writes and a test author would not:
+`CERTIFICATE_VERIFY_FAILED`, the glibc, BSD and Node resolver errors,
+`Network is unreachable`, `No route to host`, curl's `Could not resolve host`,
+`requests.exceptions.ProxyError`. Matching is case-sensitive, so a test named
+`test_certificate_verify_failed` does not match.
+
+`Connection refused` and `timed out` are deliberately excluded. Test suites
+start local servers and exercise timeouts on purpose, and matching either
+would turn genuine failures into errors. `TestGenuineOracleFailureStaysFlagged`
+names that case, per D12's rule that every filter must name the signal it may
+not swallow.
+
+### The cost
+
+A genuinely broken reference solution, checked on a host whose network is
+also broken, is reported `ERROR` rather than `ORACLE_FAILS`. That is the
+honest answer: on that host the tool cannot tell the two apart. The signature
+can also come from a harness's setup step (pip failing to upgrade itself)
+rather than from a test. The reason line quotes the last match, not the first,
+so it normally points at the test that failed.
+
+### An approach that does not work
+
+The roadmap first suggested re-running the oracle with `--network none` and
+comparing. That cannot separate the cases. On a host whose network is already
+broken, both runs fail the same way whether or not the solution is broken. The
+comparison only has power where the network works, and there the oracle
+passes and no question arises.

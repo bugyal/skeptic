@@ -5,6 +5,16 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **A reference solution that fails because the host has no working network
+  is reported as `ERROR`, not `ORACLE_FAILS`.** On a host with restricted
+  egress, instances whose graded tests make live requests were flagged as
+  broken benchmarks. The reason now names the score and quotes the
+  network-failure line. A nop that passes is still reported, and a failure
+  with no network evidence is still `ORACLE_FAILS`. See `docs/decisions.md`
+  D16.
+
 ### Added
 
 - **A custom `skeptic.toml` format** for benchmarks that do not use Harbor's

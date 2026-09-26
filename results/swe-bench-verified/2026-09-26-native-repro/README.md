@@ -70,6 +70,18 @@ restricted egress it would report every network-dependent instance as a broken
 benchmark. That is the failure `CONTRIBUTING.md` rules out. It is written up as
 roadmap issue 6.
 
+**Fixed since.** With the change recorded in `docs/decisions.md` D16, the same
+instance on the same host now reports:
+
+```
+ERROR  psf__requests-1921  0.00  0.00  oracle scored 0.00, but its tests could not reach
+       the network, so the score says nothing about the solution: E requests.exceptions.SSLError:
+       [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain
+```
+
+That is the honest answer on this host. The reports in `reports/` are from
+before the fix and are kept as they were written.
+
 ## Also reproduced on this host
 
 - **The partial control's fixture** (`testdata/partial/demo`, D9): withholding
