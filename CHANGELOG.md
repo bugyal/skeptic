@@ -5,6 +5,15 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-26
+
+A minor release rather than a patch: the report schema changes (a new
+verdict), and `check` now scores Terminal-Bench 1.x tasks, which it never
+did correctly before. Most of the fixes came from re-running the committed
+results on a second, native x86_64 host and from parallel Docker Compose
+validation. Each is a place where Skeptic reported a verdict it had not
+earned.
+
 ### Changed
 
 - **Report schema 2.** It adds the `FLAKY` verdict and the per-run
@@ -52,7 +61,6 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   network makes the task `ERROR`, not `FLAKY`. See `docs/decisions.md` D18.
 - `--override-cpus` and `--override-memory-mb` replace every task's declared
   limits, mirroring Harbor's flags of the same names.
-
 - **A custom `skeptic.toml` format** for benchmarks that do not use Harbor's
   layout. One manifest per task directory names the environment (a Dockerfile
   or a prebuilt image), the reference solution (a script, a patch, or
@@ -196,7 +204,8 @@ rather than indicating a defect.
 - Published SWE-bench images are ~4 GB each and x86_64, so a large run needs
   substantial disk and, on arm64 hosts, emulation.
 
-[Unreleased]: https://github.com/bugyal/skeptic/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/bugyal/skeptic/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/bugyal/skeptic/releases/tag/v0.2.0
 [0.1.2]: https://github.com/bugyal/skeptic/releases/tag/v0.1.2
 [0.1.1]: https://github.com/bugyal/skeptic/releases/tag/v0.1.1
 [0.1.0]: https://github.com/bugyal/skeptic/releases/tag/v0.1.0

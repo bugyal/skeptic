@@ -1,7 +1,9 @@
 # BUILD-NOTES
 
-Status: **v0.1 complete on `dev/v0.1`** as of 2026-09-24. Everything below was
-verified with the exact commands listed at the end.
+Status: **historical** — this records v0.1 as first built, on 2026-09-24.
+For what has changed since, see `CHANGELOG.md` (0.1.1 through 0.2.0); for why,
+`docs/decisions.md` (D1–D20); for what is left, `docs/roadmap.md`.
+Everything below was verified with the exact commands listed at the end.
 
 ## What is implemented
 

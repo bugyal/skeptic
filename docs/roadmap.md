@@ -50,7 +50,11 @@ details, including what Harbor's source said that the sketch here did not.
 want this, and the README currently promises a tap that does not exist.
 
 **Where.** A `bugyal/homebrew-tap` repository, plus a `brews:` block in
-`.goreleaser.yaml`. goreleaser can push the formula on release.
+`.goreleaser.yaml`. goreleaser can push the formula on release, but the
+workflow's own `GITHUB_TOKEN` cannot write to a second repository: this needs
+a token with write access to the tap, stored as a repository secret. That
+repository and that secret are the owner's to create, which is why this is
+still open.
 
 **Done when.** The tap installs a working binary on both arm64 and amd64 macOS,
 and the README's install section points at it instead of saying "planned".
@@ -71,6 +75,26 @@ re-running with `--network none` and comparing, cannot tell the cases apart;
 A related check is still unbuilt: a benchmark whose graded tests *need* the
 internet is fragile in its own right and could be reported as such, as a
 separate finding rather than folded into a verdict.
+
+---
+
+## Open, and blocked on access rather than work
+
+**Two SWE-bench Verified instances have never been scored cleanly:**
+`pylint-dev__pylint-6386` was never reached, and `astropy__astropy-13398` is
+quarantined because its result came from a build with a known bug (D11).
+Both need the augmented dataset, which only Hugging Face serves; the session
+that did the 0.2.0 work could not reach it. On any machine that can:
+
+```sh
+python -c "from datasets import load_dataset; \
+  load_dataset('SWE-bench/SWE-bench_Verified', split='test').to_json('verified.jsonl')"
+skeptic check verified.jsonl --task pylint-dev__pylint-6386 --task astropy__astropy-13398 \
+  --partial --json two.json
+```
+
+On arm64 each takes about four minutes under emulation, and both images are
+about 4 GB. Record the result beside `results/swe-bench-verified/2026-09-25-batch60`.
 
 ---
 
