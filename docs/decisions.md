@@ -817,3 +817,63 @@ validating against schema 1 would reject `FLAKY`. Schema 2 also adds
 `nop_scores` and `oracle_scores`, present only when there was more than one
 run. Schema 1 reports are a subset and still load, since everything under
 `results/` is one.
+
+---
+
+## D19. `check` had never scored a Terminal-Bench 1.x task
+
+**Status:** fixed, after a validation run found it. Corrects part of D17.
+
+### What was wrong
+
+Asked to validate everything with parallel Compose runs, the Terminal-Bench
+1.x fixture `testdata/tbench-tasks/clean` came back `ORACLE_FAILS`. The
+evidence said `./run-tests.sh: not found`. The build before this session
+(`38634de`) gives the same result, so this was never a regression. `check`
+had simply never produced a correct score for this format:
+
+- **The grading script was never delivered.** The adapter ran
+  `./run-tests.sh` from `/`. Upstream images do not contain the script; the
+  harness copies it in. `terminal_bench/harness/harness.py` `_setup_test_env`
+  copies `run-tests.sh` and the *contents* of `tests/` into `/tests`
+  (`_create_tar_archive` flattens the directory). `_run_tests` then runs
+  `bash /tests/run-tests.sh`.
+- **Both scripts ran from the wrong directory.** Upstream sends them to a
+  tmux session in the container, whose directory is the image's `WORKDIR`.
+  The adapter used `/`. The oracle agent (`terminal_bench/agents/oracle_agent.py`)
+  copies `solution.sh` to `/oracle/solution.sh` and runs it with bash from
+  there, so a solution using relative paths also broke.
+
+Every reference solution therefore scored 0. The unit tests passed
+throughout, because they asserted the fields the adapter set rather than
+what upstream does. No committed result was affected: every Terminal-Bench
+result under `results/` comes from `lint`, which runs nothing.
+
+The fixtures hid it twice over. Their image lacked pytest, so even a
+delivered script would have failed, and `no-solution`'s test checked
+`echo hello`, which passes on an untouched workspace, so a working run would
+have reported `NOP_PASSES` rather than the `NO_ORACLE` the fixture exists
+for. Both fixtures now install pytest and grade a file the agent must write.
+`e2e/tbench_test.go` runs them, and it is the test that would have caught
+this.
+
+### What Compose does with limits, measured
+
+The same run checked D17's claim that Compose applies
+`deploy.resources.limits` outside Swarm. Four compose files, brought up with
+`docker compose` (v5.1.1) in parallel and inspected:
+
+| Declared | Compose `HostConfig` | Skeptic `HostConfig` |
+|---|---|---|
+| `deploy` `memory: 4.0G`, reservation `2.0G` | Memory 4 GiB, **MemoryReservation 2 GiB** | Memory 4 GiB |
+| `mem_limit: 512m`, `cpus: 0.5` | 512 MiB, 0.5 CPU | 512 MiB, 0.5 CPU |
+| `deploy` `memory: 1gb`, `cpus: '1.5'` | 1 GiB, 1.5 CPU | 1 GiB, 1.5 CPU |
+| `deploy` `memory: 3.5G` | 3.5 GiB | 3.5 GiB |
+
+The limits match exactly. D17 was wrong in one detail. It said reservations
+"are not limits and are ignored" by Docker. Compose does apply them, as
+`MemoryReservation`, a soft limit the kernel enforces only when the host is
+short of memory. Skeptic does not apply it. On a host with memory to spare
+the two behave the same; under contention upstream would reclaim memory from
+the container sooner. That is recorded here rather than silently copied,
+because nothing yet shows it changes a verdict.

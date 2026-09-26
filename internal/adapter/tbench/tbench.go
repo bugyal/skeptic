@@ -8,9 +8,16 @@
 //	Dockerfile              at the task root (no environment/ nesting)
 //	docker-compose.yaml     generated boilerplate: one `client` service that
 //	                        builds the Dockerfile and runs `sleep infinity`
-//	run-tests.sh            the grading entrypoint, run from the image root
-//	tests/                  pytest files, copied to TEST_DIR at runtime
-//	solution.sh             the reference solve script
+//	run-tests.sh            the grading entrypoint, copied into /tests beside
+//	                        the test files and run as `bash /tests/run-tests.sh`
+//	tests/                  pytest files, flattened into /tests at runtime
+//	solution.sh             the reference solve script, copied to
+//	                        /oracle/solution.sh and run with bash
+//
+// Both scripts run in a tmux session in the container, whose working
+// directory is the image's WORKDIR (terminal_bench/harness/harness.py
+// _setup_test_env and _run_tests; terminal_bench/agents/oracle_agent.py;
+// DockerComposeManager.copy_to_container and _create_tar_archive).
 //
 // Skeptic builds the Dockerfile directly and starts the container detached
 // (compose is boilerplate, per docs/decisions.md D4), so the adapter mirrors
@@ -37,8 +44,9 @@ const (
 	// TestsMount is where tests/ is copied inside the container, matching the
 	// TEST_DIR the boilerplate compose file sets.
 	TestsMount = "/tests"
-	// SolMount is where solution.sh is copied inside the container.
-	SolMount = "/solution"
+	// SolMount is where solution.sh is copied inside the container, as the
+	// upstream oracle agent does.
+	SolMount = "/oracle"
 	// TestDirEnv is the variable run-tests.sh reads the test directory from.
 	TestDirEnv = "TEST_DIR"
 )
@@ -145,16 +153,27 @@ func (a *Adapter) Load(dir string) (*task.Task, error) {
 	}
 	t.Solution = sol
 
+	runTests, err := os.ReadFile(filepath.Join(abs, runTestsScript))
+	if err != nil {
+		t.Unsupported = fmt.Sprintf("unreadable %s", runTestsScript)
+		return t, nil
+	}
+
 	t.Tests = task.Tests{
 		Dir:       testsDir,
 		MountPath: TestsMount,
-		// Terminal-Bench runs the grading entrypoint from the image root with
-		// TEST_DIR pointing at the copied-in tests.
-		Command: fmt.Sprintf("./%s", runTestsScript),
+		// Upstream copies run-tests.sh and the contents of tests/ into the
+		// same directory, then runs the script with bash from the image's
+		// working directory. The image does not contain the script; the
+		// harness delivers it.
+		ScriptContent: string(runTests),
+		ScriptPath:    TestsMount + "/" + runTestsScript,
+		Command:       "bash " + TestsMount + "/" + runTestsScript,
 		Env: map[string]string{
 			TestDirEnv: TestsMount,
 		},
-		WorkDir: "/",
+		// Empty: the image's WORKDIR, where upstream's tmux session starts.
+		WorkDir: "",
 		Timeout: seconds(c.MaxTestTimeoutSec, defaultTestTimeout),
 		Score: task.ScoreSpec{
 			// Terminal-Bench 1.x grades by pytest's exit status: run-tests.sh
@@ -202,7 +221,9 @@ func stageSolution(abs string) (task.Solution, error) {
 		Dir:       stage,
 		Script:    solutionScript,
 		MountPath: SolMount,
-		WorkDir:   "/",
+		// Empty: the image's WORKDIR. Upstream runs the script from there,
+		// and solutions written against it use relative paths.
+		WorkDir: "",
 	}, nil
 }
 

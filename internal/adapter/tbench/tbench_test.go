@@ -107,20 +107,27 @@ func TestLoad(t *testing.T) {
 	if len(entries) != 1 || entries[0].Name() != solutionScript {
 		t.Errorf("staged solution dir contents = %v, want only %s", names(entries), solutionScript)
 	}
-	if tk.Solution.MountPath != SolMount || tk.Solution.WorkDir != "/" {
+	if tk.Solution.MountPath != SolMount || tk.Solution.WorkDir != "" {
 		t.Errorf("Solution mount/workdir = %q/%q", tk.Solution.MountPath, tk.Solution.WorkDir)
 	}
 
 	if tk.Tests.MountPath != TestsMount {
 		t.Errorf("Tests.MountPath = %q", tk.Tests.MountPath)
 	}
-	if tk.Tests.Command != "./"+runTestsScript {
+	// The image does not contain run-tests.sh; upstream's harness delivers
+	// it into /tests and runs it with bash. Running "./run-tests.sh" from /
+	// found nothing, so every oracle scored 0.
+	if tk.Tests.Command != "bash /tests/run-tests.sh" {
 		t.Errorf("Tests.Command = %q", tk.Tests.Command)
+	}
+	if tk.Tests.ScriptPath != "/tests/run-tests.sh" || tk.Tests.ScriptContent == "" {
+		t.Errorf("run-tests.sh not delivered: ScriptPath = %q, %d bytes",
+			tk.Tests.ScriptPath, len(tk.Tests.ScriptContent))
 	}
 	if tk.Tests.Env[TestDirEnv] != TestsMount {
 		t.Errorf("Tests.Env[%s] = %q", TestDirEnv, tk.Tests.Env[TestDirEnv])
 	}
-	if tk.Tests.WorkDir != "/" {
+	if tk.Tests.WorkDir != "" {
 		t.Errorf("Tests.WorkDir = %q", tk.Tests.WorkDir)
 	}
 	if tk.Tests.Score.Kind != task.ScoreExitCode {

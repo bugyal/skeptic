@@ -14,6 +14,13 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **`check` now scores Terminal-Bench 1.x tasks correctly.** It had never
+  done so. The adapter ran `./run-tests.sh` from `/` without copying the
+  script in, so every reference solution scored 0. It now delivers
+  `run-tests.sh` beside the tests in `/tests` and runs both scripts with bash
+  from the image's working directory, as upstream's harness does. `lint`
+  results, including every committed Terminal-Bench result, were unaffected.
+  See `docs/decisions.md` D19.
 - **A reference solution that fails because the host has no working network
   is reported as `ERROR`, not `ORACLE_FAILS`.** On a host with restricted
   egress, instances whose graded tests make live requests were flagged as
