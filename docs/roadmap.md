@@ -104,9 +104,10 @@ about 4 GB. Record the result beside `results/swe-bench-verified/2026-09-25-batc
   declares more than one service is `UNSUPPORTED` (`docs/decisions.md` D4).
   Doing this properly means bringing up a stack, waiting on health checks, and
   deciding which service the controls act on.
-- **Exercise the remaining log parsers against real instances.** Eight of the
-  twelve SWE-bench parsers are ported and unit tested but have never run against
-  a live instance. See `results/swe-bench-verified/2026-09-24/README.md`.
+- ~~**Exercise the remaining log parsers against real instances.**~~ Done:
+  all twelve SWE-bench parsers ran against live instances on 2026-09-25
+  (`results/swe-bench-verified/2026-09-25-controls`), and the same subset was
+  reproduced natively and in parallel on 2026-09-26.
 - **A full SWE-bench Verified run.** Needs roughly 2 TB of image traffic and a
   machine with real disk. The result belongs under `results/`.
 - **Adapters for other task formats**, if and when ones with a reference

@@ -5,6 +5,11 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `skeptic sweep` is an alias for `skeptic check`, the name the original brief
+  used.
+
 ## [0.2.0] - 2026-09-26
 
 A minor release rather than a patch: the report schema changes (a new

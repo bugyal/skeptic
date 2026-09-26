@@ -427,11 +427,12 @@ that. It does not run agents or call any model.
 ## Roadmap
 
 - Run the full SWE-bench Verified set on a machine with the disk for it
-- Exercise the remaining eight log parsers against real instances
+  (about 2 TB of image traffic)
 - Multi-service compose orchestration (a whole compose stack brought up and
   cross-probed, beyond D4's single-buildable-service policy)
-- `skeptic sweep` as an alias for `check`, per the original naming
-- Homebrew tap
+- Homebrew tap (needs a tap repository and a token; see `docs/roadmap.md`)
+
+`docs/roadmap.md` has each item written up to be picked up cold.
 
 See [docs/decisions.md](docs/decisions.md) for why things are the way they are.
 

@@ -37,8 +37,10 @@ func newCheckCmd() *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "check <path>",
-		Short: "Run the oracle and nop controls over a benchmark",
+		Use: "check <path>",
+		// sweep is the name the original brief used for this command.
+		Aliases: []string{"sweep"},
+		Short:   "Run the oracle and nop controls over a benchmark",
 		Long: "Builds each task's environment, runs the requested controls in fresh\n" +
 			"containers, and classifies every task. Full stdout, stderr and the raw\n" +
 			"score artifact are captured per task and per control.",
