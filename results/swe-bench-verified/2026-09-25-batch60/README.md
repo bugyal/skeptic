@@ -57,9 +57,10 @@ wrong with those instances.
 This is the `ERROR` category earning its keep: a tool that had scored them 0
 would have reported five broken instances that were never broken.
 
-## The partial control: 10 flags, 2 real
+## The partial control: 11 flags, 2 real
 
-The weak-test probe flagged 10 instances. Read by hand, one at a time:
+The weak-test probe flagged 11 instances (the last two rows below were
+filed as cleanup by the tool and are not counted). Read by hand, one at a time:
 
 | Instance | Flag | Verdict |
 |---|---|---|
@@ -103,7 +104,7 @@ would silently delete the best result here.
 
 ## Honest summary
 
-- The two original controls: **0 findings in 55 instances.** SWE-bench Verified
+- The two original controls: **0 findings in 59 instances.** SWE-bench Verified
   is sound on solvability and non-triviality.
 - The partial control: **2 real weak tests in 59 instances**, at a precision
   around 2-in-11 that only holds because every flag was read by hand. The last

@@ -40,22 +40,17 @@ patches; this release is mostly about that.
 ### Added
 
 - `skeptic report <dir>` merges a directory of per-task report fragments when
-  there is no `report.json`, so a long sweep is readable while it runs.
+  there is no `report.json`. A long sweep writes one file per instance as it
+  finishes, so a run still in progress, or interrupted, is readable as a
+  partial result instead of useless until the end.
 
 ### Known limitation
 
 The `partial` control cannot distinguish "this change is untested" from "this
 change is unobservable" in general; that needs to know whether the withheld
 code is reachable from the tests, which is program analysis rather than
-diffing. Measured precision on a 60-instance stratified sample was 2 of 10
-flags. Read every flag before believing it. See `docs/decisions.md` D11.
-
-### Added
-
-- `skeptic report <dir>` merges a directory of per-task report fragments when
-  there is no `report.json`. A long sweep writes one file per instance as it
-  finishes, so a run still in progress, or interrupted, is readable as a
-  partial result instead of useless until the end.
+diffing. Measured precision on a 60-instance stratified sample was 2 of 11
+flags. Read every flag before believing it. See `docs/decisions.md` D11-D14.
 
 ## [0.1.1] - 2026-09-25
 

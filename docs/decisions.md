@@ -569,3 +569,21 @@ Nothing to fix. Three things to say honestly:
 3. Raising it would need a different technique — coverage instrumentation, to
    ask whether the withheld lines are executed by the graded tests at all.
    That is a real option and a much larger one; it is not v0.1.
+
+---
+
+## D14. Correction: the partial control's precision is 2 of 11
+
+**Status:** correction. Supersedes the count, not the reasoning, in D12 and D13.
+
+D12 reports ten flags. The batch's own verdict table
+(`results/swe-bench-verified/2026-09-25-batch60/README.md`) lists eleven:
+`pytest-dev__pytest-7236` was re-run under the finished classifier after D12 was
+written, still flagged, and was added to the table without the count being
+updated. `psf__requests-2317` and `sympy__sympy-20154` appear in the same table
+but were filed as `ungraded_cleanup` by the tool, so they are not flags.
+
+Precision is therefore **2 of 11**: two confirmed weak tests, one unresolved
+(`sphinx-doc__sphinx-9229`), eight artifacts. The README already said 11; the
+CHANGELOG and the batch README said 10 and now say 11. The conclusion in D13
+does not change: the ratio is close to the technique's ceiling.
