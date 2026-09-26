@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "skeptic_version": "v0.1.2-0.20260925071558-00e89dfebb1f+dirty",
-  "generated_at": "2026-09-25T14:14:25.712272Z",
+  "generated_at": "2026-09-26T15:02:19.27574Z",
   "host": {
     "os": "darwin",
     "arch": "arm64",
@@ -9,85 +9,15 @@
   },
   "run_dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/batchonly",
   "totals": {
-    "total": 60,
-    "clean": 55,
+    "total": 59,
+    "clean": 59,
     "flagged": 0,
-    "errors": 5,
+    "errors": 0,
     "no_oracle": 0,
     "unsupported": 0,
-    "weak_tests": 10
+    "weak_tests": 11
   },
   "tasks": [
-    {
-      "id": "psf__requests-2317",
-      "format": "swebench",
-      "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/verified.jsonl",
-      "verdict": "ERROR",
-      "reason": "pulling swebench/sweb.eval.x86_64.psf_1776_requests-2317:latest failed: Error response from daemon: failed to resolve reference \"docker.io/swebench/sweb.eval.x86_64.psf_1776_requests-2317:latest\": failed to do request: Head \"https://registry-1.docker.io/v2/swebench/sweb.eval.x86_64.psf_1776_requests-2317/manifests/latest\": dial tcp: lookup registry-1.docker.io on 192.168.5.1:53: no such host",
-      "nop_score": null,
-      "oracle_score": null,
-      "nop_seconds": 0,
-      "oracle_seconds": 0,
-      "seconds": 0.030987542,
-      "log_dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/full/runs/psf__requests-2317/psf__requests-2317",
-      "error": "pulling swebench/sweb.eval.x86_64.psf_1776_requests-2317:latest failed: Error response from daemon: failed to resolve reference \"docker.io/swebench/sweb.eval.x86_64.psf_1776_requests-2317:latest\": failed to do request: Head \"https://registry-1.docker.io/v2/swebench/sweb.eval.x86_64.psf_1776_requests-2317/manifests/latest\": dial tcp: lookup registry-1.docker.io on 192.168.5.1:53: no such host"
-    },
-    {
-      "id": "pydata__xarray-4695",
-      "format": "swebench",
-      "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/verified.jsonl",
-      "verdict": "ERROR",
-      "reason": "pulling swebench/sweb.eval.x86_64.pydata_1776_xarray-4695:latest failed: Error response from daemon: failed to resolve reference \"docker.io/swebench/sweb.eval.x86_64.pydata_1776_xarray-4695:latest\": failed to do request: Head \"https://registry-1.docker.io/v2/swebench/sweb.eval.x86_64.pydata_1776_xarray-4695/manifests/latest\": dial tcp: lookup registry-1.docker.io on 192.168.5.1:53: no such host",
-      "nop_score": null,
-      "oracle_score": null,
-      "nop_seconds": 0,
-      "oracle_seconds": 0,
-      "seconds": 0.043134584,
-      "log_dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/full/runs/pydata__xarray-4695/pydata__xarray-4695",
-      "error": "pulling swebench/sweb.eval.x86_64.pydata_1776_xarray-4695:latest failed: Error response from daemon: failed to resolve reference \"docker.io/swebench/sweb.eval.x86_64.pydata_1776_xarray-4695:latest\": failed to do request: Head \"https://registry-1.docker.io/v2/swebench/sweb.eval.x86_64.pydata_1776_xarray-4695/manifests/latest\": dial tcp: lookup registry-1.docker.io on 192.168.5.1:53: no such host"
-    },
-    {
-      "id": "pylint-dev__pylint-6386",
-      "format": "swebench",
-      "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/verified.jsonl",
-      "verdict": "ERROR",
-      "reason": "pulling swebench/sweb.eval.x86_64.pylint-dev_1776_pylint-6386:latest failed: Error response from daemon: failed to resolve reference \"docker.io/swebench/sweb.eval.x86_64.pylint-dev_1776_pylint-6386:latest\": failed to do request: Head \"https://registry-1.docker.io/v2/swebench/sweb.eval.x86_64.pylint-dev_1776_pylint-6386/manifests/latest\": dial tcp: lookup registry-1.docker.io on 192.168.5.1:53: no such host",
-      "nop_score": null,
-      "oracle_score": null,
-      "nop_seconds": 0,
-      "oracle_seconds": 0,
-      "seconds": 0.025711,
-      "log_dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/full/runs/pylint-dev__pylint-6386/pylint-dev__pylint-6386",
-      "error": "pulling swebench/sweb.eval.x86_64.pylint-dev_1776_pylint-6386:latest failed: Error response from daemon: failed to resolve reference \"docker.io/swebench/sweb.eval.x86_64.pylint-dev_1776_pylint-6386:latest\": failed to do request: Head \"https://registry-1.docker.io/v2/swebench/sweb.eval.x86_64.pylint-dev_1776_pylint-6386/manifests/latest\": dial tcp: lookup registry-1.docker.io on 192.168.5.1:53: no such host"
-    },
-    {
-      "id": "pytest-dev__pytest-5809",
-      "format": "swebench",
-      "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/verified.jsonl",
-      "verdict": "ERROR",
-      "reason": "pulling swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-5809:latest failed: Error response from daemon: failed to resolve reference \"docker.io/swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-5809:latest\": failed to do request: Head \"https://registry-1.docker.io/v2/swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-5809/manifests/latest\": dial tcp: lookup registry-1.docker.io on 192.168.5.1:53: no such host",
-      "nop_score": null,
-      "oracle_score": null,
-      "nop_seconds": 0,
-      "oracle_seconds": 0,
-      "seconds": 0.0365675,
-      "log_dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/full/runs/pytest-dev__pytest-5809/pytest-dev__pytest-5809",
-      "error": "pulling swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-5809:latest failed: Error response from daemon: failed to resolve reference \"docker.io/swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-5809:latest\": failed to do request: Head \"https://registry-1.docker.io/v2/swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-5809/manifests/latest\": dial tcp: lookup registry-1.docker.io on 192.168.5.1:53: no such host"
-    },
-    {
-      "id": "pytest-dev__pytest-7236",
-      "format": "swebench",
-      "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/verified.jsonl",
-      "verdict": "ERROR",
-      "reason": "pulling swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-7236:latest failed: Error response from daemon: failed to resolve reference \"docker.io/swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-7236:latest\": failed to do request: Head \"https://registry-1.docker.io/v2/swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-7236/manifests/latest\": dial tcp: lookup registry-1.docker.io on 192.168.5.1:53: no such host",
-      "nop_score": null,
-      "oracle_score": null,
-      "nop_seconds": 0,
-      "oracle_seconds": 0,
-      "seconds": 0.0285015,
-      "log_dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/full/runs/pytest-dev__pytest-7236/pytest-dev__pytest-7236",
-      "error": "pulling swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-7236:latest failed: Error response from daemon: failed to resolve reference \"docker.io/swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-7236:latest\": failed to do request: Head \"https://registry-1.docker.io/v2/swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-7236/manifests/latest\": dial tcp: lookup registry-1.docker.io on 192.168.5.1:53: no such host"
-    },
     {
       "id": "astropy__astropy-14539",
       "format": "swebench",
@@ -595,6 +525,23 @@
       "log_dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/full/runs/matplotlib__matplotlib-25311/matplotlib__matplotlib-25311"
     },
     {
+      "id": "psf__requests-2317",
+      "format": "swebench",
+      "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/verified.jsonl",
+      "verdict": "CLEAN",
+      "reason": "oracle 1.00, nop 0.00",
+      "nop_score": 0,
+      "oracle_score": 1,
+      "nop_seconds": 607.052567,
+      "oracle_seconds": 676.01979075,
+      "seconds": 1969.559638042,
+      "image_digest": "sha256:c6b5c8846507b5e48e307decca28dbdfa4f5ef17070c1087aacde765e8c4b178",
+      "log_dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/full/runs/psf__requests-2317/psf__requests-2317",
+      "ungraded_cleanup": [
+        "requests/sessions.py lines 13-19 (import statements only)"
+      ]
+    },
+    {
       "id": "pydata__xarray-3677",
       "format": "swebench",
       "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/subset.jsonl",
@@ -609,6 +556,20 @@
       "log_dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/swb2/pydata__xarray-3677/pydata__xarray-3677"
     },
     {
+      "id": "pydata__xarray-4695",
+      "format": "swebench",
+      "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/verified.jsonl",
+      "verdict": "CLEAN",
+      "reason": "oracle 1.00, nop 0.00",
+      "nop_score": 0,
+      "oracle_score": 1,
+      "nop_seconds": 54.292466541,
+      "oracle_seconds": 50.836697958,
+      "seconds": 162.740605041,
+      "image_digest": "sha256:fe6074de116357f2b6f1b3b964726cd02b866f68509f3e74d3a58c48a778ac6d",
+      "log_dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/full/runs/pydata__xarray-4695/pydata__xarray-4695"
+    },
+    {
       "id": "pydata__xarray-6599",
       "format": "swebench",
       "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/verified.jsonl",
@@ -621,6 +582,38 @@
       "seconds": 277.909188125,
       "image_digest": "sha256:32ffcec37de801f41349c399cbab1a64ade337fdc88249ae2fe8dcf94c6a17d1",
       "log_dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/full/runs/pydata__xarray-6599/pydata__xarray-6599"
+    },
+    {
+      "id": "pytest-dev__pytest-5809",
+      "format": "swebench",
+      "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/verified.jsonl",
+      "verdict": "CLEAN",
+      "reason": "oracle 1.00, nop 0.00",
+      "nop_score": 0,
+      "oracle_score": 1,
+      "nop_seconds": 15.890451,
+      "oracle_seconds": 15.263415125,
+      "seconds": 58.657780208,
+      "image_digest": "sha256:0185f5d9efb9cf1364122a7eff7fc5f02227698d01f7e4f2d593917816df42d3",
+      "log_dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/full/runs/pytest-dev__pytest-5809/pytest-dev__pytest-5809"
+    },
+    {
+      "id": "pytest-dev__pytest-7236",
+      "format": "swebench",
+      "dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/verified.jsonl",
+      "verdict": "CLEAN",
+      "reason": "oracle 1.00, nop 0.00",
+      "nop_score": 0,
+      "oracle_score": 1,
+      "nop_seconds": 20.665937417,
+      "oracle_seconds": 18.986991125,
+      "seconds": 128.66411575,
+      "image_digest": "sha256:54f89a5c1611eac42d3d7b7c03e17a43e9e70c604cd8439f45bf68102fc3ff09",
+      "log_dir": "/private/tmp/claude-501/-Users-ashishbhatt/1f0d97bc-4b40-43c0-8137-b7345b935568/scratchpad/full/runs/pytest-dev__pytest-7236/pytest-dev__pytest-7236",
+      "weak_tests": [
+        "src/_pytest/unittest.py lines 41-47",
+        "src/_pytest/unittest.py lines 89-95"
+      ]
     },
     {
       "id": "scikit-learn__scikit-learn-12682",

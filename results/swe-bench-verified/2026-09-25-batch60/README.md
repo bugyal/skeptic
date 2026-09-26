@@ -20,10 +20,11 @@ whatever sorted first. `sample.txt` lists them.
 
 | | |
 |---|---:|
-| Scored | 55 |
-| **CLEAN** | **55** |
+| Scored | 59 |
+| **CLEAN** | **59** |
 | Flagged (`NOP_PASSES`, `ORACLE_FAILS`, `BOTH`) | **0** |
-| Errors | 5 |
+| Errors | **0** |
+| Not run | 1 (`pylint-dev__pylint-6386`) |
 
 Every gold patch scored 1.0. Every empty diff scored 0.0. On the axis the two
 original controls measure, **SWE-bench Verified is clean across this sample** —
@@ -33,22 +34,28 @@ remove unsolvable and trivially-solvable instances.
 That is worth stating plainly rather than buried: the headline controls, run
 across a representative sample, produced no findings.
 
-### The 5 errors are this machine, not the benchmark
+### The 5 errors were this machine, and re-running proved it
 
-All five failed identically:
+The first run of this batch ended with five `ERROR` instances, all failing
+identically:
 
 ```
 failed to resolve reference "docker.io/swebench/sweb.eval.x86_64.…":
 failed to do request: Head https://registry-1.docker.io/v2/…
 ```
 
-Docker Hub rate-limits anonymous pulls at 100 per six hours; this run pulled
-around 55 images on top of earlier runs. They arrived in a contiguous block at
-the end of the batch, which is the signature of a limit rather than five
+Docker Hub rate-limits anonymous pulls at 100 per six hours, and the run had
+pulled around 55 images on top of earlier work. They arrived in a contiguous
+block at the end, which is the signature of a limit rather than five
 independently broken instances.
 
-Recorded as `ERROR`, counted apart from pass and fail, and **not** reported as
-findings. Re-running them with an authenticated Docker login should score them.
+They were recorded as `ERROR`, counted apart from pass and fail, and not
+reported as findings. Re-run the next day, four of the five scored **CLEAN**
+and the fifth was not reached before the host ran out of disk. Nothing was
+wrong with those instances.
+
+This is the `ERROR` category earning its keep: a tool that had scored them 0
+would have reported five broken instances that were never broken.
 
 ## The partial control: 10 flags, 2 real
 
@@ -66,8 +73,11 @@ The weak-test probe flagged 10 instances. Read by hand, one at a time:
 | `scikit-learn__scikit-learn-13496` | numpydoc parameter block | artifact |
 | `scikit-learn__scikit-learn-25102` | numpydoc parameter block | artifact |
 | `sympy__sympy-13852` | doctest expected output | artifact |
+| `pytest-dev__pytest-7236` | two behaviour-preserving refactors | artifact — see D13 |
+| `psf__requests-2317` | deletion-only | classified as cleanup by the tool itself |
+| `sympy__sympy-20154` | deletion-only | classified as cleanup by the tool itself |
 
-**Two confirmed of ten.** The two are written up in
+**Two confirmed of eleven.** The two are written up in
 [`../2026-09-25-weak-tests`](../2026-09-25-weak-tests).
 
 ### Why so many artifacts
@@ -95,8 +105,14 @@ would silently delete the best result here.
 
 - The two original controls: **0 findings in 55 instances.** SWE-bench Verified
   is sound on solvability and non-triviality.
-- The partial control: **2 real weak tests in 60 instances**, at a 20% precision
-  rate that only holds because every flag was read by hand.
+- The partial control: **2 real weak tests in 59 instances**, at a precision
+  around 2-in-11 that only holds because every flag was read by hand. The last
+  two entries in the table above were filed as `ungraded_cleanup` by the tool
+  itself rather than needing a human — that is the v0.1.2 classifier working.
+- `pytest-dev__pytest-7236` is the instructive one: re-run under the fully
+  fixed classifier, it still flagged two hunks, and both are
+  behaviour-preserving refactors. No pattern can catch those. See
+  `docs/decisions.md` D13 for why that is the technique's ceiling.
 - The static leak scan, run separately over all 500, remains the highest-yield
   check: see [`../2026-09-25-leakage`](../2026-09-25-leakage).
 

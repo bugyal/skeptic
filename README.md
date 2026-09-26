@@ -233,24 +233,30 @@ flagged instances, and the caveats are in
 
 | Benchmark | Date | Instances | Clean | Flagged | Errors |
 |---|---|---:|---:|---:|---:|
-| [SWE-bench Verified](results/swe-bench-verified/2026-09-25-batch60) | 2026-09-25 | 60 (stratified) | 55 | **0** | 5 |
+| [SWE-bench Verified](results/swe-bench-verified/2026-09-25-batch60) | 2026-09-25 | 59 (stratified) | 59 | **0** | 0 |
 | [SWE-bench Verified](results/swe-bench-verified/2026-09-25-controls) | 2026-09-25 | 12 (all parsers) | 12 | 0 | 0 |
 
 **The two headline controls found nothing.** Across a sample stratified over all
 twelve repositories, every gold patch scored 1.0 and every empty diff scored
 0.0. That is the right answer for a benchmark curated to remove unsolvable and
 trivially-solvable instances, and it is reported as plainly as a failure would
-be. The five errors were Docker Hub rate limiting, counted apart.
+be.
 
-The weak-test probe flagged 10 instances and **2 held up** after reading each by
+The first run of that batch ended with five `ERROR` instances from Docker Hub
+rate limiting. Re-run the next day, four scored CLEAN and the fifth was not
+reached. Nothing was wrong with them — which is why `ERROR` is its own category
+rather than a zero.
+
+The weak-test probe flagged 11 instances and **2 held up** after reading each by
 hand — [`matplotlib__matplotlib-24637`](results/swe-bench-verified/2026-09-25-weak-tests)
 and `sympy__sympy-13878`. The other eight were gold patches bundling the fix
 with changes no test can observe: comments, unused imports, dead code,
 docstrings, gallery scripts.
 
-Take the precision seriously: **2 of 10**, and only because every flag was
+Take the precision seriously: **2 of 11**, and only because every flag was
 verified individually. The probe points at things worth reading, not at
-conclusions.
+conclusions — and `docs/decisions.md` D13 explains why that ratio is close to
+the technique's ceiling rather than a bug awaiting a fix.
 
 ## In CI
 
