@@ -26,24 +26,11 @@ is `ERROR` instead.
 
 ---
 
-## 3. `skeptic diff` between two runs
+## 3. `skeptic diff` between two runs — done
 
-**Why.** Benchmarks rot. Base images drift, unpinned dependencies move,
-network resources vanish. The interesting question in CI is usually not "is this
-set clean" but "what changed since last time".
-
-**Where.** A new `cmd/skeptic/diff.go`. The report schema is versioned and
-stable precisely so this is possible; `internal/report/report.go` already has
-`Load`.
-
-**Done when.** `skeptic diff old.json new.json` prints tasks whose verdict
-changed, in both directions, plus tasks that appeared or disappeared. Support
-`--format table|md|json`. Non-zero exit when a task regressed.
-
-**The trap.** A task moving to `ERROR` is not a regression in the benchmark —
-it usually means the machine ran out of disk or the network faltered. Report
-those in their own section rather than as new findings. This has already bitten
-us once; see `results/swe-bench-verified/2026-09-24/README.md`.
+`skeptic diff old new` sorts tasks into regressed, fixed, changed, could not
+compare, added and removed, and exits 1 only on a regression. A move to or
+from `ERROR` is never one. `docs/decisions.md` D20 defines a regression.
 
 ---
 

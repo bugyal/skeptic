@@ -877,3 +877,43 @@ short of memory. Skeptic does not apply it. On a host with memory to spare
 the two behave the same; under contention upstream would reclaim memory from
 the container sooner. That is recorded here rather than silently copied,
 because nothing yet shows it changes a verdict.
+
+---
+
+## D20. What `skeptic diff` calls a regression
+
+**Status:** decided.
+
+A **regression** is a task that gained a failure mode between two runs. Each
+verdict names its modes: `NOP_PASSES` {nop}, `ORACLE_FAILS` {oracle},
+`BOTH` {nop, oracle}, `FLAKY` {flaky}; `CLEAN` and `NO_ORACLE` have none. A
+task regressed if the new run has a mode the old one did not. That includes a
+swap such as `NOP_PASSES` → `ORACLE_FAILS`, which loses one mode and gains
+another. It is **fixed** if it only lost modes. `CLEAN` ↔ `NO_ORACLE` is
+**changed**: nothing was gained or lost, but whether the oracle could run did
+change. The exit status is 1 only for a regression.
+
+**`ERROR` and `UNSUPPORTED` are never compared.** Any move to or from either
+goes under "could not compare", in both directions. This is the trap the
+roadmap named, and it has bitten this project once already: the 2026-09-24
+run's eight `ERROR`s were a full disk, and 2026-09-25's five were a Docker Hub
+rate limit. A diff that reported `CLEAN` → `ERROR` as a regression would blame
+the benchmark for the machine. The reverse, `ERROR` → `ORACLE_FAILS`, is not
+one either. There is no earlier verdict to regress from, only an earlier run
+that could not look.
+
+A run where every task errored therefore exits 0 with everything under "could
+not compare". That is deliberate, and the summary line makes it impossible to
+miss. A CI job that wants a machine failure to fail the build should also check
+`totals.errors` in the new report, which is a different question from "did
+the benchmark change".
+
+Verdicts are compared, not scores. An `ORACLE_FAILS` task whose oracle moved
+from 0.50 to 0.20 is unchanged here. Nothing in the report yet says whether
+such a move is the benchmark or the run.
+
+Writing this found a bug in `report` itself. Merging a directory of fragments
+stamped the result with the reading machine's host and the current time.
+Fragments from an arm64 Mac merged on an amd64 Linux host therefore claimed
+amd64, in a project where emulation against native was a real question. The
+merge now takes both from the fragments.

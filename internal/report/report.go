@@ -232,11 +232,13 @@ func loadDir(dir string) (Report, error) {
 		return Report{}, err
 	}
 
+	// Host and time come from the fragments, not from the machine reading
+	// them: fragments from an arm64 Mac merged on a Linux box must still say
+	// arm64, and a diff must show when the tasks ran, not when they were
+	// read.
 	merged := Report{
-		Schema:      SchemaVersion,
-		GeneratedAt: time.Now().UTC(),
-		Host:        Host{OS: runtime.GOOS, Arch: runtime.GOARCH},
-		RunDir:      dir,
+		Schema: SchemaVersion,
+		RunDir: dir,
 	}
 	seen := map[string]bool{}
 	var parsed int
@@ -254,8 +256,14 @@ func loadDir(dir string) (Report, error) {
 		if merged.SkepticVersion == "" {
 			merged.SkepticVersion = part.SkepticVersion
 		}
+		if merged.Host.OS == "" {
+			merged.Host = part.Host
+		}
 		if merged.Host.DockerAPI == "" {
 			merged.Host.DockerAPI = part.Host.DockerAPI
+		}
+		if part.GeneratedAt.After(merged.GeneratedAt) {
+			merged.GeneratedAt = part.GeneratedAt
 		}
 		for _, t := range part.Tasks {
 			if seen[t.ID] {
@@ -268,6 +276,15 @@ func loadDir(dir string) (Report, error) {
 
 	if parsed == 0 {
 		return merged, fmt.Errorf("no report files found in %s", dir)
+	}
+	// Per-task fragments written mid-sweep carry no envelope; for those the
+	// reading machine is the best guess there is, and it is usually the one
+	// that wrote them.
+	if merged.Host.OS == "" {
+		merged.Host = Host{OS: runtime.GOOS, Arch: runtime.GOARCH}
+	}
+	if merged.GeneratedAt.IsZero() {
+		merged.GeneratedAt = time.Now().UTC()
 	}
 
 	merged.Totals = tally(merged.Tasks)

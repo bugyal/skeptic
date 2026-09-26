@@ -21,6 +21,9 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   from the image's working directory, as upstream's harness does. `lint`
   results, including every committed Terminal-Bench result, were unaffected.
   See `docs/decisions.md` D19.
+- `skeptic report` on a directory of fragments now reports the host and time
+  the fragments were written on. It used the reading machine's, so arm64
+  fragments merged on an amd64 host claimed amd64.
 - **A reference solution that fails because the host has no working network
   is reported as `ERROR`, not `ORACLE_FAILS`.** On a host with restricted
   egress, instances whose graded tests make live requests were flagged as
@@ -38,6 +41,11 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **`skeptic diff <old> <new>`** compares two runs and sorts every task into
+  regressed, fixed, changed, could not compare, added and removed. It exits
+  1 only when a task gained a failure mode. A move to or from `ERROR` or
+  `UNSUPPORTED` is never counted as one. `--format table|md|json`. See
+  `docs/decisions.md` D20.
 - **`--repeat N` and the `FLAKY` verdict.** Each control runs N times in fresh
   containers; a task whose scores disagree is reported as `FLAKY` with every
   score, and fails CI. A run that errors, is killed for memory or loses the

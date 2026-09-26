@@ -110,6 +110,7 @@ skeptic check ./tasks           # run both controls over a task set
 skeptic check ./tasks/one-task  # or a single task
 skeptic lint  ./tasks           # static checks; no Docker, no model, no cost
 skeptic report .skeptic/runs/… --format md
+skeptic diff  old/report.json new/report.json   # what changed since last time
 skeptic version
 ```
 
@@ -117,6 +118,15 @@ Useful `check` flags: `--task ID` (repeatable), `--limit N`, `--parallel N`,
 `--timeout 30m`, `--only nop|oracle`, `--json out.json`, `--no-fail-on-flagged`,
 `--keep-containers`, `--no-cache`, `--override-cpus N`, `--override-memory-mb N`,
 `--repeat N`.
+
+`skeptic diff` compares two runs (a `report.json` or a run directory each)
+and sorts every task into regressed, fixed, changed, could not compare,
+added and removed. A regression is a task that gained a failure mode: its
+nop started passing, its oracle started failing, or it started to flake. It
+exits 1 only then. A move to or from `ERROR` or `UNSUPPORTED` goes under
+"could not compare" and never counts as a regression. An `ERROR` is almost
+always the machine, and a diff that blamed the benchmark for a full disk
+would be the tool inventing a finding. `--format table|md|json`.
 
 `--repeat N` runs the nop and oracle controls N times each, every run in a
 fresh container, and reports a task whose scores disagree as `FLAKY`, listing
@@ -357,7 +367,6 @@ that. It does not run agents or call any model.
 - Exercise the remaining eight log parsers against real instances
 - Multi-service compose orchestration (a whole compose stack brought up and
   cross-probed, beyond D4's single-buildable-service policy)
-- `skeptic diff` between two runs, to catch benchmark rot over time
 - `skeptic sweep` as an alias for `check`, per the original naming
 - Homebrew tap
 

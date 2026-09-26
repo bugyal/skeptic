@@ -42,7 +42,7 @@ func main() {
 	root.PersistentFlags().CountVarP(&verbosity, "verbose", "v",
 		"-v for per-step progress, -vv for container-level detail")
 
-	root.AddCommand(newCheckCmd(), newLintCmd(), newReportCmd(), newVersionCmd())
+	root.AddCommand(newCheckCmd(), newLintCmd(), newReportCmd(), newDiffCmd(), newVersionCmd())
 
 	if err := root.ExecuteContext(ctx); err != nil {
 		if errors.Is(err, context.Canceled) || ctx.Err() != nil {
