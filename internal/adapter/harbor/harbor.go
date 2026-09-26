@@ -7,12 +7,17 @@
 //	src/harbor/models/trial/paths.py   /logs/verifier, /tests, /solution
 //	src/harbor/verifier/verifier.py    reward.json is preferred over reward.txt
 //	src/harbor/agents/oracle.py        upload solution/, chmod, run solve.sh
+//	src/harbor/models/task/config.py   cpus, memory_mb, the legacy memory field
+//	src/harbor/environments/docker/    both applied as hard limits by default
 package harbor
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -74,8 +79,11 @@ type config struct {
 		BuildTimeoutSec float64 `toml:"build_timeout_sec"`
 		CPUs            float64 `toml:"cpus"`
 		MemoryMB        int     `toml:"memory_mb"`
-		OS              string  `toml:"os"`
-		WorkDir         string  `toml:"workdir"`
+		// Memory is the deprecated spelling ("2G", "512M"), still accepted
+		// upstream and migrated to memory_mb.
+		Memory  interface{} `toml:"memory"`
+		OS      string      `toml:"os"`
+		WorkDir string      `toml:"workdir"`
 	} `toml:"environment"`
 	Steps []struct {
 		Name string `toml:"name"`
@@ -131,11 +139,21 @@ func (a *Adapter) Load(dir string) (*task.Task, error) {
 		workdir = defaultWork
 	}
 
+	memoryMB, err := memoryLimit(cfg.Environment.MemoryMB, cfg.Environment.Memory)
+	if err != nil {
+		// Harbor refuses to load such a task, so it has no defined behaviour
+		// to reproduce.
+		t.Unsupported = err.Error()
+		return t, nil
+	}
+
 	t.Environment = task.Environment{
 		Dockerfile:   dockerfile,
 		ContextDir:   contextDir,
 		BuildTimeout: seconds(cfg.Environment.BuildTimeoutSec, buildTimeout),
 		WorkDir:      workdir,
+		CPUs:         max(cfg.Environment.CPUs, 0),
+		MemoryMB:     memoryMB,
 	}
 	t.Solution = loadSolution(abs, cfg, workdir)
 
@@ -237,6 +255,47 @@ func composeUnsupported(envDir string) string {
 		}
 	}
 	return ""
+}
+
+// memoryLimit resolves memory_mb, migrating the deprecated memory field the
+// way EnvironmentConfig._migrate_legacy_resource_fields does: a string is
+// parsed as a size and must agree with memory_mb when both are set, and any
+// other type is dropped. Zero or less means no limit.
+func memoryLimit(memoryMB int, legacy interface{}) (int, error) {
+	if str, ok := legacy.(string); ok {
+		mb, err := parseSizeToMB(str)
+		if err != nil {
+			return 0, err
+		}
+		if memoryMB != 0 && memoryMB != mb {
+			return 0, fmt.Errorf("conflicting memory (%q = %d MB) and memory_mb (%d)", str, mb, memoryMB)
+		}
+		memoryMB = mb
+	}
+	return max(memoryMB, 0), nil
+}
+
+// parseSizeToMB mirrors EnvironmentConfig._parse_size_to_mb, including its
+// truncation towards zero.
+func parseSizeToMB(size string) (int, error) {
+	s := strings.ToUpper(strings.TrimSpace(size))
+	var scale float64
+	switch {
+	case strings.HasSuffix(s, "G"):
+		scale = 1024
+	case strings.HasSuffix(s, "M"):
+		scale = 1
+	case strings.HasSuffix(s, "K"):
+		scale = 1.0 / 1024
+	default:
+		return 0, fmt.Errorf("invalid memory size %q: expected a form like 1G or 512M", size)
+	}
+	v, err := strconv.ParseFloat(s[:len(s)-1], 64)
+	// Python's int() raises on infinity and NaN; Go's conversion would not.
+	if err != nil || math.IsInf(v, 0) || math.IsNaN(v) {
+		return 0, fmt.Errorf("invalid memory size %q: expected a form like 1G or 512M", size)
+	}
+	return int(v * scale), nil
 }
 
 // discoverScript mirrors Harbor's own priority: .sh before .bat.

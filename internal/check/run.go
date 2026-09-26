@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -101,7 +102,12 @@ type Options struct {
 	Partial bool
 	// PartialMaxHunks caps how many hunks are withheld, one at a time.
 	PartialMaxHunks int
-	Log             *slog.Logger
+	// OverrideCPUs and OverrideMemoryMB replace every task's declared
+	// limits when positive, mirroring Harbor's --override-cpus and
+	// --override-memory-mb.
+	OverrideCPUs     float64
+	OverrideMemoryMB int
+	Log              *slog.Logger
 }
 
 // Runner executes controls against tasks.
@@ -318,12 +324,7 @@ func (r *Runner) runControl(ctx context.Context, t *task.Task, image string, c C
 		name = name[:100]
 	}
 
-	container, err := r.docker.Start(ctx, docker.StartOptions{
-		Image:    image,
-		Name:     name,
-		WorkDir:  t.Environment.WorkDir,
-		Platform: r.platform(t),
-	})
+	container, err := r.docker.Start(ctx, r.startOptions(t, image, name))
 	if err != nil {
 		out.Error = fmt.Sprintf("starting container: %v", err)
 		out.Duration = time.Since(start)
@@ -401,6 +402,17 @@ func (r *Runner) runControl(ctx context.Context, t *task.Task, image string, c C
 	writeFileAlways(filepath.Join(out.LogDir, "test.stderr"), testRes.Stderr)
 	writeFileAlways(filepath.Join(out.LogDir, "test.combined"), testRes.Combined)
 	writeFile(filepath.Join(out.LogDir, "exit-code.txt"), fmt.Sprintf("%d\n", testRes.ExitCode))
+
+	// A process the kernel killed for memory did not fail; it was stopped.
+	// Scoring what is left would read a limit as a verdict -- a nop at 0.00
+	// that never finished, an oracle at 0.00 that never got to pass. The
+	// flag is sticky for the container, so this also covers a solution
+	// script killed before the tests ran.
+	if msg := r.oomError(ctx, container, t); msg != "" {
+		out.Error = msg
+		out.Duration = time.Since(start)
+		return out
+	}
 
 	if testRes.TimedOut {
 		out.Error = fmt.Sprintf("test command timed out after %s", r.testTimeout(t))
@@ -514,6 +526,57 @@ func firstLine(s string) string {
 		return s[:i]
 	}
 	return s
+}
+
+// startOptions is how every control's container is started: the task's
+// image, working directory and platform, and its resource limits.
+func (r *Runner) startOptions(t *task.Task, image, name string) docker.StartOptions {
+	o := docker.StartOptions{
+		Image:    image,
+		Name:     name,
+		WorkDir:  t.Environment.WorkDir,
+		Platform: r.platform(t),
+	}
+	cpus, memoryMB := r.limits(t)
+	if cpus > 0 {
+		o.CPUs = strconv.FormatFloat(cpus, 'f', -1, 64)
+	}
+	if memoryMB > 0 {
+		o.Memory = fmt.Sprintf("%dm", memoryMB)
+	}
+	return o
+}
+
+// limits resolves the CPU and memory limits for a task's containers: the
+// command-line override when set, otherwise what the task declares. Zero
+// means no limit.
+func (r *Runner) limits(t *task.Task) (cpus float64, memoryMB int) {
+	cpus, memoryMB = t.Environment.CPUs, t.Environment.MemoryMB
+	if r.opts.OverrideCPUs > 0 {
+		cpus = r.opts.OverrideCPUs
+	}
+	if r.opts.OverrideMemoryMB > 0 {
+		memoryMB = r.opts.OverrideMemoryMB
+	}
+	return cpus, memoryMB
+}
+
+// oomError returns a control error when the kernel killed a process in the
+// container for memory, and "" otherwise. Failing to ask is an error too:
+// without the answer, a score of zero cannot be told from a kill.
+func (r *Runner) oomError(ctx context.Context, container string, t *task.Task) string {
+	_, memoryMB := r.limits(t)
+	killed, err := r.docker.OOMKilled(ctx, container)
+	if err != nil {
+		return fmt.Sprintf("could not check the container for an out-of-memory kill: %v", err)
+	}
+	if !killed {
+		return ""
+	}
+	if memoryMB > 0 {
+		return fmt.Sprintf("out of memory: a process was killed at the %d MB limit, so the score says nothing about the task", memoryMB)
+	}
+	return "out of memory: a process was killed by the kernel, so the score says nothing about the task"
 }
 
 // platform resolves the image architecture, preferring an explicit flag over

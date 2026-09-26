@@ -31,6 +31,8 @@ func newCheckCmd() *cobra.Command {
 		noCache        bool
 		partial        bool
 		partialMax     int
+		overrideCPUs   float64
+		overrideMemMB  int
 	)
 
 	cmd := &cobra.Command{
@@ -46,6 +48,10 @@ func newCheckCmd() *cobra.Command {
 
 			if only != "" && only != string(check.ControlNop) && only != string(check.ControlOracle) {
 				return fmt.Errorf("--only must be nop or oracle, got %q", only)
+			}
+
+			if overrideCPUs < 0 || overrideMemMB < 0 {
+				return fmt.Errorf("--override-cpus and --override-memory-mb must be positive")
 			}
 
 			dc := docker.New(log)
@@ -70,15 +76,17 @@ func newCheckCmd() *cobra.Command {
 			}
 
 			runner := check.NewRunner(dc, check.Options{
-				RunDir:          runDir,
-				Timeout:         timeout,
-				KeepContainers:  keepContainers,
-				NoCache:         noCache,
-				Only:            check.Control(only),
-				Platform:        platform,
-				Partial:         partial,
-				PartialMaxHunks: partialMax,
-				Log:             log,
+				RunDir:           runDir,
+				Timeout:          timeout,
+				KeepContainers:   keepContainers,
+				NoCache:          noCache,
+				Only:             check.Control(only),
+				Platform:         platform,
+				Partial:          partial,
+				PartialMaxHunks:  partialMax,
+				OverrideCPUs:     overrideCPUs,
+				OverrideMemoryMB: overrideMemMB,
+				Log:              log,
 			})
 
 			if parallel <= 0 {
@@ -132,6 +140,8 @@ func newCheckCmd() *cobra.Command {
 	f.BoolVar(&partial, "partial", false,
 		"also probe for weak tests: withhold one hunk of the reference patch and expect the score to drop")
 	f.IntVar(&partialMax, "partial-max-hunks", 3, "how many hunks to withhold, one at a time")
+	f.Float64Var(&overrideCPUs, "override-cpus", 0, "CPU limit for every task, replacing what tasks declare")
+	f.IntVar(&overrideMemMB, "override-memory-mb", 0, "memory limit in MB for every task, replacing what tasks declare")
 	return cmd
 }
 

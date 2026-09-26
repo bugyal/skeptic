@@ -697,3 +697,68 @@ comparing. That cannot separate the cases. On a host whose network is already
 broken, both runs fail the same way whether or not the solution is broken. The
 comparison only has power where the network works, and there the oracle
 passes and no question arises.
+
+---
+
+## D17. Resource limits are hard limits, and a memory kill is ERROR
+
+**Status:** decided.
+
+### What upstream does
+
+Read from the Harbor source at `d10ac31`:
+
+- `models/task/config.py` declares `cpus` and `memory_mb` as integers. It
+  still accepts the deprecated `memory = "2G"`, migrates it with
+  `_parse_size_to_mb`, and refuses to load a task whose `memory` and
+  `memory_mb` disagree.
+- `environments/base.py` resolves each resource through an enforcement policy
+  that defaults to `auto`. The Docker environment maps `auto` to `limit`
+  (`environments/docker/docker.py`), so by default both values become
+  compose's `cpus` and `mem_limit`, which are hard limits.
+- `--override-cpus` and `--override-memory-mb` replace the task's values.
+
+Terminal-Bench 1.x has no such fields in `task.yaml`. Two of its 241 tasks,
+`hf-lora-adapter` and `hf-train-lora-adapter`, set
+`deploy.resources.limits.memory` in their compose file. The harness runs
+`docker compose up`, and Compose applies those limits outside Swarm.
+Reservations are not limits and are ignored.
+
+Skeptic now applies all of these as `docker run --cpus/--memory`, mirrors the
+size parsing exactly (so a truncation or refusal upstream is one here), and
+adds the two override flags.
+
+### A memory kill is ERROR
+
+The roadmap's trap. A test process the kernel kills for memory did not fail;
+it was stopped. Scoring what is left reads a limit as a verdict: an oracle at
+0.00 would be `ORACLE_FAILS` against a working solution, and a nop at 0.00
+would look like a healthy control without ever having run.
+
+After the tests run, Skeptic asks Docker whether the container's OOM flag is
+set, and if so the control is `ERROR`, naming the limit. Two things were
+checked on a live daemon rather than assumed:
+
+- **The flag is set for an exec'd process.** The controls exec into a
+  container that only runs `sleep`, so the process killed is never the
+  container's own. Docker sets `.State.OOMKilled` anyway, and the container
+  keeps running. It is set by the time the exec returns (5 of 5 trials), and
+  stays false when nothing was killed.
+- **It works under cgroup v1.** The first idea was to read `oom_kill` from
+  `/sys/fs/cgroup/memory.events` inside the container. That file only exists
+  under cgroup v2, and the verification host was v1. The Docker flag reads
+  the same on both.
+
+Exit status 137 alone is not used: a timeout's kill produces it too, and a
+test runner can survive the death of one of its workers and exit 1.
+
+The flag stays set for the container's lifetime, so one check after the tests
+also covers a solution script killed earlier. If the check cannot be made at
+all, the control is `ERROR`: without the answer, a zero cannot be told from a
+kill.
+
+### What stays unlimited
+
+A task declaring nothing runs without limits, as before. `storage_mb` and
+GPUs are not applied; Docker cannot enforce the first portably, and Skeptic
+has no GPU path.

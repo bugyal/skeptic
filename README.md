@@ -73,7 +73,7 @@ and the captured output behind them.
 | `NOP_PASSES` | tests reward an untouched workspace | ✓ |
 | `ORACLE_FAILS` | the reference solution doesn't pass | ✓ |
 | `BOTH` | both controls wrong | ✓ |
-| `ERROR` | build failed, timed out, or score unreadable | ✓ |
+| `ERROR` | build failed, timed out, killed for memory, tests could not reach the network, or score unreadable | ✓ |
 | `NO_ORACLE` | no reference solution ships; oracle can't run | |
 | `UNSUPPORTED` | recognised but not runnable faithfully | |
 
@@ -114,7 +114,14 @@ skeptic version
 
 Useful `check` flags: `--task ID` (repeatable), `--limit N`, `--parallel N`,
 `--timeout 30m`, `--only nop|oracle`, `--json out.json`, `--no-fail-on-flagged`,
-`--keep-containers`, `--no-cache`.
+`--keep-containers`, `--no-cache`, `--override-cpus N`, `--override-memory-mb N`.
+
+A task's declared CPU and memory limits are applied to every control's
+container as hard limits, as Harbor's Docker environment does:
+`cpus`/`memory_mb` (and the legacy `memory = "2G"`) in Harbor's `task.toml`,
+`deploy.resources.limits` in a Terminal-Bench 1.x compose file, and the same two
+keys in `skeptic.toml`. A test killed at the limit is `ERROR`, not a score of
+zero. The two override flags replace every task's limits.
 
 ### `skeptic lint`
 
@@ -159,6 +166,8 @@ dockerfile = "environment/Dockerfile" # or: image = "registry/name:tag"
 context    = "environment"            # required with dockerfile
 workdir    = "/app"                   # required; solution and tests run here
 # platform = "linux/amd64"            # build_args, build_timeout_sec also accepted
+# cpus = 2                            # optional hard limits; leave out for none
+# memory_mb = 2048
 
 [solution]
 kind   = "script"                     # "script", "patch" or "none"

@@ -14,8 +14,18 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   network-failure line. A nop that passes is still reported, and a failure
   with no network evidence is still `ORACLE_FAILS`. See `docs/decisions.md`
   D16.
+- **Declared resource limits are applied.** Harbor's `cpus` and `memory_mb`
+  were parsed and then ignored, so a task written to run in 2 GB got whatever
+  the host had. They are now hard limits on every control's container, as in
+  Harbor's own Docker environment, together with Harbor's legacy
+  `memory = "2G"` and Terminal-Bench 1.x's compose
+  `deploy.resources.limits`. A test the kernel kills at the limit is reported
+  as `ERROR`, never as a score of zero. See `docs/decisions.md` D17.
 
 ### Added
+
+- `--override-cpus` and `--override-memory-mb` replace every task's declared
+  limits, mirroring Harbor's flags of the same names.
 
 - **A custom `skeptic.toml` format** for benchmarks that do not use Harbor's
   layout. One manifest per task directory names the environment (a Dockerfile

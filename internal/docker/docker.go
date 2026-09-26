@@ -256,6 +256,22 @@ func (c *Client) Start(ctx context.Context, o StartOptions) (string, error) {
 	return strings.TrimSpace(res.Stdout), nil
 }
 
+// OOMKilled reports whether the kernel's OOM killer has killed any process in
+// the container since it started. Docker sets the flag on the container even
+// when the victim is an exec'd process and the container itself keeps
+// running, which is the case here: the controls exec into a container that
+// only runs sleep. It reads the same way under cgroup v1 and v2.
+func (c *Client) OOMKilled(ctx context.Context, container string) (bool, error) {
+	res, err := c.run(ctx, 30*time.Second, "inspect", "--format", "{{.State.OOMKilled}}", container)
+	if err != nil {
+		return false, err
+	}
+	if res.ExitCode != 0 {
+		return false, fmt.Errorf("inspecting %s: %s", container, strings.TrimSpace(res.Stderr))
+	}
+	return strings.TrimSpace(res.Stdout) == "true", nil
+}
+
 // ExecOptions configures a command inside a container.
 type ExecOptions struct {
 	WorkDir string

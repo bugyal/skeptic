@@ -66,6 +66,10 @@ type manifest struct {
 		Platform        string            `toml:"platform"`
 		BuildArgs       map[string]string `toml:"build_args"`
 		BuildTimeoutSec float64           `toml:"build_timeout_sec"`
+		// Pointers, so an explicit 0 can be refused rather than read as
+		// "no limit": leaving the key out is how a task declares none.
+		CPUs     *float64 `toml:"cpus"`
+		MemoryMB *int     `toml:"memory_mb"`
 	} `toml:"environment"`
 	Solution struct {
 		Kind       string            `toml:"kind"`
@@ -171,6 +175,19 @@ func buildEnvironment(t *task.Task, abs string, m *manifest) string {
 		Platform:     e.Platform,
 		BuildArgs:    e.BuildArgs,
 		BuildTimeout: seconds(e.BuildTimeoutSec, buildTimeout),
+	}
+
+	if e.CPUs != nil {
+		if *e.CPUs <= 0 {
+			return fmt.Sprintf("environment.cpus must be positive, got %v; leave it out for no limit", *e.CPUs)
+		}
+		env.CPUs = *e.CPUs
+	}
+	if e.MemoryMB != nil {
+		if *e.MemoryMB <= 0 {
+			return fmt.Sprintf("environment.memory_mb must be positive, got %d; leave it out for no limit", *e.MemoryMB)
+		}
+		env.MemoryMB = *e.MemoryMB
 	}
 
 	switch {

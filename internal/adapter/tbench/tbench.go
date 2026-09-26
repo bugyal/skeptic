@@ -20,8 +20,12 @@ package tbench
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bugyal/skeptic/internal/task"
@@ -121,10 +125,18 @@ func (a *Adapter) Load(dir string) (*task.Task, error) {
 		return t, nil
 	}
 
+	cpus, memoryMB, reason := composeLimits(abs)
+	if reason != "" {
+		t.Unsupported = reason
+		return t, nil
+	}
+
 	t.Environment = task.Environment{
 		Dockerfile:   dockerfile,
 		ContextDir:   abs,
 		BuildTimeout: buildTimeout,
+		CPUs:         cpus,
+		MemoryMB:     memoryMB,
 	}
 
 	sol, err := stageSolution(abs)
@@ -226,6 +238,94 @@ func composeUnsupported(dir string) string {
 		}
 	}
 	return ""
+}
+
+// composeLimits reads the resource limits of the single compose service.
+// Terminal-Bench starts tasks with `docker compose up`, and Compose applies
+// deploy.resources.limits outside Swarm, so a task declaring
+// `memory: 4.0G` runs capped at 4 GiB upstream and must here too. The
+// service-level mem_limit and cpus are honoured when deploy does not set a
+// value. Reservations are not limits and are ignored.
+func composeLimits(dir string) (cpus float64, memoryMB int, reason string) {
+	for _, name := range []string{"docker-compose.yaml", "docker-compose.yml"} {
+		b, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			continue
+		}
+		var doc struct {
+			Services map[string]struct {
+				MemLimit interface{} `yaml:"mem_limit"`
+				CPUs     interface{} `yaml:"cpus"`
+				Deploy   struct {
+					Resources struct {
+						Limits struct {
+							Memory interface{} `yaml:"memory"`
+							CPUs   interface{} `yaml:"cpus"`
+						} `yaml:"limits"`
+					} `yaml:"resources"`
+				} `yaml:"deploy"`
+			} `yaml:"services"`
+		}
+		if err := yaml.Unmarshal(b, &doc); err != nil {
+			return 0, 0, fmt.Sprintf("unparsable %s", name)
+		}
+		// composeUnsupported has already required exactly one service.
+		for _, svc := range doc.Services {
+			lim := svc.Deploy.Resources.Limits
+			mem, cpu := lim.Memory, lim.CPUs
+			if mem == nil {
+				mem = svc.MemLimit
+			}
+			if cpu == nil {
+				cpu = svc.CPUs
+			}
+			if mem != nil {
+				bytes, err := ramInBytes(mem)
+				if err != nil {
+					return 0, 0, fmt.Sprintf("%s: memory limit %v: %v", name, mem, err)
+				}
+				memoryMB = int(bytes / (1024 * 1024))
+				if memoryMB == 0 {
+					// Below a megabyte cannot be expressed in MB, and no
+					// real task would start in it; refuse rather than drop.
+					return 0, 0, fmt.Sprintf("%s: memory limit %v is below 1 MB", name, mem)
+				}
+			}
+			if cpu != nil {
+				v, err := strconv.ParseFloat(strings.TrimSpace(fmt.Sprint(cpu)), 64)
+				if err != nil || v < 0 || math.IsInf(v, 0) || math.IsNaN(v) {
+					return 0, 0, fmt.Sprintf("%s: cpu limit %v is not a number", name, cpu)
+				}
+				cpus = v
+			}
+		}
+		return cpus, memoryMB, ""
+	}
+	return 0, 0, ""
+}
+
+// ramSize is the byte-size syntax Compose accepts for memory, from
+// docker/go-units RAMInBytes: a number, then an optional unit k, m, g, t or
+// p, optionally followed by b or ib, all binary multiples, case-insensitive.
+var ramSize = regexp.MustCompile(`(?i)^(\d+(?:\.\d+)?)\s*([kmgtp])?(?:i?b)?$`)
+
+func ramInBytes(v interface{}) (int64, error) {
+	switch n := v.(type) {
+	case int:
+		return int64(n), nil
+	case int64:
+		return n, nil
+	}
+	m := ramSize.FindStringSubmatch(strings.TrimSpace(fmt.Sprint(v)))
+	if m == nil {
+		return 0, fmt.Errorf("not a size Compose accepts")
+	}
+	f, err := strconv.ParseFloat(m[1], 64)
+	if err != nil {
+		return 0, err
+	}
+	mult := map[string]float64{"": 1, "k": 1 << 10, "m": 1 << 20, "g": 1 << 30, "t": 1 << 40, "p": 1 << 50}[strings.ToLower(m[2])]
+	return int64(f * mult), nil
 }
 
 func seconds(v float64, fallback time.Duration) time.Duration {

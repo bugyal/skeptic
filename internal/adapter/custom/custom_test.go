@@ -136,6 +136,8 @@ func TestInvalidManifestsAreUnsupported(t *testing.T) {
 		{"reward file without paths", strings.Replace(valid, `kind = "exit_code"`, `kind = "reward_file"`, 1), "paths is required"},
 		{"reward path relative", strings.Replace(valid, `kind = "exit_code"`, "kind = \"reward_file\"\npaths = [\"reward.txt\"]", 1), "absolute container path"},
 		{"reward path extension", strings.Replace(valid, `kind = "exit_code"`, "kind = \"reward_file\"\npaths = [\"/logs/reward.yaml\"]", 1), ".json or .txt"},
+		{"zero cpus", strings.Replace(valid, `workdir = "/app"`, "workdir = \"/app\"\ncpus = 0", 1), "environment.cpus must be positive"},
+		{"negative memory", strings.Replace(valid, `workdir = "/app"`, "workdir = \"/app\"\nmemory_mb = -1", 1), "environment.memory_mb must be positive"},
 		{"exit code with paths", strings.Replace(valid, `kind = "exit_code"`, "kind = \"exit_code\"\npaths = [\"/r.txt\"]", 1), "do not apply"},
 	}
 	for _, c := range cases {
@@ -182,4 +184,18 @@ func load(t *testing.T, manifest string) *task.Task {
 		t.Fatalf("Load returned an error; problems must be reported as Unsupported: %v", err)
 	}
 	return got
+}
+
+func TestResourceLimits(t *testing.T) {
+	got := load(t, strings.Replace(valid, `workdir = "/app"`, "workdir = \"/app\"\ncpus = 1.5\nmemory_mb = 2048", 1))
+	if got.Unsupported != "" {
+		t.Fatalf("Unsupported = %q", got.Unsupported)
+	}
+	if got.Environment.CPUs != 1.5 || got.Environment.MemoryMB != 2048 {
+		t.Errorf("CPUs, MemoryMB = %v, %d; want 1.5, 2048", got.Environment.CPUs, got.Environment.MemoryMB)
+	}
+	// Left out means no limit.
+	if got := load(t, valid); got.Environment.CPUs != 0 || got.Environment.MemoryMB != 0 {
+		t.Errorf("undeclared limits = %v, %d; want 0, 0", got.Environment.CPUs, got.Environment.MemoryMB)
+	}
 }

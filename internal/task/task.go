@@ -42,6 +42,12 @@ type Environment struct {
 	// benchmark images are often amd64-only, and running one on arm64 without
 	// saying so silently falls back to emulation or fails obscurely.
 	Platform string `json:"platform,omitempty"`
+	// CPUs and MemoryMB are the limits the task declares for its container,
+	// applied as hard limits the way Harbor's Docker environment applies
+	// them. Zero means the task declares none, and the container gets
+	// whatever the host has.
+	CPUs     float64 `json:"cpus,omitempty"`
+	MemoryMB int     `json:"memory_mb,omitempty"`
 }
 
 // Prebuilt reports whether the environment is an image reference rather than

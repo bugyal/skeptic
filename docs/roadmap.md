@@ -60,24 +60,13 @@ us once; see `results/swe-bench-verified/2026-09-24/README.md`.
 
 ---
 
-## 4. Honour per-task resource limits — good first issue
+## 4. Honour per-task resource limits — done
 
-**Why.** Harbor's `task.toml` declares `[environment] cpus` and `memory_mb`.
-Skeptic parses both and then ignores them, so a task authored to run in 2 GB
-gets whatever the host has. That makes results less reproducible than the task
-author intended, and lets one task starve others under `--parallel`.
-
-**Where.** `internal/adapter/harbor/harbor.go` parses them into its config
-struct (`CPUs`, `MemoryMB`) but never puts them on the `task.Task`. Add fields
-to `task.Environment` in `internal/task/task.go`, populate them in the adapter,
-and pass them through in `internal/check/run.go`. The plumbing at the far end
-already exists: `docker.StartOptions` has `Memory` and `CPUs`.
-
-**Done when.** A task declaring `memory_mb = 2048` starts with `--memory 2048m`,
-a unit test asserts the value reaches `StartOptions`, and a flag can override it.
-
-**The trap.** An out-of-memory kill must not read as a failing test. Check
-whether the container was OOM-killed and report `ERROR`, not a score of zero.
+Harbor's `cpus`, `memory_mb` and legacy `memory`, Terminal-Bench 1.x's compose
+`deploy.resources.limits`, and two new `skeptic.toml` keys are applied as
+hard limits, with `--override-cpus` and `--override-memory-mb` to replace
+them. A test killed at the limit is `ERROR`. `docs/decisions.md` D17 has the
+details, including what Harbor's source said that the sketch here did not.
 
 ---
 

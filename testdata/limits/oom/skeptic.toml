@@ -1,0 +1,26 @@
+# A task whose tests need more memory than it declares. The kernel kills the
+# test process at the limit, and Skeptic must report that as ERROR: a score of
+# zero here would say the task is broken when only the limit was hit. With
+# --override-memory-mb 1024 the same task is CLEAN.
+format_version = 1
+
+[task]
+id          = "limits-fixtures/oom"
+instruction = "instruction.md"
+
+[environment]
+image     = "python:3.12-slim"
+workdir   = "/app"
+memory_mb = 64
+
+[solution]
+kind   = "script"
+script = "solution/solve.sh"
+
+[tests]
+command = "python3 /grader/test.py"
+dir     = "tests"
+mount   = "/grader"
+
+[tests.score]
+kind = "exit_code"
