@@ -1,6 +1,7 @@
 package harbor
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -43,8 +44,11 @@ func TestLoadClean(t *testing.T) {
 	if got.Solution.Script != "solve.sh" {
 		t.Errorf("Solution.Script = %q, want solve.sh", got.Solution.Script)
 	}
-	if got.Environment.WorkDir != "/app" {
-		t.Errorf("WorkDir = %q, want /app", got.Environment.WorkDir)
+	// task.toml sets no workdir, so the image's own WORKDIR applies, as in
+	// Harbor: no -w is passed at all.
+	if got.Environment.WorkDir != "" || got.Tests.WorkDir != "" || got.Solution.WorkDir != "" {
+		t.Errorf("WorkDir = %q/%q/%q, want empty (the image's WORKDIR)",
+			got.Environment.WorkDir, got.Tests.WorkDir, got.Solution.WorkDir)
 	}
 	// reward.json must be tried before reward.txt, matching Harbor's verifier.
 	want := []string{RewardJSON, RewardText}
@@ -66,5 +70,30 @@ func TestLoadNoSolution(t *testing.T) {
 	}
 	if got.Tests.Command == "" {
 		t.Error("tests should still be loaded when no solution exists")
+	}
+}
+
+// An explicit workdir is passed through to every command.
+func TestLoadExplicitWorkdir(t *testing.T) {
+	dir := t.TempDir()
+	for name, body := range map[string]string{
+		"task.toml":              "[environment]\nworkdir = \"/custom-workdir\"\n",
+		"environment/Dockerfile": "FROM alpine:3\n",
+		"tests/test.sh":          "#!/bin/sh\n",
+	} {
+		p := filepath.Join(dir, name)
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte(body), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	got, err := New().Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Environment.WorkDir != "/custom-workdir" || got.Tests.WorkDir != "/custom-workdir" {
+		t.Errorf("WorkDir = %q/%q, want /custom-workdir", got.Environment.WorkDir, got.Tests.WorkDir)
 	}
 }

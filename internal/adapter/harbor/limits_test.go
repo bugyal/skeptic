@@ -110,3 +110,33 @@ func TestLoadResourceLimits(t *testing.T) {
 		t.Errorf("Unsupported = %q, want the size error", got.Unsupported)
 	}
 }
+
+// Each case matches resolve_env_vars in src/harbor/utils/env.py.
+func TestResolveEnv(t *testing.T) {
+	t.Setenv("SKEPTIC_TEST_HOST_VAR", "from-host")
+	got, err := resolveEnv(map[string]string{
+		"literal":       "plain",
+		"from host":     "${SKEPTIC_TEST_HOST_VAR}",
+		"default used":  "${SKEPTIC_TEST_UNSET:-fallback}",
+		"host wins":     "${SKEPTIC_TEST_HOST_VAR:-fallback}",
+		"empty default": "${SKEPTIC_TEST_UNSET:-}",
+		// fullmatch: a template inside a longer value is a literal.
+		"embedded": "x-${SKEPTIC_TEST_HOST_VAR}",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]string{
+		"literal": "plain", "from host": "from-host", "default used": "fallback",
+		"host wins": "from-host", "empty default": "", "embedded": "x-${SKEPTIC_TEST_HOST_VAR}",
+	}
+	for k, v := range want {
+		if got[k] != v {
+			t.Errorf("%s = %q, want %q", k, got[k], v)
+		}
+	}
+	if _, err := resolveEnv(map[string]string{"API_KEY": "${SKEPTIC_TEST_UNSET}"}); err == nil ||
+		!strings.Contains(err.Error(), "SKEPTIC_TEST_UNSET") {
+		t.Errorf("missing required variable: err = %v, want one naming it", err)
+	}
+}

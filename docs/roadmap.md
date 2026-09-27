@@ -100,10 +100,10 @@ about 4 GB. Record the result beside `results/swe-bench-verified/2026-09-25-batc
 
 ## Larger, not yet specified
 
-- **Multi-service compose orchestration.** Today a task whose compose file
-  declares more than one service is `UNSUPPORTED` (`docs/decisions.md` D4).
-  Doing this properly means bringing up a stack, waiting on health checks, and
-  deciding which service the controls act on.
+- ~~**Multi-service compose orchestration.**~~ Done: see `docs/decisions.md`
+  D21. Still refused: a Terminal-Bench task with no service named as the
+  client container, and Harbor's multi-step and Windows tasks, which are
+  separate features.
 - ~~**Exercise the remaining log parsers against real instances.**~~ Done:
   all twelve SWE-bench parsers ran against live instances on 2026-09-25
   (`results/swe-bench-verified/2026-09-25-controls`), and the same subset was

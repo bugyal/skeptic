@@ -149,7 +149,13 @@ func (r *Runner) CheckTask(ctx context.Context, t *task.Task) TaskResult {
 		return res
 	}
 
-	image, digest, err := r.image(ctx, t, taskLogDir)
+	var image, digest string
+	var err error
+	if t.Environment.Compose != nil {
+		err = r.buildCompose(ctx, t, taskLogDir)
+	} else {
+		image, digest, err = r.image(ctx, t, taskLogDir)
+	}
 	if err != nil {
 		res.Verdict, res.Error = VerdictError, err.Error()
 		res.Reason = err.Error()
@@ -351,6 +357,17 @@ func (r *Runner) runControl(ctx context.Context, t *task.Task, image string, c C
 		name = name[:100]
 	}
 
+	if t.Environment.Compose != nil {
+		container, down, err := r.startCompose(ctx, t, name, out.LogDir)
+		defer down()
+		if err != nil {
+			out.Error = err.Error()
+			out.Duration = time.Since(start)
+			return out
+		}
+		return r.control(ctx, t, container, c, reducedPatch, out, start)
+	}
+
 	container, err := r.docker.Start(ctx, r.startOptions(t, image, name))
 	if err != nil {
 		out.Error = fmt.Sprintf("starting container: %v", err)
@@ -366,6 +383,13 @@ func (r *Runner) runControl(ctx context.Context, t *task.Task, image string, c C
 	} else {
 		r.log.Info("keeping container", "task", t.ID, "control", c, "container", name)
 	}
+	return r.control(ctx, t, container, c, reducedPatch, out, start)
+}
+
+// control runs one control inside a started container: prepare, apply the
+// solution if any, deliver the tests, run them and score. It is the same for
+// a single container and for the chosen service of a Compose project.
+func (r *Runner) control(ctx context.Context, t *task.Task, container string, c Control, reducedPatch string, out *ControlResult, start time.Time) *ControlResult {
 
 	// Harbor mounts these directories into every trial; test scripts in the
 	// wild write to them unconditionally.
@@ -563,6 +587,10 @@ func (r *Runner) startOptions(t *task.Task, image, name string) docker.StartOpti
 		Name:     name,
 		WorkDir:  t.Environment.WorkDir,
 		Platform: r.platform(t),
+		Env:      t.Environment.Env,
+		// Compose keeps the entrypoint anyway; this is the single
+		// container matching it.
+		KeepEntrypoint: t.Environment.KeepEntrypoint,
 	}
 	cpus, memoryMB := r.limits(t)
 	if cpus > 0 {

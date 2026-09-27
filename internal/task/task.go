@@ -48,6 +48,41 @@ type Environment struct {
 	// whatever the host has.
 	CPUs     float64 `json:"cpus,omitempty"`
 	MemoryMB int     `json:"memory_mb,omitempty"`
+
+	// Env is set in the agent's container when it starts, and so is seen by
+	// its entrypoint and by every command run in it: Harbor's
+	// [environment.env]. Sidecars do not get it.
+	Env map[string]string `json:"env,omitempty"`
+
+	// KeepEntrypoint runs the image's ENTRYPOINT with the idle command as
+	// its arguments, instead of clearing it. Harbor does this; an
+	// entrypoint that prepares the container is part of the task.
+	KeepEntrypoint bool `json:"keep_entrypoint,omitempty"`
+
+	// Compose, when set, runs the task as a Docker Compose project: the
+	// service the controls act on plus the sidecars it depends on. Dockerfile
+	// and Image are then unused. See docs/decisions.md D21.
+	Compose *Compose `json:"compose,omitempty"`
+}
+
+// Compose describes a multi-container environment the way the task's own
+// harness brings it up.
+type Compose struct {
+	// Files are host paths passed as -f, in order; later files override
+	// earlier ones.
+	Files []string `json:"files"`
+	// ProjectDir is where relative paths in the files resolve.
+	ProjectDir string `json:"project_dir"`
+	// Service is the one the agent works in, and so the one the solution and
+	// the tests run in: Harbor's "main", Terminal-Bench's "client".
+	Service string `json:"service"`
+	// Env holds the variables the files interpolate. Values may use
+	// ${SKEPTIC_PROJECT}, the per-control project name, and
+	// ${SKEPTIC_LOG_DIR}, a per-control host directory kept as evidence.
+	Env map[string]string `json:"env,omitempty"`
+	// Wait brings the project up with --wait, blocking until healthchecks
+	// pass, as Harbor does. Terminal-Bench 1.x does not wait.
+	Wait bool `json:"wait"`
 }
 
 // Prebuilt reports whether the environment is an image reference rather than

@@ -16,8 +16,10 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -34,7 +36,6 @@ const (
 	SolutionDir  = "/solution"
 	RewardJSON   = "/logs/verifier/reward.json"
 	RewardText   = "/logs/verifier/reward.txt"
-	defaultWork  = "/app"
 	formatName   = "harbor"
 	configFile   = "task.toml"
 	buildTimeout = 30 * time.Minute
@@ -84,6 +85,8 @@ type config struct {
 		Memory  interface{} `toml:"memory"`
 		OS      string      `toml:"os"`
 		WorkDir string      `toml:"workdir"`
+		// Env is [environment.env]: set in main when it starts.
+		Env map[string]string `toml:"env"`
 	} `toml:"environment"`
 	Steps []struct {
 		Name string `toml:"name"`
@@ -124,7 +127,8 @@ func (a *Adapter) Load(dir string) (*task.Task, error) {
 	}
 
 	envDir := filepath.Join(abs, "environment")
-	if reason := composeUnsupported(envDir); reason != "" {
+	composeFile, reason := taskCompose(envDir)
+	if reason != "" {
 		t.Unsupported = reason
 		return t, nil
 	}
@@ -133,10 +137,32 @@ func (a *Adapter) Load(dir string) (*task.Task, error) {
 	if err != nil {
 		return nil, err
 	}
+	if composeFile != "" && contextDir != envDir {
+		// Harbor's base compose file builds main from environment/, so a
+		// compose task with only a root Dockerfile has nothing to build.
+		t.Unsupported = "compose task without environment/Dockerfile: Harbor builds the main service from environment/"
+		return t, nil
+	}
 
+	// Harbor passes -w only when task.toml sets workdir; otherwise every
+	// command runs in the image's own WORKDIR (environments/docker/docker.py
+	// _exec; agents/oracle.py and verifier/verifier.py pass no cwd). An empty
+	// value here does the same. Defaulting to /app, as this adapter once did,
+	// ran describe-image's tests in /app instead of its /workspace, and failed
+	// outright on an image with no /app once tasks ran under Compose.
 	workdir := cfg.Environment.WorkDir
-	if workdir == "" {
-		workdir = defaultWork
+
+	// Harbor resolves ${VAR} and ${VAR:-default} in all three env tables
+	// from the host (utils/env.py resolve_env_vars, called by the
+	// environment, the oracle agent and the verifier), and refuses the task
+	// when a required variable is unset.
+	for _, table := range []*map[string]string{&cfg.Environment.Env, &cfg.Solution.Env, &cfg.Verifier.Env} {
+		resolved, err := resolveEnv(*table)
+		if err != nil {
+			t.Unsupported = err.Error()
+			return t, nil
+		}
+		*table = resolved
 	}
 
 	memoryMB, err := memoryLimit(cfg.Environment.MemoryMB, cfg.Environment.Memory)
@@ -154,6 +180,29 @@ func (a *Adapter) Load(dir string) (*task.Task, error) {
 		WorkDir:      workdir,
 		CPUs:         max(cfg.Environment.CPUs, 0),
 		MemoryMB:     memoryMB,
+		Env:          cfg.Environment.Env,
+		// Harbor's base compose file sets main's command to sleep infinity
+		// and leaves the image's ENTRYPOINT alone, so an entrypoint that
+		// prepares the container runs.
+		KeepEntrypoint: true,
+	}
+	if composeFile != "" {
+		base, err := composeBase()
+		if err != nil {
+			return nil, err
+		}
+		// Harbor's order: its base file, then the task's, so the task can
+		// override main and add the services main depends on.
+		t.Environment.Compose = &task.Compose{
+			Files:      []string{base, composeFile},
+			ProjectDir: envDir,
+			Service:    mainService,
+			Env: map[string]string{
+				"CONTEXT_DIR":     envDir,
+				"MAIN_IMAGE_NAME": "hb__skeptic-${SKEPTIC_PROJECT}",
+			},
+			Wait: true,
+		}
 	}
 	t.Solution = loadSolution(abs, cfg, workdir)
 
@@ -211,18 +260,47 @@ func locateDockerfile(abs, envDir string) (dockerfile, contextDir string, err er
 	return "", "", fmt.Errorf("no Dockerfile in %s or %s", envDir, abs)
 }
 
-// composeUnsupported returns a reason when a compose file describes something
-// Skeptic cannot faithfully run. See docs/decisions.md D4:
-//
-//   - a single service with a build unit is always supported — Skeptic starts
-//     it detached and drives both controls through docker exec, overriding
-//     whatever command it declares (Terminal-Bench boilerplate runs
-//     `sleep infinity`);
-//   - a single service with no build unit offers nothing to build or run;
-//   - multiple services need orchestrated networking (a database the task's
-//     tests talk to, for instance), which would make Skeptic's controls test
-//     a different system than the one the benchmark grades — refused.
-func composeUnsupported(envDir string) string {
+// mainService is the service Harbor runs the agent, the solution and the
+// tests in.
+const mainService = "main"
+
+// composeBaseYAML is src/harbor/environments/docker/docker-compose-build.yaml,
+// verbatim. Harbor layers the task's own compose file on top of it.
+const composeBaseYAML = `services:
+  main:
+    build:
+      context: ${CONTEXT_DIR}
+    pull_policy: build
+    command: [ "sh", "-c", "sleep infinity" ]
+`
+
+var (
+	baseOnce sync.Once
+	basePath string
+	baseErr  error
+)
+
+// composeBase writes Harbor's base compose file once per process and returns
+// its path.
+func composeBase() (string, error) {
+	baseOnce.Do(func() {
+		dir, err := os.MkdirTemp("", "skeptic-harbor-compose-")
+		if err != nil {
+			baseErr = err
+			return
+		}
+		basePath = filepath.Join(dir, "docker-compose-build.yaml")
+		baseErr = os.WriteFile(basePath, []byte(composeBaseYAML), 0o644)
+	})
+	return basePath, baseErr
+}
+
+// taskCompose finds the task's own compose file, if any. Harbor merges any
+// such file with its base, so every compose task runs as a Compose project
+// with the controls in main (docs/decisions.md D21, superseding D4 for this
+// format). A file that will not parse is refused: it may describe services
+// that would change what is being graded.
+func taskCompose(envDir string) (path, reason string) {
 	for _, name := range []string{"docker-compose.yaml", "docker-compose.yml"} {
 		p := filepath.Join(envDir, name)
 		if !isFile(p) {
@@ -230,31 +308,17 @@ func composeUnsupported(envDir string) string {
 		}
 		b, err := os.ReadFile(p)
 		if err != nil {
-			return fmt.Sprintf("unreadable %s", name)
+			return "", fmt.Sprintf("unreadable %s", name)
 		}
 		var doc struct {
-			Services map[string]struct {
-				// Build is present whenever the service declares a build
-				// unit; its shape (a string path or a mapping) does not
-				// matter here.
-				Build interface{} `yaml:"build"`
-			} `yaml:"services"`
+			Services map[string]interface{} `yaml:"services"`
 		}
 		if err := yaml.Unmarshal(b, &doc); err != nil {
-			return fmt.Sprintf("unparsable %s", name)
+			return "", fmt.Sprintf("unparsable %s", name)
 		}
-		switch {
-		case len(doc.Services) > 1:
-			return fmt.Sprintf("multi-container task (%d compose services)", len(doc.Services))
-		case len(doc.Services) == 1:
-			for _, svc := range doc.Services {
-				if svc.Build == nil {
-					return "compose service has no build unit; nothing to build or run"
-				}
-			}
-		}
+		return p, ""
 	}
-	return ""
+	return "", ""
 }
 
 // memoryLimit resolves memory_mb, migrating the deprecated memory field the
@@ -296,6 +360,35 @@ func parseSizeToMB(size string) (int, error) {
 		return 0, fmt.Errorf("invalid memory size %q: expected a form like 1G or 512M", size)
 	}
 	return int(v * scale), nil
+}
+
+// envTemplate is utils/env.py's _TEMPLATE_PATTERN, matched against the whole
+// value as fullmatch does.
+var envTemplate = regexp.MustCompile(`^\$\{([^}:]+)(?::-(.*))?\}$`)
+
+// resolveEnv mirrors resolve_env_vars: a value that is exactly ${VAR} or
+// ${VAR:-default} is replaced from the host environment, anything else is a
+// literal, and a template with no host value and no default is an error.
+func resolveEnv(env map[string]string) (map[string]string, error) {
+	if len(env) == 0 {
+		return env, nil
+	}
+	out := make(map[string]string, len(env))
+	for k, v := range env {
+		m := envTemplate.FindStringSubmatch(v)
+		if m == nil {
+			out[k] = v
+			continue
+		}
+		if host, ok := os.LookupEnv(m[1]); ok {
+			out[k] = host
+		} else if strings.Contains(v, ":-") {
+			out[k] = m[2]
+		} else {
+			return nil, fmt.Errorf("task needs host environment variable %s (for %s), which is not set", m[1], k)
+		}
+	}
+	return out, nil
 }
 
 // discoverScript mirrors Harbor's own priority: .sh before .bat.

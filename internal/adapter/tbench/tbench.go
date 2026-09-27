@@ -115,15 +115,23 @@ func (a *Adapter) Load(dir string) (*task.Task, error) {
 	}
 
 	// Refuse rather than mis-run, mirroring the harbor adapter's posture.
-	if reason := composeUnsupported(abs); reason != "" {
+	stack, reason := composeStack(abs, t.ID)
+	if reason != "" {
 		t.Unsupported = reason
 		return t, nil
 	}
 
+	// A single container is built from the task root's Dockerfile. A
+	// Compose stack builds whatever its services name, often from
+	// subdirectories, so it needs none at the root.
 	dockerfile := filepath.Join(abs, "Dockerfile")
+	contextDir := abs
 	if !isFile(dockerfile) {
-		t.Unsupported = "no Dockerfile in the task directory"
-		return t, nil
+		if stack == nil {
+			t.Unsupported = "no Dockerfile in the task directory"
+			return t, nil
+		}
+		dockerfile, contextDir = "", ""
 	}
 
 	testsDir := filepath.Join(abs, "tests")
@@ -133,7 +141,11 @@ func (a *Adapter) Load(dir string) (*task.Task, error) {
 		return t, nil
 	}
 
-	cpus, memoryMB, reason := composeLimits(abs)
+	service := ""
+	if stack != nil {
+		service = stack.Service
+	}
+	cpus, memoryMB, reason := composeLimits(abs, service)
 	if reason != "" {
 		t.Unsupported = reason
 		return t, nil
@@ -141,10 +153,11 @@ func (a *Adapter) Load(dir string) (*task.Task, error) {
 
 	t.Environment = task.Environment{
 		Dockerfile:   dockerfile,
-		ContextDir:   abs,
+		ContextDir:   contextDir,
 		BuildTimeout: buildTimeout,
 		CPUs:         cpus,
 		MemoryMB:     memoryMB,
+		Compose:      stack,
 	}
 
 	sol, err := stageSolution(abs)
@@ -227,9 +240,19 @@ func stageSolution(abs string) (task.Solution, error) {
 	}, nil
 }
 
-// composeUnsupported refuses tasks whose compose file declares anything other
-// than the generated single-service boilerplate. See docs/decisions.md D4.
-func composeUnsupported(dir string) string {
+// clientContainerVar is how a Terminal-Bench compose file names the container
+// the agent works in; the harness finds that container by this name.
+const clientContainerVar = "${T_BENCH_TASK_DOCKER_CLIENT_CONTAINER_NAME}"
+
+// composeStack decides how a task's compose file is run. The generated
+// single-service boilerplate stays on D4's path: build the Dockerfile and
+// start it directly. A file with more services is a real multi-container
+// task, and is run as a Compose project the way Terminal-Bench's harness runs
+// it (terminal_bench/terminal/docker_compose_manager.py): `docker compose -p
+// <client container name> -f docker-compose.yaml`, T_BENCH_* variables set,
+// `up -d` without waiting, controls in the client container. See
+// docs/decisions.md D21.
+func composeStack(dir, id string) (*task.Compose, string) {
 	for _, name := range []string{"docker-compose.yaml", "docker-compose.yml"} {
 		p := filepath.Join(dir, name)
 		if !isFile(p) {
@@ -237,28 +260,73 @@ func composeUnsupported(dir string) string {
 		}
 		b, err := os.ReadFile(p)
 		if err != nil {
-			return fmt.Sprintf("unreadable %s", name)
+			return nil, fmt.Sprintf("unreadable %s", name)
 		}
 		var doc struct {
 			Services map[string]struct {
-				Build interface{} `yaml:"build"`
+				Build         interface{} `yaml:"build"`
+				ContainerName string      `yaml:"container_name"`
 			} `yaml:"services"`
 		}
 		if err := yaml.Unmarshal(b, &doc); err != nil {
-			return fmt.Sprintf("unparsable %s", name)
+			return nil, fmt.Sprintf("unparsable %s", name)
 		}
-		switch {
-		case len(doc.Services) > 1:
-			return fmt.Sprintf("multi-container task (%d compose services)", len(doc.Services))
-		case len(doc.Services) == 1:
+		switch len(doc.Services) {
+		case 0:
+			return nil, ""
+		case 1:
 			for _, svc := range doc.Services {
 				if svc.Build == nil {
-					return "compose service has no build unit; nothing to build or run"
+					return nil, "compose service has no build unit; nothing to build or run"
 				}
 			}
+			return nil, ""
+		}
+
+		client := ""
+		for svcName, svc := range doc.Services {
+			if strings.TrimSpace(svc.ContainerName) == clientContainerVar {
+				client = svcName
+			}
+		}
+		if client == "" {
+			return nil, fmt.Sprintf("multi-container task (%d compose services) with no service named %s: "+
+				"the harness would not know where the agent works, and neither does Skeptic",
+				len(doc.Services), clientContainerVar)
+		}
+		return &task.Compose{
+			Files:      []string{p},
+			ProjectDir: dir,
+			Service:    client,
+			Env: map[string]string{
+				// One image per task, shared by every control's project,
+				// so each control does not rebuild it.
+				"T_BENCH_TASK_DOCKER_CLIENT_IMAGE_NAME":     "tb__skeptic-" + imageName(id),
+				"T_BENCH_TASK_DOCKER_CLIENT_CONTAINER_NAME": "${SKEPTIC_PROJECT}",
+				"T_BENCH_TASK_DOCKER_NAME_PREFIX":           "${SKEPTIC_PROJECT}",
+				"T_BENCH_CONTAINER_LOGS_PATH":               "/logs",
+				"T_BENCH_CONTAINER_AGENT_LOGS_PATH":         "/agent-logs",
+				"T_BENCH_TEST_DIR":                          TestsMount,
+				"T_BENCH_TASK_LOGS_PATH":                    "${SKEPTIC_LOG_DIR}/sessions",
+				"T_BENCH_TASK_AGENT_LOGS_PATH":              "${SKEPTIC_LOG_DIR}/agent-logs",
+			},
+			Wait: false,
+		}, ""
+	}
+	return nil, ""
+}
+
+// imageName lowercases a task ID into something Docker accepts as a tag.
+func imageName(id string) string {
+	var b strings.Builder
+	for _, r := range strings.ToLower(id) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' || r == '_' || r == '.' {
+			b.WriteRune(r)
+		} else {
+			b.WriteRune('-')
 		}
 	}
-	return ""
+	return b.String()
 }
 
 // composeLimits reads the resource limits of the single compose service.
@@ -267,7 +335,7 @@ func composeUnsupported(dir string) string {
 // `memory: 4.0G` runs capped at 4 GiB upstream and must here too. The
 // service-level mem_limit and cpus are honoured when deploy does not set a
 // value. Reservations are not limits and are ignored.
-func composeLimits(dir string) (cpus float64, memoryMB int, reason string) {
+func composeLimits(dir, service string) (cpus float64, memoryMB int, reason string) {
 	for _, name := range []string{"docker-compose.yaml", "docker-compose.yml"} {
 		b, err := os.ReadFile(filepath.Join(dir, name))
 		if err != nil {
@@ -290,8 +358,12 @@ func composeLimits(dir string) (cpus float64, memoryMB int, reason string) {
 		if err := yaml.Unmarshal(b, &doc); err != nil {
 			return 0, 0, fmt.Sprintf("unparsable %s", name)
 		}
-		// composeUnsupported has already required exactly one service.
-		for _, svc := range doc.Services {
+		// With one service it is the one; with several, the client's limits
+		// are the ones the controls run under.
+		for name, svc := range doc.Services {
+			if service != "" && name != service {
+				continue
+			}
 			lim := svc.Deploy.Resources.Limits
 			mem, cpu := lim.Memory, lim.CPUs
 			if mem == nil {

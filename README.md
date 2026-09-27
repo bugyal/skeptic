@@ -229,6 +229,7 @@ WARN  example/leaky-instruction
 | SWE-bench (local JSONL + published images) | supported |
 | Terminal-Bench 1.x (`task.yaml`) | supported |
 | Custom `skeptic.toml` | supported — see below |
+| Multi-container tasks (Docker Compose) | supported for Harbor and Terminal-Bench 1.x |
 
 ### Custom `skeptic.toml`
 
@@ -275,6 +276,18 @@ reason, rather than running it on a guess — a typo such as `workdri` is
 reported, not silently dropped. `kind = "none"` has to be written out; it gives
 the `NO_ORACLE` verdict. A `patch` solution also gets the partial control.
 Working examples are in [`testdata/custom`](testdata/custom).
+
+### Multi-container tasks
+
+Some tasks run the agent beside other containers: a database, an API it has
+to call, a server it has to break into. Skeptic brings the whole stack up
+the way the task's own harness does, and runs its checks in the container
+the agent would work in. That is `main` for Harbor and the client for
+Terminal-Bench 1.x. Every check gets a fresh stack, torn down afterwards,
+volumes included. A stack that will not build, start or pass its health
+checks is `ERROR`, because the system being graded never existed. Tasks that
+publish a fixed host port can collide under `--parallel`, so run those one
+at a time. Details: `docs/decisions.md` D21.
 
 ### Terminal-Bench 1.x exit-status mapping
 
@@ -428,8 +441,6 @@ that. It does not run agents or call any model.
 
 - Run the full SWE-bench Verified set on a machine with the disk for it
   (about 2 TB of image traffic)
-- Multi-service compose orchestration (a whole compose stack brought up and
-  cross-probed, beyond D4's single-buildable-service policy)
 - Homebrew tap (needs a tap repository and a token; see `docs/roadmap.md`)
 
 `docs/roadmap.md` has each item written up to be picked up cold.

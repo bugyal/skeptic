@@ -3,7 +3,6 @@ package harbor
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -39,72 +38,53 @@ func writeTaskDir(t *testing.T, extra map[string]string) string {
 	return dir
 }
 
-// The Terminal-Bench 1.x boilerplate compose file: one `client` service whose
-// command is `sleep infinity`. D4 rules it supported: Skeptic starts the
-// container detached and drives the controls through exec, overriding the
-// command entirely.
-func TestComposeBoilerplateSupported(t *testing.T) {
-	dir := writeTaskDir(t, map[string]string{
-		"environment/docker-compose.yaml": strings.Join([]string{
-			"services:",
-			"  client:",
-			"    build: .",
-			"    command: [\"sh\", \"-c\", \"sleep infinity\"]",
-			"    environment:",
-			"      - TEST_DIR=/tests",
-			"    volumes:",
-			"      - ./logs:/logs",
-		}, "\n"),
-	})
-	tk, err := New().Load(dir)
-	if err != nil {
-		t.Fatalf("Load: %v", err)
-	}
-	if tk.Unsupported != "" {
-		t.Fatalf("Unsupported = %q, want empty for the single-service boilerplate", tk.Unsupported)
-	}
-}
-
-// Two services mean the task grades a multi-container system that Skeptic
-// would not reproduce; the task must be refused as unsupported, not mis-run.
-func TestComposeMultiServiceUnsupported(t *testing.T) {
-	dir := writeTaskDir(t, map[string]string{
-		"environment/docker-compose.yaml": strings.Join([]string{
-			"services:",
-			"  client:",
-			"    build: .",
-			"    command: [\"sh\", \"-c\", \"sleep infinity\"]",
-			"  database:",
-			"    image: postgres:16",
-		}, "\n"),
-	})
-	tk, err := New().Load(dir)
-	if err != nil {
-		t.Fatalf("Load: %v", err)
-	}
-	if tk.Unsupported == "" {
-		t.Fatal("Unsupported = empty, want a multi-container reason")
-	}
-	if want := "2 compose services"; !strings.Contains(tk.Unsupported, want) {
-		t.Errorf("Unsupported = %q, want it to mention %q", tk.Unsupported, want)
+// Harbor merges any task compose file on top of its base, which defines
+// main. Every one of these therefore runs as a Compose project with the
+// controls in main (docs/decisions.md D21).
+func TestComposeTasksRunAsProjects(t *testing.T) {
+	for _, tc := range []struct {
+		name, compose string
+	}{
+		{"sidecar database", "services:\n  main:\n    depends_on: [database]\n  database:\n    image: postgres:16\n"},
+		{"main overrides only", "services:\n  main:\n    environment:\n      - MODE=test\n"},
+		// Refused before D21: no build unit. Harbor adds main from its base,
+		// so this is main plus an alpine sidecar.
+		{"image-only service", "services:\n  client:\n    image: alpine:3\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := writeTaskDir(t, map[string]string{"environment/docker-compose.yaml": tc.compose})
+			tk, err := New().Load(dir)
+			if err != nil {
+				t.Fatalf("Load: %v", err)
+			}
+			if tk.Unsupported != "" {
+				t.Fatalf("Unsupported = %q, want a compose task", tk.Unsupported)
+			}
+			c := tk.Environment.Compose
+			if c == nil {
+				t.Fatal("Environment.Compose = nil")
+			}
+			if c.Service != "main" || !c.Wait || len(c.Files) != 2 {
+				t.Errorf("Compose = %+v, want service main, --wait, base + task file", c)
+			}
+			if filepath.Base(c.Files[1]) != "docker-compose.yaml" || c.ProjectDir != filepath.Join(dir, "environment") {
+				t.Errorf("task file %q, project dir %q", c.Files[1], c.ProjectDir)
+			}
+			if c.Env["CONTEXT_DIR"] != c.ProjectDir {
+				t.Errorf("CONTEXT_DIR = %q, want the environment directory", c.Env["CONTEXT_DIR"])
+			}
+		})
 	}
 }
 
-// A compose file with one service but no build unit cannot be started.
-func TestComposeSingleServiceNoBuildUnsupported(t *testing.T) {
-	dir := writeTaskDir(t, map[string]string{
-		"environment/docker-compose.yaml": strings.Join([]string{
-			"services:",
-			"  client:",
-			"    image: alpine:3",
-		}, "\n"),
-	})
-	tk, err := New().Load(dir)
+// A task with no compose file is still a single container.
+func TestNoComposeFileIsSingleContainer(t *testing.T) {
+	tk, err := New().Load(writeTaskDir(t, nil))
 	if err != nil {
-		t.Fatalf("Load: %v", err)
+		t.Fatal(err)
 	}
-	if tk.Unsupported == "" {
-		t.Fatal("Unsupported = empty, want a no-buildable-unit reason")
+	if tk.Environment.Compose != nil {
+		t.Errorf("Compose = %+v, want nil", tk.Environment.Compose)
 	}
 }
 
@@ -113,13 +93,18 @@ func TestComposeYmlExtensionHandled(t *testing.T) {
 	dir := writeTaskDir(t, map[string]string{
 		"environment/docker-compose.yml": "services:\n  client:\n    build: .\n",
 	})
-	if _, err := New().Load(dir); err != nil {
+	tk, err := New().Load(dir)
+	if err != nil {
 		t.Fatalf("Load: %v", err)
+	}
+	if tk.Environment.Compose == nil {
+		t.Error("a .yml compose file was ignored")
 	}
 }
 
 // An unparsable compose file must refuse the task, not silently treat it as
-// absent — an unreadable description may hide a second service.
+// absent: an unreadable description may hide a service that changes what is
+// graded.
 func TestComposeUnparsableRefused(t *testing.T) {
 	dir := writeTaskDir(t, map[string]string{
 		"environment/docker-compose.yaml": "services: [oops",

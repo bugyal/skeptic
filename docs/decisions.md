@@ -917,3 +917,104 @@ stamped the result with the reading machine's host and the current time.
 Fragments from an arm64 Mac merged on an amd64 Linux host therefore claimed
 amd64, in a project where emulation against native was a real question. The
 merge now takes both from the fragments.
+
+---
+
+## D21. Multi-container tasks run as Compose projects
+
+**Status:** decided. Supersedes D4's refusal of multi-service compose files.
+
+D4 refused any task whose compose file described more than one service,
+because running a multi-container task as a single container would grade a
+different system. The roadmap asked for the real thing: bring the stack up,
+wait on health checks, and decide which service the controls act on. Each of
+those answers is taken from the task's own harness, not chosen here.
+
+### Harbor
+
+`src/harbor/environments/docker/docker.py`, at `d10ac31`:
+
+- **Which files.** Harbor layers its own `docker-compose-build.yaml`, which
+  defines `main` built from `environment/` running `sleep infinity`, under the
+  task's `environment/docker-compose.yaml`. The project directory is
+  `environment/`, and `CONTEXT_DIR` and `MAIN_IMAGE_NAME` are set for
+  interpolation. Skeptic writes that base file verbatim and passes the same
+  order.
+- **Which service.** Harbor runs the agent, the solution and the verifier in
+  `main`, so the controls act there.
+- **Waiting.** Harbor starts with `up --wait`, blocking until every
+  healthcheck passes, and so does Skeptic.
+
+Harbor merges *any* task compose file, so every Harbor task with one now runs
+this way. That includes files that only override `main`, and image-only
+sidecars, which D4 refused as having no build unit.
+
+### Terminal-Bench 1.x
+
+`terminal_bench/terminal/docker_compose_manager.py`:
+
+- The single-service boilerplate stays on D4's path. It is 229 of 241 tasks,
+  and building its Dockerfile directly is proven.
+- A file with more services runs as `docker compose -p <name> -f
+  docker-compose.yaml`, with the eight `T_BENCH_*` variables the harness sets.
+  The client container name is unique per control, and the two host log
+  paths point into the control's evidence directory.
+- The agent's service is the one whose `container_name` is
+  `${T_BENCH_TASK_DOCKER_CLIENT_CONTAINER_NAME}`: that is how the harness
+  finds it. A task with no such service is refused; `find-restaurant` is
+  the one case.
+- The harness runs `up -d` without waiting, and so does Skeptic. A sidecar
+  that is slow to start is part of the task as upstream runs it.
+
+11 of the 12 multi-container Terminal-Bench tasks and every Harbor compose
+example now load. Each control gets a fresh project. Resource limits
+(D17) and startup env go on the agent's service through an override file,
+the way Harbor's resources and env compose files do. Stack logs are kept as
+evidence. The project is removed with `down -v`, so named volumes do not
+carry state from one control to the next.
+
+### What makes a compose task ERROR
+
+A build that fails, a stack that does not come up, or a healthcheck that
+never passes is `ERROR`: the system under test never existed, so there is
+nothing to grade. `e2e/compose_test.go` pins the unhealthy-sidecar case. A
+task that publishes a fixed host port (`ancient-puzzle` publishes 8090) can
+collide with itself under `--parallel`; that is also `ERROR`, never a score.
+Run such tasks with `--parallel 1`.
+
+### Three Harbor fidelity bugs this uncovered
+
+Running Harbor's real multi-container examples found three places where
+Skeptic had never matched Harbor. Each affected single-container tasks too:
+
+1. **Working directory.** The adapter defaulted to `/app` when `task.toml`
+   set no `workdir`. Harbor passes `-w` only when one is set, and the oracle
+   agent and the verifier pass none, so commands run in the image's own
+   `WORKDIR`. `describe-image` (`WORKDIR /workspace`) was graded in the wrong
+   directory. Under Compose the default failed outright: `docker run -w`
+   creates a missing directory, `docker exec -w` does not.
+2. **`[environment.env]` was ignored,** and `${VAR}` templates in
+   `[solution.env]` and `[verifier.env]` were passed through literally.
+   Harbor resolves all three with `resolve_env_vars` (`utils/env.py`), and
+   refuses a task whose required host variable is unset. Skeptic now does the
+   same, reporting such a task `UNSUPPORTED` with the variable named. Before
+   this, `llm-judge-example`'s judge received the literal string
+   `${ANTHROPIC_API_KEY}`, and its failure would have read as `ORACLE_FAILS`.
+3. **The image ENTRYPOINT was cleared** for every single-container task.
+   Harbor's base file replaces only the command, so an entrypoint that
+   prepares the container runs. Harbor tasks now keep it. SWE-bench and
+   `skeptic.toml` tasks still clear it, because some of those images'
+   entrypoints are programs, not shells (`alpine/git`'s is `git`).
+
+`environment-env-single` and `environment-env-multi` are Harbor's own tests
+of 2 and 3. Both failed under Skeptic, and both now pass. As tasks, both
+report `NOP_PASSES`, which is correct: they check the harness, and their tests
+pass without an agent doing anything.
+
+### Also found: a leaked volume per control
+
+`docker rm -f` leaves behind a container's anonymous volumes. SWE-bench images
+declare one, so every control leaked one: 64 after two days of runs here, on
+a disk colima never gives back. Containers are now removed with `rm -f -v`,
+which removes anonymous volumes only. An image with a `VOLUME` left 2 behind
+per task before the fix and 0 after.

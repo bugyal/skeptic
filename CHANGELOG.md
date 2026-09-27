@@ -7,8 +7,28 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Multi-container tasks.** A task whose environment is a Docker Compose
+  stack, such as a database or an API sidecar beside the agent's container,
+  is now checked instead of reported `UNSUPPORTED`. Stacks come up the way
+  each harness brings them up (Harbor: its base file under the task's, `up
+  --wait`, controls in `main`; Terminal-Bench 1.x: `T_BENCH_*` variables,
+  `up -d`, controls in the client), in a fresh project per control. A stack
+  that will not build, start or become healthy is `ERROR`. See
+  `docs/decisions.md` D21.
 - `skeptic sweep` is an alias for `skeptic check`, the name the original brief
   used.
+
+### Fixed
+
+- **Harbor tasks run in the image's working directory** unless `task.toml`
+  sets `workdir`, as in Harbor. Skeptic used `/app`.
+- **Harbor's `[environment.env]` is applied,** and `${VAR}` templates in all
+  three env tables are resolved from the host as Harbor resolves them. A task
+  needing an unset host variable is `UNSUPPORTED`, naming it, rather than
+  receiving the template text.
+- **Harbor tasks keep the image's `ENTRYPOINT`,** as Harbor does.
+- **Containers are removed with their anonymous volumes.** Images declaring
+  a `VOLUME` left one behind per control.
 
 ## [0.2.0] - 2026-09-26
 

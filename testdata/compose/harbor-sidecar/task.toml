@@ -1,0 +1,10 @@
+schema_version = "1.4"
+
+[task]
+name = "compose-fixtures/harbor-sidecar"
+
+[verifier]
+timeout_sec = 120.0
+
+[agent]
+timeout_sec = 120.0

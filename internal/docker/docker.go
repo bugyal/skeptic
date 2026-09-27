@@ -69,6 +69,12 @@ type Result struct {
 }
 
 func (c *Client) run(ctx context.Context, timeout time.Duration, args ...string) (Result, error) {
+	return c.runEnv(ctx, timeout, nil, args...)
+}
+
+// runEnv is run with extra environment variables layered over the process's
+// own, for commands such as docker compose whose files interpolate them.
+func (c *Client) runEnv(ctx context.Context, timeout time.Duration, env map[string]string, args ...string) (Result, error) {
 	runCtx := ctx
 	var cancel context.CancelFunc
 	if timeout > 0 {
@@ -78,6 +84,12 @@ func (c *Client) run(ctx context.Context, timeout time.Duration, args ...string)
 
 	start := time.Now()
 	cmd := exec.CommandContext(runCtx, c.Bin, args...)
+	if len(env) > 0 {
+		cmd.Env = os.Environ()
+		for k, v := range env {
+			cmd.Env = append(cmd.Env, k+"="+v)
+		}
+	}
 	var stdout, stderr bytes.Buffer
 	// exec copies stdout and stderr on separate goroutines whenever they are
 	// not *os.File, so the shared combined buffer must be synchronised. An
@@ -220,12 +232,19 @@ type StartOptions struct {
 	Platform string
 	Memory   string
 	CPUs     string
+	// KeepEntrypoint leaves the image's ENTRYPOINT in place and replaces
+	// only its command, as Harbor does. By default the entrypoint is
+	// cleared, because some images' entrypoints are programs, not shells.
+	KeepEntrypoint bool
 }
 
 // Start launches a detached container that idles until Remove is called, so
 // the controls can exec into a live environment the way a real harness does.
 func (c *Client) Start(ctx context.Context, o StartOptions) (string, error) {
-	args := []string{"run", "-d", "--entrypoint", ""}
+	args := []string{"run", "-d"}
+	if !o.KeepEntrypoint {
+		args = append(args, "--entrypoint", "")
+	}
 	if o.Name != "" {
 		args = append(args, "--name", o.Name)
 	}
@@ -389,7 +408,11 @@ func (c *Client) Remove(ctx context.Context, container string) error {
 	// which is exactly the Ctrl-C case.
 	cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Minute)
 	defer cancel()
-	res, err := c.run(cleanupCtx, 2*time.Minute, "rm", "-f", container)
+	// -v removes the container's anonymous volumes with it. Images that
+	// declare a VOLUME (SWE-bench's do) otherwise leave one behind per
+	// control, forever: 64 after two days of runs, on a disk that colima
+	// never gives back. Named volumes are untouched.
+	res, err := c.run(cleanupCtx, 2*time.Minute, "rm", "-f", "-v", container)
 	if err != nil {
 		return err
 	}

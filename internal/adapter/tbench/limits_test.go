@@ -43,7 +43,7 @@ func TestComposeLimits(t *testing.T) {
 			if err := os.WriteFile(filepath.Join(dir, "docker-compose.yaml"), []byte(tc.compose), 0o644); err != nil {
 				t.Fatal(err)
 			}
-			cpus, mem, reason := composeLimits(dir)
+			cpus, mem, reason := composeLimits(dir, "")
 			if tc.reason != "" {
 				if !strings.Contains(reason, tc.reason) {
 					t.Fatalf("reason = %q, want it to contain %q", reason, tc.reason)
