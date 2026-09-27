@@ -1,4 +1,8 @@
 /dist/
 /skeptic
+skeptic
 .skeptic/
 *.test
+
+# macOS
+.DS_Store
