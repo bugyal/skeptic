@@ -5,6 +5,17 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-27
+
+Multi-container tasks are checked instead of refused, and Harbor tasks now
+run the way Harbor runs them. Running Harbor's own examples to validate the
+Compose support found four places Skeptic never had: the working directory,
+`[environment.env]`, the image entrypoint, and a leaked volume per control.
+Harbor's `environment-env-single` and `environment-env-multi` tests now pass
+under Skeptic. A minor release: tasks that were `UNSUPPORTED` now get
+verdicts, and some Harbor verdicts change because the environment they run
+in is now the one Harbor builds.
+
 ### Added
 
 - **Multi-container tasks.** A task whose environment is a Docker Compose
@@ -229,7 +240,8 @@ rather than indicating a defect.
 - Published SWE-bench images are ~4 GB each and x86_64, so a large run needs
   substantial disk and, on arm64 hosts, emulation.
 
-[Unreleased]: https://github.com/bugyal/skeptic/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/bugyal/skeptic/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/bugyal/skeptic/releases/tag/v0.3.0
 [0.2.0]: https://github.com/bugyal/skeptic/releases/tag/v0.2.0
 [0.1.2]: https://github.com/bugyal/skeptic/releases/tag/v0.1.2
 [0.1.1]: https://github.com/bugyal/skeptic/releases/tag/v0.1.1
