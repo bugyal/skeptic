@@ -23,6 +23,15 @@ type Task struct {
 	Solution    Solution    `json:"solution"`
 	Tests       Tests       `json:"tests"`
 
+	// Steps, when set, make this a multi-step task: each step's solution
+	// and tests run in turn in one environment, and the control's score
+	// combines theirs (docs/decisions.md D24). Solution and Tests then
+	// describe the first step, for the static checks.
+	Steps []Step `json:"steps,omitempty"`
+	// StepReward is how step scores combine: "mean" (per reward key, over
+	// the steps that ran) or "final" (the last step that ran).
+	StepReward string `json:"step_reward,omitempty"`
+
 	// Unsupported is set by an adapter that recognised the task but cannot
 	// run it faithfully. Such a task is reported, never scored: a confident
 	// wrong verdict is worse than an admission of ignorance.
@@ -139,11 +148,45 @@ type Solution struct {
 // Available reports whether an oracle control can run at all.
 func (s Solution) Available() bool { return s.Kind != SolutionNone && s.Kind != "" }
 
+// Step is one step of a multi-step task, run in order in the same
+// environment as the steps before it.
+type Step struct {
+	Name        string   `json:"name"`
+	Instruction string   `json:"-"`
+	Solution    Solution `json:"solution"`
+	Tests       Tests    `json:"tests"`
+	// WorkdirDir is a host directory copied into the working directory
+	// before the step; Setup runs its setup.sh with bash after the copy.
+	WorkdirDir string `json:"workdir_dir,omitempty"`
+	Setup      bool   `json:"setup,omitempty"`
+	// Healthcheck, when set, must pass after setup and before the step.
+	Healthcheck *Healthcheck `json:"healthcheck,omitempty"`
+	// MinReward stops the remaining steps when any listed reward key falls
+	// below its threshold, a missing key counting as below. Nil: no gate.
+	MinReward map[string]float64 `json:"min_reward,omitempty"`
+}
+
+// Healthcheck is a command that must exit 0, retried with Docker
+// HEALTHCHECK semantics: failures during StartPeriod do not count, and
+// Retries consecutive failures after it are fatal.
+type Healthcheck struct {
+	Command       string        `json:"command"`
+	Interval      time.Duration `json:"interval"`
+	Timeout       time.Duration `json:"timeout"`
+	StartPeriod   time.Duration `json:"start_period"`
+	StartInterval time.Duration `json:"start_interval"`
+	Retries       int           `json:"retries"`
+}
+
 // Tests is the hidden grading: what to copy in, what to run, how to read a score.
 type Tests struct {
-	Dir       string `json:"dir,omitempty"`
-	MountPath string `json:"mount_path,omitempty"`
-	Command   string `json:"command"`
+	Dir string `json:"dir,omitempty"`
+	// Overlay directories are copied to MountPath after Dir, in order, so
+	// their files replace Dir's: a step's own tests over a task's shared
+	// ones.
+	Overlay   []string `json:"overlay,omitempty"`
+	MountPath string   `json:"mount_path,omitempty"`
+	Command   string   `json:"command"`
 	// ScriptContent is written to ScriptPath inside the container before
 	// Command runs, for formats that carry their test script inline.
 	ScriptContent string            `json:"-"`

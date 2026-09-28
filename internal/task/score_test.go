@@ -2,6 +2,7 @@ package task
 
 import (
 	"errors"
+	"strings"
 	"testing"
 )
 
@@ -91,5 +92,64 @@ func TestParseRewardJSONAmbiguous(t *testing.T) {
 	}
 	if len(amb.Keys) != 2 || amb.Keys[0] != "speed" || amb.Keys[1] != "style" {
 		t.Fatalf("keys = %v, want sorted [speed style]", amb.Keys)
+	}
+}
+
+func TestParseRewards(t *testing.T) {
+	for _, tc := range []struct {
+		name, body string
+		json       bool
+		want       map[string]float64
+		err        string
+	}{
+		{"text", "0.5\n", false, map[string]float64{"reward": 0.5}, ""},
+		{"bare json number", "1", true, map[string]float64{"reward": 1}, ""},
+		{"object", `{"a": 1, "b": 0}`, true, map[string]float64{"a": 1, "b": 0}, ""},
+		{"empty", " ", true, nil, "empty"},
+		{"empty object", "{}", true, nil, "empty"},
+		{"string value", `{"a": "1"}`, true, nil, "not a number"},
+		{"array", `[1]`, true, nil, "number or an object"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := ParseRewards([]byte(tc.body), tc.json)
+			if tc.err != "" {
+				if err == nil || !strings.Contains(err.Error(), tc.err) {
+					t.Fatalf("err = %v, want it to contain %q", err, tc.err)
+				}
+				return
+			}
+			if err != nil || len(got) != len(tc.want) {
+				t.Fatalf("= %v, %v; want %v", got, err, tc.want)
+			}
+			for k, v := range tc.want {
+				if got[k] != v {
+					t.Errorf("%s = %v, want %v", k, got[k], v)
+				}
+			}
+		})
+	}
+}
+
+// ReduceRewards is the D2 rule, applied to rewards already combined over steps.
+func TestReduceRewards(t *testing.T) {
+	two := map[string]float64{"a": 1, "b": 0}
+	if v, err := ReduceRewards(two, "b"); err != nil || v != 0 {
+		t.Errorf("explicit key = %v, %v", v, err)
+	}
+	if _, err := ReduceRewards(two, "c"); err == nil || !strings.Contains(err.Error(), "have: a, b") {
+		t.Errorf("missing key err = %v", err)
+	}
+	if v, err := ReduceRewards(map[string]float64{"only": 0.25}, ""); err != nil || v != 0.25 {
+		t.Errorf("single key = %v, %v", v, err)
+	}
+	if v, err := ReduceRewards(map[string]float64{"reward": 1, "x": 0}, ""); err != nil || v != 1 {
+		t.Errorf("reward key = %v, %v", v, err)
+	}
+	var amb *ErrAmbiguousReward
+	if _, err := ReduceRewards(two, ""); !errors.As(err, &amb) {
+		t.Errorf("ambiguous err = %v, want ErrAmbiguousReward", err)
+	}
+	if _, err := ReduceRewards(nil, ""); err == nil {
+		t.Error("no rewards must be an error, not 0")
 	}
 }

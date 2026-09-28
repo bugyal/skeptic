@@ -1,0 +1,16 @@
+schema_version = "1.4"
+
+[task]
+name = "step-fixtures/clean"
+
+# Two steps in one container. The second builds on the first, so the oracle
+# scores 1.0 only if both steps ran in order in the same environment, with
+# the second step's tests and env and nothing left over from the first.
+[[steps]]
+name = "write"
+
+[[steps]]
+name = "append"
+
+[steps.verifier.env]
+EXPECTED = "one two"

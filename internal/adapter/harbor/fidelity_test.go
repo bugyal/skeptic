@@ -77,7 +77,7 @@ func TestReproducibleSetupsLoad(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if got.Unsupported != "" && !strings.Contains(got.Unsupported, "multi-step") {
+			if got.Unsupported != "" {
 				t.Errorf("Unsupported = %q, want it loaded", got.Unsupported)
 			}
 		})

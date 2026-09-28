@@ -18,6 +18,15 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Harbor multi-step tasks are checked** instead of refused. Each control
+  runs every step in one container the way Harbor's trial loop does: the
+  previous step's tests and rewards are cleared, the step's workdir files,
+  `setup.sh` and healthcheck run, and the step's own solution, tests and
+  verifier settings are used. `min_reward` stops later steps, and the
+  score is `mean` or `final` over the steps. A step that cannot be graded
+  is `ERROR`, never averaged away, and a task whose oracle cannot solve
+  every step is `NO_ORACLE`. Per-step evidence goes in `step-<name>/`. See
+  `docs/decisions.md` D24.
 - **Release config for a Homebrew tap** (`brew install bugyal/tap/skeptic`).
   It is inert until the `bugyal/homebrew-tap` repository and its token
   exist; until then, releases are unchanged. See `docs/decisions.md` D22.

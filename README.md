@@ -230,6 +230,7 @@ WARN  example/leaky-instruction
 | Terminal-Bench 1.x (`task.yaml`) | supported |
 | Custom `skeptic.toml` | supported — see below |
 | Multi-container tasks (Docker Compose) | supported for Harbor and Terminal-Bench 1.x |
+| Harbor multi-step tasks (`[[steps]]`) | supported |
 
 ### Custom `skeptic.toml`
 
@@ -288,6 +289,17 @@ volumes included. A stack that will not build, start or pass its health
 checks is `ERROR`, because the system being graded never existed. Tasks that
 publish a fixed host port can collide under `--parallel`, so run those one
 at a time. Details: `docs/decisions.md` D21.
+
+### Multi-step tasks
+
+Some Harbor tasks come in steps: first build a script, then extend it, then
+document it, all in the same container. Skeptic runs every step in order,
+with each step's own solution and tests, and combines the step scores the
+way the task says: the average, or the last step's. If a step misses its
+`min_reward`, the steps after it do not run. A step that cannot be graded
+makes the result `ERROR` rather than being left out of the average. Each
+step's evidence is kept separately, so you can see which step earned what.
+Details: `docs/decisions.md` D24.
 
 ### Terminal-Bench 1.x exit-status mapping
 

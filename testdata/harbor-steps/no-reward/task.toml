@@ -1,0 +1,15 @@
+schema_version = "1.4"
+
+[task]
+name = "step-fixtures/no-reward"
+
+# The second step's test writes no reward. The first step's reward file
+# must be gone by then, or it would be read as the second step's score.
+[[steps]]
+name = "write"
+
+[[steps]]
+name = "append"
+
+[steps.verifier.env]
+EXPECTED = "one two"

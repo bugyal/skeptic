@@ -278,10 +278,6 @@ func (a *Adapter) Load(dir string) (*task.Task, error) {
 		t.Unsupported = reason
 		return t, nil
 	}
-	if len(cfg.Steps) > 0 {
-		t.Unsupported = fmt.Sprintf("multi-step task (%d steps)", len(cfg.Steps))
-		return t, nil
-	}
 
 	// A docker_image wins over any Dockerfile: Harbor uses the prebuilt
 	// image unless forced to build, which is a command-line choice
@@ -376,6 +372,9 @@ func (a *Adapter) Load(dir string) (*task.Task, error) {
 		if uploadsEnvironment(envDir) {
 			t.Environment.UploadDir = envDir
 		}
+	}
+	if len(cfg.Steps) > 0 {
+		return loadSteps(t, abs, cfg, workdir)
 	}
 	t.Solution = loadSolution(abs, cfg, workdir)
 
@@ -593,6 +592,215 @@ func resolveEnv(env map[string]string) (map[string]string, error) {
 		}
 	}
 	return out, nil
+}
+
+// loadSteps fills a multi-step task, read against
+// src/harbor/models/task/paths.py (the steps/<name>/ layout),
+// agents/oracle.py (which solution runs for a step), verifier/verifier.py
+// (which tests grade it) and trial/multi_step.py (workdir, setup,
+// healthcheck, min_reward). See docs/decisions.md D24.
+func loadSteps(t *task.Task, abs string, cfg config, workdir string) (*task.Task, error) {
+	switch cfg.MultiStepRewardStrategy {
+	case "", "mean", "final":
+		t.StepReward = cfg.MultiStepRewardStrategy
+	default:
+		t.Unsupported = fmt.Sprintf("multi_step_reward_strategy %q is not one Harbor defines", cfg.MultiStepRewardStrategy)
+		return t, nil
+	}
+
+	sharedTests := filepath.Join(abs, "tests")
+	sharedTest := discoverScript(sharedTests, "test")
+	sharedSolution := filepath.Join(abs, "solution")
+	seen := map[string]bool{}
+	var instructions []string
+	if t.Instruction != "" {
+		instructions = append(instructions, t.Instruction)
+	}
+
+	for _, sc := range cfg.Steps {
+		name := sc.Name
+		if name == "" || !filepath.IsLocal(name) || strings.ContainsAny(name, `/\`) {
+			t.Unsupported = fmt.Sprintf("step name %q is not a plain directory name", name)
+			return t, nil
+		}
+		if seen[strings.ToLower(name)] {
+			t.Unsupported = fmt.Sprintf("step name %q is used twice", name)
+			return t, nil
+		}
+		seen[strings.ToLower(name)] = true
+		dir := filepath.Join(abs, "steps", name)
+
+		st := task.Step{Name: name}
+		if b, err := os.ReadFile(filepath.Join(dir, "instruction.md")); err == nil {
+			st.Instruction = string(b)
+			instructions = append(instructions, string(b))
+		}
+
+		// The oracle runs the step's own solution/ when the step has one,
+		// and the task's otherwise (agents/oracle.py
+		// _resolve_solution_paths). Where neither holds a solve script the
+		// upstream oracle raises on that step.
+		solEnv, err := resolveEnv(cfg.Solution.Env)
+		if err != nil {
+			t.Unsupported = err.Error()
+			return t, nil
+		}
+		solDir := filepath.Join(dir, "solution")
+		if !isDir(solDir) {
+			solDir = sharedSolution
+		}
+		if script := discoverScript(solDir, "solve"); script != "" {
+			st.Solution = task.Solution{
+				Kind:      task.SolutionScript,
+				Dir:       solDir,
+				Script:    filepath.Base(script),
+				MountPath: SolutionDir,
+				Env:       solEnv,
+				WorkDir:   workdir,
+				Timeout:   seconds(firstPositive(sc.Agent.TimeoutSec, cfg.Agent.TimeoutSec), 0),
+			}
+		} else {
+			st.Solution = task.Solution{Kind: task.SolutionNone}
+		}
+
+		// Tests: the task's shared tests/ and then the step's own, both into
+		// /tests, graded by the step's test.sh or, failing that, the shared
+		// one.
+		stepTests := filepath.Join(dir, "tests")
+		script := discoverScript(stepTests, "test")
+		if script == "" {
+			script = sharedTest
+		}
+		if script == "" {
+			t.Unsupported = fmt.Sprintf("step %q has no test script, in its tests/ or the task's", name)
+			return t, nil
+		}
+		stepEnv, err := resolveEnv(sc.Verifier.Env)
+		if err != nil {
+			t.Unsupported = err.Error()
+			return t, nil
+		}
+		env := map[string]string{}
+		for k, v := range cfg.Verifier.Env {
+			env[k] = v
+		}
+		for k, v := range stepEnv {
+			env[k] = v
+		}
+		tests := task.Tests{
+			MountPath: TestsDir,
+			Command: fmt.Sprintf("chmod +x %s/%s && %s/%s",
+				TestsDir, filepath.Base(script), TestsDir, filepath.Base(script)),
+			Env:     env,
+			WorkDir: workdir,
+			Timeout: seconds(firstPositive(sc.Verifier.TimeoutSec, cfg.Verifier.TimeoutSec), 0),
+			Score: task.ScoreSpec{
+				Kind:  task.ScoreRewardFile,
+				Paths: []string{RewardJSON, RewardText},
+			},
+		}
+		if isDir(sharedTests) {
+			tests.Dir = sharedTests
+		}
+		if isDir(stepTests) {
+			if tests.Dir == "" {
+				tests.Dir = stepTests
+			} else {
+				tests.Overlay = []string{stepTests}
+			}
+		}
+		st.Tests = tests
+
+		if wd := filepath.Join(dir, "workdir"); isDir(wd) {
+			st.WorkdirDir = wd
+			st.Setup = isFile(filepath.Join(wd, "setup.sh"))
+		}
+		if hc := sc.Healthcheck; hc != nil {
+			if strings.TrimSpace(hc.Command) == "" {
+				t.Unsupported = fmt.Sprintf("step %q healthcheck has no command", name)
+				return t, nil
+			}
+			// Defaults from HealthcheckConfig in models/task/config.py.
+			st.Healthcheck = &task.Healthcheck{
+				Command:       hc.Command,
+				Interval:      seconds(hc.IntervalSec, 5*time.Second),
+				Timeout:       seconds(hc.TimeoutSec, 30*time.Second),
+				StartPeriod:   seconds(hc.StartPeriodSec, 0),
+				StartInterval: seconds(hc.StartIntervalSec, 5*time.Second),
+				Retries:       hc.Retries,
+			}
+			if st.Healthcheck.Retries <= 0 {
+				st.Healthcheck.Retries = 3
+			}
+		}
+		min, err := minReward(sc.MinReward)
+		if err != nil {
+			t.Unsupported = fmt.Sprintf("step %q min_reward: %v", name, err)
+			return t, nil
+		}
+		st.MinReward = min
+		t.Steps = append(t.Steps, st)
+	}
+
+	t.Instruction = strings.Join(instructions, "\n\n")
+	// Solution and Tests describe the task for the static checks and for
+	// whether an oracle can run at all. The oracle solves every step or it
+	// is not an oracle: a step it cannot act on would be scored as a
+	// failure the task's author never shipped a fix for, and ORACLE_FAILS
+	// on that would be a verdict Skeptic did not earn. So one step without
+	// a solution makes the whole task NO_ORACLE (D24).
+	t.Solution = t.Steps[0].Solution
+	for _, st := range t.Steps {
+		if !st.Solution.Available() {
+			t.Solution = task.Solution{Kind: task.SolutionNone}
+			break
+		}
+	}
+	t.Tests = t.Steps[0].Tests
+	return t, nil
+}
+
+// minReward reads a step's min_reward: a number gates the "reward" key, a
+// table gates each key it names (multi_step.py _min_reward_failure).
+func minReward(v interface{}) (map[string]float64, error) {
+	num := func(x interface{}) (float64, bool) {
+		switch n := x.(type) {
+		case float64:
+			return n, true
+		case int64:
+			return float64(n), true
+		}
+		return 0, false
+	}
+	switch m := v.(type) {
+	case nil:
+		return nil, nil
+	case map[string]interface{}:
+		out := make(map[string]float64, len(m))
+		for k, x := range m {
+			f, ok := num(x)
+			if !ok {
+				return nil, fmt.Errorf("%q is not a number", k)
+			}
+			out[k] = f
+		}
+		return out, nil
+	default:
+		f, ok := num(v)
+		if !ok {
+			return nil, fmt.Errorf("%v is neither a number nor a table", v)
+		}
+		return map[string]float64{"reward": f}, nil
+	}
+}
+
+func firstPositive(vs ...float64) float64 {
+	for _, v := range vs {
+		if v > 0 {
+			return v
+		}
+	}
+	return 0
 }
 
 // discoverScript mirrors Harbor's own priority: .sh before .bat.

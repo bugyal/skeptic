@@ -118,3 +118,86 @@ func truncate(s string, n int) string {
 	}
 	return s[:n] + "..."
 }
+
+// ParseRewards reads a reward file into per-key form, as Harbor's verifier
+// does (verifier/verifier.py _parse_reward_text and _parse_reward_json): a
+// text file, or a bare JSON number, is {"reward": value}; a JSON object keeps
+// its keys, every one of which must be a finite number.
+func ParseRewards(b []byte, isJSON bool) (map[string]float64, error) {
+	if !isJSON {
+		v, err := ParseRewardText(b)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]float64{"reward": v}, nil
+	}
+	if len(strings.TrimSpace(string(b))) == 0 {
+		return nil, fmt.Errorf("reward file is empty")
+	}
+	var any interface{}
+	if err := json.Unmarshal(b, &any); err != nil {
+		return nil, fmt.Errorf("reward file is not valid JSON: %w", err)
+	}
+	switch v := any.(type) {
+	case float64:
+		if math.IsNaN(v) || math.IsInf(v, 0) {
+			return nil, fmt.Errorf("reward is not finite: %v", v)
+		}
+		return map[string]float64{"reward": v}, nil
+	case map[string]interface{}:
+		if len(v) == 0 {
+			return nil, fmt.Errorf("reward object is empty")
+		}
+		out := make(map[string]float64, len(v))
+		for k, raw := range v {
+			f, ok := raw.(float64)
+			if !ok {
+				return nil, fmt.Errorf("reward %q is not a number: %v", k, raw)
+			}
+			if math.IsNaN(f) || math.IsInf(f, 0) {
+				return nil, fmt.Errorf("reward %q is not finite: %v", k, f)
+			}
+			out[k] = f
+		}
+		return out, nil
+	default:
+		return nil, fmt.Errorf("reward file must be a number or an object, got %T", any)
+	}
+}
+
+// ReduceRewards picks the one score from per-key rewards by the rule in
+// docs/decisions.md D2: an explicit key, else the only key, else "reward",
+// else an error naming the keys rather than a guess.
+func ReduceRewards(m map[string]float64, key string) (float64, error) {
+	if len(m) == 0 {
+		return 0, fmt.Errorf("reward object is empty")
+	}
+	pick := func(k string) (float64, error) {
+		return m[k], validateScore(m[k])
+	}
+	if key != "" {
+		if _, ok := m[key]; !ok {
+			keys := make([]string, 0, len(m))
+			for k := range m {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			return 0, fmt.Errorf("reward object has no key %q (have: %s)", key, strings.Join(keys, ", "))
+		}
+		return pick(key)
+	}
+	if len(m) == 1 {
+		for k := range m {
+			return pick(k)
+		}
+	}
+	if _, ok := m["reward"]; ok {
+		return pick("reward")
+	}
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return 0, &ErrAmbiguousReward{Keys: keys}
+}

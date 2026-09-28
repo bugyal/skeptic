@@ -1,0 +1,15 @@
+schema_version = "1.4"
+
+[task]
+name = "step-fixtures/nop-passes"
+
+# The second step grades nothing: a do-nothing agent earns it, and half
+# the mean. Skeptic must flag it, not hide it inside a combined score.
+[[steps]]
+name = "write"
+
+[[steps]]
+name = "append"
+
+[steps.verifier.env]
+EXPECTED = "one two"

@@ -1,0 +1,15 @@
+schema_version = "1.4"
+
+[task]
+name = "step-fixtures/oracle-fails"
+
+# The second step's reference solution is wrong. The first step passing
+# must not carry the task.
+[[steps]]
+name = "write"
+
+[[steps]]
+name = "append"
+
+[steps.verifier.env]
+EXPECTED = "one two"

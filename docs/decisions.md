@@ -1103,3 +1103,65 @@ task, and one allowlist demo move from a verdict about the wrong setup to
 `UNSUPPORTED`. Terminal-Bench 1.x is untouched. Supporting separate
 verifiers and users is possible and would be its own piece of work;
 supporting mid-task network switching would need Harbor's egress sidecar.
+
+## D24. Harbor multi-step tasks run every step, in one container
+
+**Status:** decided. Read from `src/harbor` at `d10ac31`:
+`trial/multi_step.py`, `trial/trial.py`, `verifier/verifier.py`,
+`agents/oracle.py`.
+
+A multi-step task is a sequence of `[[steps]]`, each with its own
+instruction, solution, tests and settings, run one after another in the
+same environment. It was refused as `UNSUPPORTED`. Each control now runs it
+the way Harbor's trial loop does:
+
+| Per step | Harbor | Skeptic |
+|---|---|---|
+| before every step after the first | `/tests` and `/logs/verifier` are removed (`_reset_shared_step_verifier_dirs`) | the same |
+| `steps/<name>/workdir/` | copied into the working directory, then its `setup.sh` runs, then the step's `healthcheck` with Docker's polling semantics | the same; `setup.sh` output and exit code kept as evidence |
+| solution | the step's `solution/` if the directory exists, else the task's | the same |
+| tests | the task's `tests/`, then the step's laid over it, both in `/tests`; the step's `test.sh`, else the task's | the same |
+| verifier env and timeouts | the step's over the task's | the same |
+| `min_reward` (a number gates `reward`, a table each key) | a step below it, or missing a gated key, stops the steps after it | the same; the evidence says where it stopped |
+| score | `multi_step_reward_strategy`: `mean` per key over the steps that ran, a missing key counting 0, or `final` | the same, then D2 reduces the keys to one score |
+
+The nop does nothing on every step; the oracle runs each step's solution.
+Each step's evidence is in `<control>/step-<name>/`, and `steps.txt` has
+the per-step rewards and the combined score, so a combined 0.50 can be
+traced to the step that earned it.
+
+### Where Skeptic stops and Harbor carries on
+
+Harbor treats a step whose verifier found no reward file, or whose setup
+failed, as a step without a result: it drops it from the mean and moves on.
+Skeptic reports `ERROR`, naming the step. A combined score that silently
+leaves out a step it could not grade is a verdict Skeptic did not earn.
+The reset matters for the same reason: without it, a step that wrote no
+reward would be scored from the previous step's file.
+`e2e/steps_test.go` pins that with `no-reward`. With the reset disabled, that
+fixture comes out `CLEAN`.
+
+### An oracle that cannot solve every step is not an oracle
+
+Where a step has neither its own solve script nor a task-level one,
+Harbor's oracle raises on that step. Running the oracle anyway would score
+the unsolved step 0 and call it `ORACLE_FAILS`, a failure the author never
+shipped a fix for. The task is `NO_ORACLE` instead, and only the nop runs.
+
+### What it covers
+
+On Harbor's examples, 4 multi-step tasks move from `UNSUPPORTED` to checked,
+and all 4 are `CLEAN`: `hello-multi-step-simple`, `hello-multi-step-full`
+(setup script, healthcheck, step verifier env, shared helpers, `min_reward`),
+`verifier-mode-multistep-all-shared` and `network-policy-static-e-sa-same`
+(offline). Multi-step tasks that also use a separate verifier or switch
+networks per step remain `UNSUPPORTED` under D23, and the Windows one
+remains unsupported for its OS. Terminal-Bench 1.x lint output is
+unchanged across all 241 tasks.
+
+The static checks see the first step's tests and every step's
+instruction. Per-step artifacts are Harbor's record of an agent's run and
+play no part in a grade, so they are not collected. Under `min_reward`, a
+nop that fails an early step never reaches the later ones, as in Harbor. A
+later step whose test a do-nothing agent would pass is therefore only found
+when no gate stops the nop before it.

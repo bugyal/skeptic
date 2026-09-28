@@ -410,78 +410,10 @@ func (r *Runner) control(ctx context.Context, t *task.Task, container string, c 
 		return out
 	}
 
-	if c == ControlOracle {
-		if err := r.applySolution(ctx, container, t, t.Solution.PatchContent, out); err != nil {
-			out.Error = err.Error()
-			out.Duration = time.Since(start)
-			return out
-		}
+	if len(t.Steps) > 0 {
+		return r.controlSteps(ctx, t, container, c, out, start)
 	}
-	if c == ControlPartial {
-		if err := r.applySolution(ctx, container, t, reducedPatch, out); err != nil {
-			out.Error = err.Error()
-			out.Duration = time.Since(start)
-			return out
-		}
-	}
-
-	// Formats that carry their test script inline write it in now, after any
-	// solution has run, so the solution cannot see or edit it.
-	if t.Tests.ScriptContent != "" {
-		if err := r.docker.WriteFile(ctx, container, t.Tests.ScriptPath, t.Tests.ScriptContent); err != nil {
-			out.Error = fmt.Sprintf("writing test script: %v", err)
-			out.Duration = time.Since(start)
-			return out
-		}
-	}
-
-	// Tests are copied in after the control has acted, exactly as a real
-	// harness does, so the solution cannot see or edit them.
-	if t.Tests.Dir != "" {
-		if err := r.docker.CopyIn(ctx, container, t.Tests.Dir+"/.", t.Tests.MountPath); err != nil {
-			out.Error = fmt.Sprintf("copying tests: %v", err)
-			out.Duration = time.Since(start)
-			return out
-		}
-	}
-
-	testRes, err := r.docker.Exec(ctx, container, t.Tests.Command, docker.ExecOptions{
-		WorkDir: t.Tests.WorkDir,
-		Env:     t.Tests.Env,
-		Timeout: r.testTimeout(t),
-		// Scorers that locate results between markers need the true write
-		// order, which only holds when the container merges the streams.
-		CombineStreams: true,
-	})
-	out.ExitCode = testRes.ExitCode
-	out.TimedOut = testRes.TimedOut
-	out.stdout, out.stderr = testRes.Stdout, testRes.Stderr
-	out.combined = testRes.Combined
-	// Always written, even when empty: "the test printed nothing" is itself
-	// evidence when someone disputes a flag.
-	writeFileAlways(filepath.Join(out.LogDir, "test.stdout"), testRes.Stdout)
-	writeFileAlways(filepath.Join(out.LogDir, "test.stderr"), testRes.Stderr)
-	writeFileAlways(filepath.Join(out.LogDir, "test.combined"), testRes.Combined)
-	writeFile(filepath.Join(out.LogDir, "exit-code.txt"), fmt.Sprintf("%d\n", testRes.ExitCode))
-
-	// A process the kernel killed for memory did not fail; it was stopped.
-	// Scoring what is left would read a limit as a verdict -- a nop at 0.00
-	// that never finished, an oracle at 0.00 that never got to pass. The
-	// flag is sticky for the container, so this also covers a solution
-	// script killed before the tests ran.
-	if msg := r.oomError(ctx, container, t); msg != "" {
-		out.Error = msg
-		out.Duration = time.Since(start)
-		return out
-	}
-
-	if testRes.TimedOut {
-		out.Error = fmt.Sprintf("test command timed out after %s", r.testTimeout(t))
-		out.Duration = time.Since(start)
-		return out
-	}
-	if err != nil {
-		out.Error = fmt.Sprintf("running tests: %v", err)
+	if !r.act(ctx, t, container, c, reducedPatch, out) {
 		out.Duration = time.Since(start)
 		return out
 	}
@@ -587,6 +519,86 @@ func firstLine(s string) string {
 		return s[:i]
 	}
 	return s
+}
+
+// act applies the control's change, delivers the tests and runs them. It
+// returns false, with out.Error set, when the control could not be carried
+// out, so there is no score to read.
+func (r *Runner) act(ctx context.Context, t *task.Task, container string, c Control, reducedPatch string, out *ControlResult) bool {
+	if c == ControlOracle {
+		if err := r.applySolution(ctx, container, t, t.Solution.PatchContent, out); err != nil {
+			out.Error = err.Error()
+			return false
+		}
+	}
+	if c == ControlPartial {
+		if err := r.applySolution(ctx, container, t, reducedPatch, out); err != nil {
+			out.Error = err.Error()
+			return false
+		}
+	}
+
+	// Formats that carry their test script inline write it in now, after any
+	// solution has run, so the solution cannot see or edit it.
+	if t.Tests.ScriptContent != "" {
+		if err := r.docker.WriteFile(ctx, container, t.Tests.ScriptPath, t.Tests.ScriptContent); err != nil {
+			out.Error = fmt.Sprintf("writing test script: %v", err)
+			return false
+		}
+	}
+
+	// Tests are copied in after the control has acted, exactly as a real
+	// harness does, so the solution cannot see or edit them. Overlays go
+	// last, so a step's own files replace the task's shared ones.
+	for _, dir := range append([]string{t.Tests.Dir}, t.Tests.Overlay...) {
+		if dir == "" {
+			continue
+		}
+		if err := r.docker.CopyIn(ctx, container, dir+"/.", t.Tests.MountPath); err != nil {
+			out.Error = fmt.Sprintf("copying tests: %v", err)
+			return false
+		}
+	}
+
+	testRes, err := r.docker.Exec(ctx, container, t.Tests.Command, docker.ExecOptions{
+		WorkDir: t.Tests.WorkDir,
+		Env:     t.Tests.Env,
+		Timeout: r.testTimeout(t),
+		// Scorers that locate results between markers need the true write
+		// order, which only holds when the container merges the streams.
+		CombineStreams: true,
+	})
+	out.ExitCode = testRes.ExitCode
+	out.TimedOut = testRes.TimedOut
+	out.stdout, out.stderr = testRes.Stdout, testRes.Stderr
+	out.combined = testRes.Combined
+	// Always written, even when empty: "the test printed nothing" is itself
+	// evidence when someone disputes a flag.
+	writeFileAlways(filepath.Join(out.LogDir, "test.stdout"), testRes.Stdout)
+	writeFileAlways(filepath.Join(out.LogDir, "test.stderr"), testRes.Stderr)
+	writeFileAlways(filepath.Join(out.LogDir, "test.combined"), testRes.Combined)
+	writeFile(filepath.Join(out.LogDir, "exit-code.txt"), fmt.Sprintf("%d\n", testRes.ExitCode))
+
+	// A process the kernel killed for memory did not fail; it was stopped.
+	// Scoring what is left would read a limit as a verdict -- a nop at 0.00
+	// that never finished, an oracle at 0.00 that never got to pass. The
+	// flag is sticky for the container, so this also covers a solution
+	// script killed before the tests ran.
+	if msg := r.oomError(ctx, container, t); msg != "" {
+		out.Error = msg
+		return false
+	}
+
+	if testRes.TimedOut {
+		out.Error = fmt.Sprintf("test command timed out after %s", r.testTimeout(t))
+		return false
+	}
+	if err != nil {
+		out.Error = fmt.Sprintf("running tests: %v", err)
+		return false
+	}
+
+	return true
 }
 
 // uploadEnvironment copies Environment.UploadDir into the task's working
