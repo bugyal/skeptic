@@ -390,6 +390,16 @@ func (r *Runner) runControl(ctx context.Context, t *task.Task, image string, c C
 // solution if any, deliver the tests, run them and score. It is the same for
 // a single container and for the chosen service of a Compose project.
 func (r *Runner) control(ctx context.Context, t *task.Task, container string, c Control, reducedPatch string, out *ControlResult, start time.Time) *ControlResult {
+	// A prebuilt image with its task files alongside: Harbor copies them
+	// into the working directory as the environment starts
+	// (environments/base.py _upload_environment_dir_after_start).
+	if t.Environment.UploadDir != "" {
+		if err := r.uploadEnvironment(ctx, container, t); err != nil {
+			out.Error = fmt.Sprintf("uploading environment files: %v", err)
+			out.Duration = time.Since(start)
+			return out
+		}
+	}
 
 	// Harbor mounts these directories into every trial; test scripts in the
 	// wild write to them unconditionally.
@@ -579,6 +589,23 @@ func firstLine(s string) string {
 	return s
 }
 
+// uploadEnvironment copies Environment.UploadDir into the task's working
+// directory, or the container's own when the task names none.
+func (r *Runner) uploadEnvironment(ctx context.Context, container string, t *task.Task) error {
+	target := t.Environment.WorkDir
+	if target == "" {
+		res, err := r.docker.Exec(ctx, container, "pwd", docker.ExecOptions{Timeout: time.Minute})
+		if err != nil {
+			return err
+		}
+		target = strings.TrimSpace(res.Stdout)
+		if target == "" {
+			target = "/"
+		}
+	}
+	return r.docker.CopyIn(ctx, container, t.Environment.UploadDir+"/.", target)
+}
+
 // startOptions is how every control's container is started: the task's
 // image, working directory and platform, and its resource limits.
 func (r *Runner) startOptions(t *task.Task, image, name string) docker.StartOptions {
@@ -591,6 +618,9 @@ func (r *Runner) startOptions(t *task.Task, image, name string) docker.StartOpti
 		// Compose keeps the entrypoint anyway; this is the single
 		// container matching it.
 		KeepEntrypoint: t.Environment.KeepEntrypoint,
+	}
+	if t.Environment.NoNetwork {
+		o.Network = "none"
 	}
 	cpus, memoryMB := r.limits(t)
 	if cpus > 0 {

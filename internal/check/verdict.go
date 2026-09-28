@@ -102,10 +102,12 @@ func classify(t *task.Task, nop, oracle *ControlResult) (Verdict, string) {
 	oracleBad := oracle != nil && oracle.Score != nil && *oracle.Score < 1
 
 	// A reference solution whose tests could not reach the network has not
-	// been shown to fail; the host has. Reporting ORACLE_FAILS there would
+	// been shown to fail; the host has. Unless the task runs offline by its
+	// own declaration: then the network was never there to fail, and a test
+	// that needs it is the task's defect. Reporting ORACLE_FAILS there would
 	// flag a benchmark for this machine's firewall. A nop that passes is still
 	// earned -- a missing network cannot make a test pass -- so it stands.
-	if oracleBad {
+	if oracleBad && !t.Environment.NoNetwork {
 		if line := networkFailure(oracle.combined); line != "" {
 			if nopBad {
 				return VerdictNopPasses, ""

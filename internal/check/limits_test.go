@@ -27,3 +27,13 @@ func TestStartOptionsCarryLimits(t *testing.T) {
 		t.Errorf("undeclared limits gave Memory, CPUs = %q, %q; want both empty", got.Memory, got.CPUs)
 	}
 }
+
+func TestOfflineTaskStartsWithoutNetwork(t *testing.T) {
+	tk := &task.Task{Environment: task.Environment{NoNetwork: true}}
+	if got := NewRunner(nil, Options{}).startOptions(tk, "img", "n"); got.Network != "none" {
+		t.Errorf("Network = %q, want none", got.Network)
+	}
+	if got := NewRunner(nil, Options{}).startOptions(&task.Task{}, "img", "n"); got.Network != "" {
+		t.Errorf("Network = %q, want the default", got.Network)
+	}
+}

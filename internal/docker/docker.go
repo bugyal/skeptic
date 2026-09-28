@@ -236,6 +236,9 @@ type StartOptions struct {
 	// only its command, as Harbor does. By default the entrypoint is
 	// cleared, because some images' entrypoints are programs, not shells.
 	KeepEntrypoint bool
+	// Network is passed as --network when set; "none" isolates the
+	// container completely.
+	Network string
 }
 
 // Start launches a detached container that idles until Remove is called, so
@@ -253,6 +256,9 @@ func (c *Client) Start(ctx context.Context, o StartOptions) (string, error) {
 	}
 	if o.Platform != "" {
 		args = append(args, "--platform", o.Platform)
+	}
+	if o.Network != "" {
+		args = append(args, "--network", o.Network)
 	}
 	if o.Memory != "" {
 		args = append(args, "--memory", o.Memory)

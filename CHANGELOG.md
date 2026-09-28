@@ -5,6 +5,17 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Harbor tasks run on the setup they declare, or are refused.** A
+  separate verifier container, a custom user, a network allowlist or a
+  mid-task network change used to be ignored, so the task ran on a
+  different setup and got a verdict about it. These are now `UNSUPPORTED`,
+  naming the setting. `network_mode = "no-network"` is honoured for single
+  containers (`--network none`), and `docker_image` is used as Harbor uses
+  it. Tasks with no Dockerfile or test script are reported instead of
+  silently dropped. See `docs/decisions.md` D23.
+
 ### Added
 
 - **Release config for a Homebrew tap** (`brew install bugyal/tap/skeptic`).

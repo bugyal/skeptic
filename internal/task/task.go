@@ -54,6 +54,17 @@ type Environment struct {
 	// [environment.env]. Sidecars do not get it.
 	Env map[string]string `json:"env,omitempty"`
 
+	// NoNetwork starts the agent's container with no network at all, as
+	// Harbor does for [environment] network_mode = "no-network". A task run
+	// this way is offline by design, so a network failure in its tests is
+	// the task's own doing, not the host's (docs/decisions.md D16, D23).
+	NoNetwork bool `json:"no_network,omitempty"`
+
+	// UploadDir is a host directory copied into the container's working
+	// directory once it starts: Harbor's environment/ for a task that names
+	// a prebuilt docker_image and ships no Dockerfile or compose file.
+	UploadDir string `json:"upload_dir,omitempty"`
+
 	// KeepEntrypoint runs the image's ENTRYPOINT with the idle command as
 	// its arguments, instead of clearing it. Harbor does this; an
 	// entrypoint that prepares the container is part of the task.

@@ -1059,3 +1059,47 @@ binary, it declares no dependencies, and Ruby parses it. Installing it could
 not be tested: that needs the tap repository, a Mac of each architecture, and
 a real release. The roadmap's "done when" (a working install on arm64 and
 amd64 macOS) therefore still stands.
+
+---
+
+## D23. Harbor setups Skeptic cannot reproduce are refused, not approximated
+
+**Status:** decided. Found while reading Harbor's source for multi-step tasks.
+
+Harbor's `task.toml` has more ways to shape the environment than the adapter
+read. Every one it did not read was silently ignored, so the task ran on a
+different setup from the one it declares, and the verdict was about that
+other setup. Of the 38 Harbor examples Skeptic discovered, 12 were affected.
+Read from `src/harbor` at `d10ac31`:
+
+| Setting | Harbor | Skeptic before | Now |
+|---|---|---|---|
+| `environment_mode = "separate"` or a `[verifier.environment]` table, task- or step-level (`models/task/verifier_mode.py`) | tests run in a separate verifier container | tests ran in the agent's container | `UNSUPPORTED` |
+| `[agent]`/`[verifier]`/`[solution]` or step `user` | phases run as that user | image default user | `UNSUPPORTED` |
+| `network_mode = "allowlist"`, or a phase `network_mode` differing from the environment's | an egress sidecar switches policy mid-task | ignored | `UNSUPPORTED` |
+| `[environment] network_mode = "no-network"`, single container | `network_mode: none` for main | ran online | **supported**: `docker run --network none` |
+| the same, multi-container | egress sidecar | ran online | `UNSUPPORTED` |
+| `docker_image` | the prebuilt image is used even when a Dockerfile exists (`should_use_prebuilt_docker_image`); with nothing to build, `environment/` is copied into the working directory (`should_upload_environment_dir`) | built the Dockerfile; with none, the task vanished | **supported**, both rules |
+| no Dockerfile, or no test script | refused | load error: the task vanished from a set without a word | `UNSUPPORTED`, naming it |
+
+`e2e/fidelity_test.go` has the proof for the offline case. The fixture's test
+passes only in a container with no network interface but loopback. The
+previous build ran it online and reported `ORACLE_FAILS`; this build reports
+`CLEAN`.
+
+### An offline task keeps its network failures
+
+D16 turns an oracle failure with network-error evidence into `ERROR`, on the
+grounds that the host's network failed, not the solution. A task that
+declares `no-network` never had a network to lose. A test there that needs
+one is the task's own defect, so D16's rule does not apply to it, and
+`ORACLE_FAILS` stands. `TestOfflineTaskKeepsItsNetworkFailure` pins that.
+
+### What refusing costs
+
+On Harbor's examples: the 5 separate-verifier tasks, the one custom-user
+task, and one allowlist demo move from a verdict about the wrong setup to
+`UNSUPPORTED`, and 3 tasks that used to vanish now appear as
+`UNSUPPORTED`. Terminal-Bench 1.x is untouched. Supporting separate
+verifiers and users is possible and would be its own piece of work;
+supporting mid-task network switching would need Harbor's egress sidecar.

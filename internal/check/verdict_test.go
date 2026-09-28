@@ -240,3 +240,15 @@ func TestFlakyReasonListsEveryRun(t *testing.T) {
 		t.Error("FLAKY must fail CI: a task that cannot grade consistently is a defect")
 	}
 }
+
+// A task that declares itself offline was never going to reach the network,
+// so a network failure in its tests is the task's own defect: the rule that
+// turns such failures into ERROR must not apply.
+func TestOfflineTaskKeepsItsNetworkFailure(t *testing.T) {
+	tk := &task.Task{Solution: task.Solution{Kind: task.SolutionScript}}
+	tk.Environment.NoNetwork = true
+	got, _ := classify(tk, ctl(ControlNop, f(0), ""), withOutput(ctl(ControlOracle, f(0), ""), requestsBehindProxy))
+	if got != VerdictOracleFails {
+		t.Fatalf("classify = %s, want ORACLE_FAILS for an offline task", got)
+	}
+}

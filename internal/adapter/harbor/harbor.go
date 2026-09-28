@@ -60,21 +60,20 @@ func (a *Adapter) Detect(dir string) bool {
 	return isDir(filepath.Join(dir, "environment")) || isFile(filepath.Join(dir, "Dockerfile"))
 }
 
-// config mirrors the subset of task.toml that affects how a task runs.
+// config mirrors the subset of task.toml that affects how a task runs, read
+// from src/harbor/models/task/config.py. Fields Skeptic cannot reproduce are
+// parsed too, so that a task using them is refused rather than run on a
+// quietly different setup.
 type config struct {
 	SchemaVersion string `toml:"schema_version"`
 	Task          struct {
 		Name string `toml:"name"`
 	} `toml:"task"`
-	Verifier struct {
-		TimeoutSec float64           `toml:"timeout_sec"`
-		Env        map[string]string `toml:"env"`
-	} `toml:"verifier"`
-	Agent struct {
-		TimeoutSec float64 `toml:"timeout_sec"`
-	} `toml:"agent"`
+	Verifier verifierConfig `toml:"verifier"`
+	Agent    phaseConfig    `toml:"agent"`
 	Solution struct {
-		Env map[string]string `toml:"env"`
+		Env  map[string]string `toml:"env"`
+		User interface{}       `toml:"user"`
 	} `toml:"solution"`
 	Environment struct {
 		BuildTimeoutSec float64 `toml:"build_timeout_sec"`
@@ -87,10 +86,156 @@ type config struct {
 		WorkDir string      `toml:"workdir"`
 		// Env is [environment.env]: set in main when it starts.
 		Env map[string]string `toml:"env"`
+		// DockerImage is a prebuilt image Harbor uses instead of building
+		// environment/Dockerfile.
+		DockerImage  string   `toml:"docker_image"`
+		NetworkMode  string   `toml:"network_mode"`
+		AllowedHosts []string `toml:"allowed_hosts"`
 	} `toml:"environment"`
-	Steps []struct {
-		Name string `toml:"name"`
-	} `toml:"steps"`
+	MultiStepRewardStrategy string       `toml:"multi_step_reward_strategy"`
+	Steps                   []stepConfig `toml:"steps"`
+}
+
+// phaseConfig is [agent], and a step's agent table.
+type phaseConfig struct {
+	TimeoutSec   float64     `toml:"timeout_sec"`
+	User         interface{} `toml:"user"`
+	NetworkMode  string      `toml:"network_mode"`
+	AllowedHosts []string    `toml:"allowed_hosts"`
+}
+
+// verifierConfig is [verifier], and a step's verifier table.
+type verifierConfig struct {
+	phaseConfig
+	Env             map[string]string `toml:"env"`
+	EnvironmentMode string            `toml:"environment_mode"`
+	// Environment is only checked for presence: declaring one implies a
+	// separate verifier container.
+	Environment map[string]interface{} `toml:"environment"`
+}
+
+type stepConfig struct {
+	Name        string             `toml:"name"`
+	Agent       phaseConfig        `toml:"agent"`
+	Verifier    verifierConfig     `toml:"verifier"`
+	MinReward   interface{}        `toml:"min_reward"`
+	Healthcheck *healthcheckConfig `toml:"healthcheck"`
+	Artifacts   []interface{}      `toml:"artifacts"`
+}
+
+type healthcheckConfig struct {
+	Command          string  `toml:"command"`
+	IntervalSec      float64 `toml:"interval_sec"`
+	TimeoutSec       float64 `toml:"timeout_sec"`
+	StartPeriodSec   float64 `toml:"start_period_sec"`
+	StartIntervalSec float64 `toml:"start_interval_sec"`
+	Retries          int     `toml:"retries"`
+}
+
+// verifierMode resolves a verifier table's own mode the way
+// models/task/verifier_mode.py _resolve_mode does: an explicit
+// environment_mode, else "separate" when it declares an environment, else
+// "" for not specified here.
+func verifierMode(v verifierConfig) string {
+	if v.EnvironmentMode != "" {
+		return v.EnvironmentMode
+	}
+	if v.Environment != nil {
+		return "separate"
+	}
+	return ""
+}
+
+// unreproducible names the first thing in cfg that Skeptic cannot run the
+// way Harbor would, or returns "". Every one of these was ignored before
+// D23, which meant running the task on a quietly different setup: a
+// verifier in the wrong container, a network the task said it would not
+// have, commands as the wrong user. Refusing is the honest answer until
+// each is supported.
+func unreproducible(cfg config, compose bool) string {
+	// Separate verifier environments: resolve_step_verifier_mode, falling
+	// back to resolve_task_verifier_mode, falling back to shared.
+	taskMode := verifierMode(cfg.Verifier)
+	if taskMode == "" {
+		taskMode = "shared"
+	}
+	if len(cfg.Steps) == 0 && taskMode != "shared" {
+		return fmt.Sprintf("verifier runs in a %s environment; Skeptic runs tests in the agent's container", taskMode)
+	}
+	for _, st := range cfg.Steps {
+		mode := verifierMode(st.Verifier)
+		if mode == "" {
+			mode = taskMode
+		}
+		if mode != "shared" {
+			return fmt.Sprintf("step %q verifier runs in a %s environment; Skeptic runs tests in the agent's container", st.Name, mode)
+		}
+	}
+
+	// Users: Harbor runs the agent phase and the verifier as these.
+	users := []struct {
+		where string
+		user  interface{}
+	}{{"[agent]", cfg.Agent.User}, {"[verifier]", cfg.Verifier.User}, {"[solution]", cfg.Solution.User}}
+	for _, st := range cfg.Steps {
+		users = append(users,
+			struct {
+				where string
+				user  interface{}
+			}{fmt.Sprintf("step %q agent", st.Name), st.Agent.User},
+			struct {
+				where string
+				user  interface{}
+			}{fmt.Sprintf("step %q verifier", st.Name), st.Verifier.User})
+	}
+	for _, u := range users {
+		if u.user != nil {
+			return fmt.Sprintf("%s runs as user %v; Skeptic runs every command as the image's default user", u.where, u.user)
+		}
+	}
+
+	// Network policy. The baseline applies to the whole environment; the
+	// agent and verifier phases, task-wide or per step, may override it,
+	// which Harbor enforces by switching policy mid-task through an egress
+	// sidecar. Skeptic can reproduce a fixed baseline of public, or of no
+	// network for a single container, and nothing that changes.
+	baseline := cfg.Environment.NetworkMode
+	if baseline == "" {
+		baseline = "public"
+	}
+	switch {
+	case baseline != "public" && baseline != "no-network":
+		return fmt.Sprintf("network_mode %q is not reproduced", baseline)
+	case len(cfg.Environment.AllowedHosts) > 0:
+		return "a network allowlist is not reproduced"
+	case baseline == "no-network" && compose:
+		return "network_mode \"no-network\" for a multi-container task is not reproduced"
+	}
+	phases := []struct {
+		where string
+		p     phaseConfig
+	}{{"[agent]", cfg.Agent}, {"[verifier]", cfg.Verifier.phaseConfig}}
+	for _, st := range cfg.Steps {
+		phases = append(phases,
+			struct {
+				where string
+				p     phaseConfig
+			}{fmt.Sprintf("step %q agent", st.Name), st.Agent},
+			struct {
+				where string
+				p     phaseConfig
+			}{fmt.Sprintf("step %q verifier", st.Name), st.Verifier.phaseConfig})
+	}
+	for _, ph := range phases {
+		if len(ph.p.AllowedHosts) > 0 {
+			return fmt.Sprintf("%s network allowlist is not reproduced", ph.where)
+		}
+		if ph.p.NetworkMode != "" && ph.p.NetworkMode != baseline {
+			return fmt.Sprintf("%s switches network_mode to %q mid-task; Skeptic keeps one network setting for the whole run",
+				ph.where, ph.p.NetworkMode)
+		}
+	}
+	return ""
 }
 
 // Load reads a Harbor task directory.
@@ -117,10 +262,6 @@ func (a *Adapter) Load(dir string) (*task.Task, error) {
 	// Refuse rather than mis-run. Each of these needs execution machinery
 	// Skeptic does not have, and guessing would produce a confident wrong
 	// verdict -- the exact failure this tool exists to catch.
-	if len(cfg.Steps) > 0 {
-		t.Unsupported = fmt.Sprintf("multi-step task (%d steps)", len(cfg.Steps))
-		return t, nil
-	}
 	if os := cfg.Environment.OS; os != "" && os != "linux" {
 		t.Unsupported = fmt.Sprintf("non-linux environment (os = %q)", os)
 		return t, nil
@@ -133,15 +274,35 @@ func (a *Adapter) Load(dir string) (*task.Task, error) {
 		return t, nil
 	}
 
-	dockerfile, contextDir, err := locateDockerfile(abs, envDir)
-	if err != nil {
-		return nil, err
-	}
-	if composeFile != "" && contextDir != envDir {
-		// Harbor's base compose file builds main from environment/, so a
-		// compose task with only a root Dockerfile has nothing to build.
-		t.Unsupported = "compose task without environment/Dockerfile: Harbor builds the main service from environment/"
+	if reason := unreproducible(cfg, composeFile != ""); reason != "" {
+		t.Unsupported = reason
 		return t, nil
+	}
+	if len(cfg.Steps) > 0 {
+		t.Unsupported = fmt.Sprintf("multi-step task (%d steps)", len(cfg.Steps))
+		return t, nil
+	}
+
+	// A docker_image wins over any Dockerfile: Harbor uses the prebuilt
+	// image unless forced to build, which is a command-line choice
+	// (environments/definition.py should_use_prebuilt_docker_image).
+	image := cfg.Environment.DockerImage
+	var dockerfile, contextDir string
+	if image == "" {
+		dockerfile, contextDir, err = locateDockerfile(abs, envDir)
+		if err != nil {
+			// Reported, not returned: a load error drops the task from a
+			// set without a word (docs/decisions.md D15).
+			t.Unsupported = err.Error()
+			return t, nil
+		}
+		if composeFile != "" && contextDir != envDir {
+			// Harbor's base compose file builds main from environment/, so
+			// a compose task with only a root Dockerfile has nothing to
+			// build.
+			t.Unsupported = "compose task without environment/Dockerfile: Harbor builds the main service from environment/"
+			return t, nil
+		}
 	}
 
 	// Harbor passes -w only when task.toml sets workdir; otherwise every
@@ -176,6 +337,7 @@ func (a *Adapter) Load(dir string) (*task.Task, error) {
 	t.Environment = task.Environment{
 		Dockerfile:   dockerfile,
 		ContextDir:   contextDir,
+		NoNetwork:    cfg.Environment.NetworkMode == "no-network",
 		BuildTimeout: seconds(cfg.Environment.BuildTimeoutSec, buildTimeout),
 		WorkDir:      workdir,
 		CPUs:         max(cfg.Environment.CPUs, 0),
@@ -186,8 +348,13 @@ func (a *Adapter) Load(dir string) (*task.Task, error) {
 		// prepares the container runs.
 		KeepEntrypoint: true,
 	}
-	if composeFile != "" {
-		base, err := composeBase()
+	switch {
+	case composeFile != "":
+		name, content := "docker-compose-build.yaml", composeBuildYAML
+		if image != "" {
+			name, content = "docker-compose-prebuilt.yaml", composePrebuiltYAML
+		}
+		base, err := composeBase(name, content)
 		if err != nil {
 			return nil, err
 		}
@@ -198,10 +365,16 @@ func (a *Adapter) Load(dir string) (*task.Task, error) {
 			ProjectDir: envDir,
 			Service:    mainService,
 			Env: map[string]string{
-				"CONTEXT_DIR":     envDir,
-				"MAIN_IMAGE_NAME": "hb__skeptic-${SKEPTIC_PROJECT}",
+				"CONTEXT_DIR":         envDir,
+				"MAIN_IMAGE_NAME":     "hb__skeptic-${SKEPTIC_PROJECT}",
+				"PREBUILT_IMAGE_NAME": image,
 			},
 			Wait: true,
+		}
+	case image != "":
+		t.Environment.Image = image
+		if uploadsEnvironment(envDir) {
+			t.Environment.UploadDir = envDir
 		}
 	}
 	t.Solution = loadSolution(abs, cfg, workdir)
@@ -209,7 +382,8 @@ func (a *Adapter) Load(dir string) (*task.Task, error) {
 	testsDir := filepath.Join(abs, "tests")
 	testScript := discoverScript(testsDir, "test")
 	if testScript == "" {
-		return nil, fmt.Errorf("no test script in %s", testsDir)
+		t.Unsupported = "no test script in tests/"
+		return t, nil
 	}
 	t.Tests = task.Tests{
 		Dir:       testsDir,
@@ -257,16 +431,19 @@ func locateDockerfile(abs, envDir string) (dockerfile, contextDir string, err er
 	if p := filepath.Join(abs, "Dockerfile"); isFile(p) {
 		return p, abs, nil
 	}
-	return "", "", fmt.Errorf("no Dockerfile in %s or %s", envDir, abs)
+	return "", "", fmt.Errorf("no Dockerfile in environment/ or the task directory")
 }
 
 // mainService is the service Harbor runs the agent, the solution and the
 // tests in.
 const mainService = "main"
 
-// composeBaseYAML is src/harbor/environments/docker/docker-compose-build.yaml,
-// verbatim. Harbor layers the task's own compose file on top of it.
-const composeBaseYAML = `services:
+// composeBuildYAML and composePrebuiltYAML are
+// src/harbor/environments/docker/docker-compose-build.yaml and
+// docker-compose-prebuilt.yaml, verbatim. Harbor layers the task's own
+// compose file on top of one of them: the prebuilt one when the task names a
+// docker_image.
+const composeBuildYAML = `services:
   main:
     build:
       context: ${CONTEXT_DIR}
@@ -274,25 +451,52 @@ const composeBaseYAML = `services:
     command: [ "sh", "-c", "sleep infinity" ]
 `
 
+const composePrebuiltYAML = `services:
+  main:
+    image: ${PREBUILT_IMAGE_NAME}
+    command: [ "sh", "-c", "sleep infinity" ]
+`
+
 var (
-	baseOnce sync.Once
-	basePath string
-	baseErr  error
+	baseMu    sync.Mutex
+	baseDir   string
+	basePaths = map[string]string{}
 )
 
-// composeBase writes Harbor's base compose file once per process and returns
-// its path.
-func composeBase() (string, error) {
-	baseOnce.Do(func() {
+// composeBase writes one of Harbor's base compose files once per process and
+// returns its path.
+func composeBase(name, content string) (string, error) {
+	baseMu.Lock()
+	defer baseMu.Unlock()
+	if p, ok := basePaths[name]; ok {
+		return p, nil
+	}
+	if baseDir == "" {
 		dir, err := os.MkdirTemp("", "skeptic-harbor-compose-")
 		if err != nil {
-			baseErr = err
-			return
+			return "", err
 		}
-		basePath = filepath.Join(dir, "docker-compose-build.yaml")
-		baseErr = os.WriteFile(basePath, []byte(composeBaseYAML), 0o644)
-	})
-	return basePath, baseErr
+		baseDir = dir
+	}
+	p := filepath.Join(baseDir, name)
+	if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
+		return "", err
+	}
+	basePaths[name] = p
+	return p, nil
+}
+
+// uploadsEnvironment is should_upload_environment_dir
+// (environments/definition.py), given that the task names a docker_image:
+// Harbor copies environment/ into the working directory when there is no
+// Dockerfile or docker-compose.yaml to build from and the directory holds
+// something.
+func uploadsEnvironment(envDir string) bool {
+	if isFile(filepath.Join(envDir, "Dockerfile")) || isFile(filepath.Join(envDir, "docker-compose.yaml")) {
+		return false
+	}
+	entries, err := os.ReadDir(envDir)
+	return err == nil && len(entries) > 0
 }
 
 // taskCompose finds the task's own compose file, if any. Harbor merges any
