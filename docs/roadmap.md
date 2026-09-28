@@ -44,24 +44,27 @@ details, including what Harbor's source said that the sketch here did not.
 
 ---
 
-## 5. A Homebrew tap
+## 5. A Homebrew tap — config ready, the rest is the owner's
 
-**Why.** `brew install bugyal/tap/skeptic` is how most macOS users will
-want this, and the README currently promises a tap that does not exist.
+The release config is done (`.goreleaser.yaml` `homebrew_casks`; why a cask
+and what it does are in `docs/decisions.md` D22). It stays inert until these
+steps, which only the repository owner can take:
 
-**Where.** A `bugyal/homebrew-tap` repository, plus a `brews:` block in
-`.goreleaser.yaml`. goreleaser can push the formula on release, but the
-workflow's own `GITHUB_TOKEN` cannot write to a second repository: this needs
-a token with write access to the tap, stored as a repository secret. That
-repository and that secret are the owner's to create, which is why this is
-still open.
+1. Create a public repository `bugyal/homebrew-tap`. An initial README is
+   fine; goreleaser writes `Casks/skeptic.rb` to its default branch.
+2. Create a fine-grained personal access token limited to that one
+   repository, with **Contents: read and write** and nothing else.
+3. In `bugyal/skeptic` → Settings → Secrets and variables → Actions, add it
+   as `HOMEBREW_TAP_GITHUB_TOKEN`.
+4. Tag the next release as usual. Its workflow uploads the cask. (Re-running
+   an older release would not: the config is newer than v0.3.0.)
+5. On an Apple Silicon Mac and an Intel Mac: `brew install
+   bugyal/tap/skeptic`, then `skeptic version` and `skeptic lint` on a task
+   directory with Docker stopped. That last check is the roadmap's trap: the
+   tap must not require Docker.
 
-**Done when.** The tap installs a working binary on both arm64 and amd64 macOS,
-and the README's install section points at it instead of saying "planned".
-
-**The trap.** The formula must not declare Docker as a dependency. `skeptic
-lint` is useful with no container runtime at all, and forcing a Docker install
-on someone who only wants the static checks is the wrong trade.
+Decide first whether to keep the post-install hook that clears macOS's
+quarantine flag. D22 explains the trade-off.
 
 ---
 

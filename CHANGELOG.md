@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **Release config for a Homebrew tap** (`brew install bugyal/tap/skeptic`).
+  It is inert until the `bugyal/homebrew-tap` repository and its token
+  exist; until then, releases are unchanged. See `docs/decisions.md` D22.
+
 ## [0.3.0] - 2026-09-27
 
 Multi-container tasks are checked instead of refused, and Harbor tasks now

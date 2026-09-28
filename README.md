@@ -104,7 +104,7 @@ go install github.com/bugyal/skeptic/cmd/skeptic@latest
 ```
 
 Or grab a binary from [Releases](https://github.com/bugyal/skeptic/releases).
-Homebrew tap: planned.
+Homebrew tap: the release config is ready, and the tap goes live once its repository exists (`docs/roadmap.md` item 5).
 
 Requires Docker (or any CLI-compatible runtime) for `check`. `lint` needs nothing.
 
@@ -441,7 +441,7 @@ that. It does not run agents or call any model.
 
 - Run the full SWE-bench Verified set on a machine with the disk for it
   (about 2 TB of image traffic)
-- Homebrew tap (needs a tap repository and a token; see `docs/roadmap.md`)
+- Homebrew tap: config ready, waiting on the tap repository and its token
 
 `docs/roadmap.md` has each item written up to be picked up cold.
 

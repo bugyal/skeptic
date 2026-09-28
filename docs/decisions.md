@@ -1018,3 +1018,44 @@ declare one, so every control leaked one: 64 after two days of runs here, on
 a disk colima never gives back. Containers are now removed with `rm -f -v`,
 which removes anonymous volumes only. An image with a `VOLUME` left 2 behind
 per task before the fix and 0 after.
+
+---
+
+## D22. The Homebrew tap: a cask, and inert until its token exists
+
+**Status:** decided; the owner's half is still to do.
+
+Roadmap item 5 sketched a `brews:` block. goreleaser v2 deprecates `brews`
+(`internal/pipe/brew/brew.go` raises a deprecation notice) in favour of
+`homebrew_casks`, so the release config uses a cask. `goreleaser check`
+passes with no deprecation warnings.
+
+### What the config does
+
+- **Publishes only when it can.** The cask is uploaded to `bugyal/homebrew-tap`
+  with a token from the `HOMEBREW_TAP_GITHUB_TOKEN` secret. `skip_upload` is
+  `true` unless that variable is set and non-empty. GitHub Actions sets a
+  missing secret to the empty string, which counts as unset, so releases work
+  unchanged until the tap exists. This was checked with goreleaser's own
+  template engine (v2.18.2, `internal/tmpl`) for unset, empty and set. With
+  the token present, `auto` still skips prereleases.
+- **No Docker dependency.** The roadmap's trap: `skeptic lint` needs no
+  container runtime, and a tap that forced Docker on people who only want
+  the static checks would be the wrong trade.
+- **Removes the macOS quarantine flag after install.** The binary is not
+  signed or notarized. goreleaser's documentation says macOS then refuses to
+  run it from a quarantined download ("is damaged and cannot be opened"), and
+  gives this `xattr` post-install hook as the alternative to notarization.
+  **This is a security trade-off and the owner's call.** It tells Gatekeeper
+  to skip its check for this one binary. The alternatives are to sign and
+  notarize (a paid Apple developer account; goreleaser supports it), or to
+  delete the hook and tell users to run the `xattr` command themselves.
+
+### What was verified, and what could not be
+
+A snapshot build generated the cask. It covers macOS and Linux on both
+architectures, each `sha256` matches its archive, it installs the `skeptic`
+binary, it declares no dependencies, and Ruby parses it. Installing it could
+not be tested: that needs the tap repository, a Mac of each architecture, and
+a real release. The roadmap's "done when" (a working install on arm64 and
+amd64 macOS) therefore still stands.

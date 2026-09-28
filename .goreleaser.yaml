@@ -68,6 +68,35 @@ changelog:
       - '^test:'
       - Merge pull request
 
+# Homebrew: `brew install bugyal/tap/skeptic`. Inert until the owner creates
+# the bugyal/homebrew-tap repository and stores a token that can write to it
+# as the HOMEBREW_TAP_GITHUB_TOKEN secret. Without the token, upload is
+# skipped and the release is unaffected. See docs/decisions.md D22.
+homebrew_casks:
+  - name: skeptic
+    repository:
+      owner: bugyal
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    # auto: upload for releases, skip prereleases.
+    skip_upload: '{{ if isEnvSet "HOMEBREW_TAP_GITHUB_TOKEN" }}auto{{ else }}true{{ end }}'
+    homepage: https://github.com/bugyal/skeptic
+    description: Checks whether AI coding benchmarks measure what they claim
+    license: Apache-2.0
+    # Deliberately no dependency on Docker: `skeptic lint` needs no container
+    # runtime, and forcing one on people who only want the static checks is
+    # the wrong trade.
+    hooks:
+      post:
+        # The binary is not signed or notarized, so macOS refuses to run it
+        # from a quarantined download ("is damaged and cannot be opened").
+        # This is goreleaser's documented alternative to notarization; the
+        # other is to sign and notarize, which needs a paid Apple account.
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/skeptic"]
+          end
+
 release:
   draft: true
   prerelease: auto
