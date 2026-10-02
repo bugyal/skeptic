@@ -5,16 +5,18 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Fixed
+## [0.4.0] - 2026-10-02
 
-- **Harbor tasks run on the setup they declare, or are refused.** A
-  separate verifier container, a custom user, a network allowlist or a
-  mid-task network change used to be ignored, so the task ran on a
-  different setup and got a verdict about it. These are now `UNSUPPORTED`,
-  naming the setting. `network_mode = "no-network"` is honoured for single
-  containers (`--network none`), and `docker_image` is used as Harbor uses
-  it. Tasks with no Dockerfile or test script are reported instead of
-  silently dropped. See `docs/decisions.md` D23.
+Harbor multi-step tasks are checked instead of refused, and every Harbor
+task now runs on the setup its `task.toml` declares or is refused, naming
+the setting. Reading Harbor's source for the multi-step work turned up
+settings the adapter had been ignoring: a separate verifier container,
+custom users, network policies and `docker_image`. A minor release: tasks
+that were `UNSUPPORTED` now get verdicts, and some Harbor tasks that used
+to get a verdict about the wrong setup are now `UNSUPPORTED` instead. On Harbor's
+examples, 4 multi-step tasks are now `CLEAN`, and the offline fixture that
+reported `ORACLE_FAILS` online is `CLEAN` offline. Terminal-Bench 1.x
+results are unchanged.
 
 ### Added
 
@@ -30,6 +32,17 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Release config for a Homebrew tap** (`brew install bugyal/tap/skeptic`).
   It is inert until the `bugyal/homebrew-tap` repository and its token
   exist; until then, releases are unchanged. See `docs/decisions.md` D22.
+
+### Fixed
+
+- **Harbor tasks run on the setup they declare, or are refused.** A
+  separate verifier container, a custom user, a network allowlist or a
+  mid-task network change used to be ignored, so the task ran on a
+  different setup and got a verdict about it. These are now `UNSUPPORTED`,
+  naming the setting. `network_mode = "no-network"` is honoured for single
+  containers (`--network none`), and `docker_image` is used as Harbor uses
+  it. Tasks with no Dockerfile or test script are reported instead of
+  silently dropped. See `docs/decisions.md` D23.
 
 ## [0.3.0] - 2026-09-27
 
@@ -266,7 +279,8 @@ rather than indicating a defect.
 - Published SWE-bench images are ~4 GB each and x86_64, so a large run needs
   substantial disk and, on arm64 hosts, emulation.
 
-[Unreleased]: https://github.com/bugyal/skeptic/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/bugyal/skeptic/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/bugyal/skeptic/releases/tag/v0.4.0
 [0.3.0]: https://github.com/bugyal/skeptic/releases/tag/v0.3.0
 [0.2.0]: https://github.com/bugyal/skeptic/releases/tag/v0.2.0
 [0.1.2]: https://github.com/bugyal/skeptic/releases/tag/v0.1.2

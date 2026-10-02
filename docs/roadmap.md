@@ -56,8 +56,10 @@ steps, which only the repository owner can take:
    repository, with **Contents: read and write** and nothing else.
 3. In `bugyal/skeptic` → Settings → Secrets and variables → Actions, add it
    as `HOMEBREW_TAP_GITHUB_TOKEN`.
-4. Tag the next release as usual. Its workflow uploads the cask. (Re-running
-   an older release would not: the config is newer than v0.3.0.)
+4. Tag the next release as usual. Its workflow uploads the cask. v0.4.0 is
+   the first release that carries the config; if its tag is pushed before
+   the secret exists, re-run its release workflow afterwards. Releases before
+   it never upload a cask.
 5. On an Apple Silicon Mac and an Intel Mac: `brew install
    bugyal/tap/skeptic`, then `skeptic version` and `skeptic lint` on a task
    directory with Docker stopped. That last check is the roadmap's trap: the
