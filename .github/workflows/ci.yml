@@ -68,5 +68,17 @@ jobs:
         with:
           go-version: '1.26'
           cache: true
+      # An e2e failure is often the runner, not the code: how much swap it
+      # has and whether its kernel accounts for it decide whether a memory
+      # limit kills a process or lets it swap.
+      - name: host facts
+        run: |
+          free -m
+          docker info 2>&1 | grep -i -E 'cgroup|swap|warning' || true
+          docker run --rm --memory 64m python:3.12-slim sh -c 'cat /sys/fs/cgroup/memory.max /sys/fs/cgroup/memory.swap.max 2>/dev/null || cat /sys/fs/cgroup/memory/memory.limit_in_bytes /sys/fs/cgroup/memory/memory.memsw.limit_in_bytes' || true
+          echo "--- 300 MB under --memory 64m"
+          docker run --rm --memory 64m python:3.12-slim python3 -c 'b=bytearray(300*1024*1024); print("survived")'; echo "exit=$?"
+          echo "--- 300 MB under --memory 64m --memory-swap 64m"
+          docker run --rm --memory 64m --memory-swap 64m python:3.12-slim python3 -c 'b=bytearray(300*1024*1024); print("survived")'; echo "exit=$?"
       - name: e2e tests
         run: go test -tags e2e -timeout 30m ./e2e/...
