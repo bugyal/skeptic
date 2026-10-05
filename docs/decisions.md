@@ -1165,3 +1165,38 @@ play no part in a grade, so they are not collected. Under `min_reward`, a
 nop that fails an early step never reaches the later ones, as in Harbor. A
 later step whose test a do-nothing agent would pass is therefore only found
 when no gate stops the nop before it.
+
+## D25. A memory limit is the limit, swap included
+
+**Status:** decided. Found when the e2e suite ran on GitHub's runner.
+
+The out-of-memory fixture (`testdata/limits/oom`: 300 MB held under a
+64 MB limit) is `ERROR` in a sandbox without swap and was `CLEAN` on a
+runner with 3 GB of it. Docker's `--memory` alone lets a container swap as
+much again as its limit (`memory.swap.max` came out equal to `memory.max`
+on the runner), so `memory_mb = 64` meant 64 MB on one host and 128 MB on
+another, and the same task got a different verdict on each.
+
+Skeptic now passes `--memory-swap` equal to `--memory`, and `memswap_limit`
+beside `mem_limit` in the Compose override, so the declared limit is what
+the kernel enforces everywhere. On the runner, the same 300 MB under
+`--memory 64m --memory-swap 64m` is killed (exit 137), as it is here.
+
+Harbor sets only `mem_limit` (`environments/docker/__init__.py`), and so
+inherits the host's swap. That is not a setting Harbor chose but one the
+host supplies, and it varies with the host, which is the kind of variation
+Skeptic exists to remove. A task whose tests pass only by swapping past
+their declared limit now fails the same way on every machine, and the
+`ERROR` names the limit.
+
+### Evidence a non-root user can delete
+
+The same run found that Terminal-Bench 1.x compose tasks left root-owned
+directories in the run's evidence. Skeptic bind-mounts a per-control
+directory for the task's logs; Docker creates a missing mount source as
+root, and the container's `mkdir -p /logs/...` makes more as root. A user
+who is not root could not then remove their own run directory. The mount
+directories are now created on the host first, by the user, and after
+`compose down` a throwaway container of the service's own image gives
+everything under them back to the user. Root hosts, like this sandbox,
+skip the repair, which is why only the runner showed it.

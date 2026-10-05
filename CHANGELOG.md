@@ -5,6 +5,19 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **A memory limit now includes swap.** Docker's `--memory` alone lets a
+  container swap as much again as its limit, so a task's `memory_mb` meant
+  one thing on a host with swap and another on one without, and the
+  out-of-memory fixture was `ERROR` on one and `CLEAN` on the other.
+  `--memory-swap` (and `memswap_limit` in Compose) is now set equal to the
+  limit. See `docs/decisions.md` D25.
+- **Compose evidence belongs to the user who ran the check.** Containers
+  wrote to the per-control log mounts as root, so a non-root user could not
+  delete their own run directory. The mount directories are created by the
+  user first and handed back after `compose down`.
+
 ## [0.4.0] - 2026-10-02
 
 Harbor multi-step tasks are checked instead of refused, and every Harbor

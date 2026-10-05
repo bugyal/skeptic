@@ -111,3 +111,33 @@ func lastLine(s string) string {
 	}
 	return s
 }
+
+// ContainerImage returns the image a running container was created from.
+func (c *Client) ContainerImage(ctx context.Context, container string) (string, error) {
+	res, err := c.run(ctx, 30*time.Second, "inspect", "--format", "{{.Image}}", container)
+	if err != nil {
+		return "", err
+	}
+	if res.ExitCode != 0 {
+		return "", fmt.Errorf("inspecting %s: %s", container, lastLine(res.Stderr))
+	}
+	return strings.TrimSpace(res.Stdout), nil
+}
+
+// Chown gives everything under the host directory dir to uid:gid, from a
+// throwaway container of image, which must carry chown. A container writes
+// to a bind mount as root, so on a host whose user is not root the evidence
+// a project left in its mounts could not otherwise be removed by the person
+// who made it.
+func (c *Client) Chown(ctx context.Context, image, dir string, uid, gid int) error {
+	res, err := c.run(ctx, 2*time.Minute, "run", "--rm", "--network", "none",
+		"-v", dir+":/skeptic-mounts", "--entrypoint", "chown", image,
+		"-R", fmt.Sprintf("%d:%d", uid, gid), "/skeptic-mounts")
+	if err != nil {
+		return err
+	}
+	if res.ExitCode != 0 {
+		return fmt.Errorf("chown in %s: %s", image, lastLine(res.Stderr))
+	}
+	return nil
+}

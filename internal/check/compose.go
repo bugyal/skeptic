@@ -41,7 +41,7 @@ func (r *Runner) project(t *task.Task, name, logDir string) (docker.Project, err
 		Env:      map[string]string{},
 	}
 
-	hostLogs, err := filepath.Abs(filepath.Join(logDir, "compose-mounts"))
+	hostLogs, err := mountsDir(logDir)
 	if err != nil {
 		return p, err
 	}
@@ -56,6 +56,14 @@ func (r *Runner) project(t *task.Task, name, logDir string) (docker.Project, err
 			}
 			return "${" + key + "}"
 		})
+		// Docker creates a missing bind-mount source as root. Made here
+		// first, the directories Skeptic names for the task's mounts belong
+		// to whoever ran it, and can be cleaned up by them.
+		if strings.HasPrefix(p.Env[k], hostLogs+string(filepath.Separator)) {
+			if err := os.MkdirAll(p.Env[k], 0o755); err != nil {
+				return p, err
+			}
+		}
 	}
 
 	// Limits and startup env go on the service the controls act on, as an
@@ -68,7 +76,9 @@ func (r *Runner) project(t *task.Task, name, logDir string) (docker.Project, err
 			svc["cpus"] = strconv.FormatFloat(cpus, 'f', -1, 64)
 		}
 		if memMB > 0 {
+			// Both, for the same reason docker.Start passes --memory-swap.
 			svc["mem_limit"] = fmt.Sprintf("%dm", memMB)
+			svc["memswap_limit"] = fmt.Sprintf("%dm", memMB)
 		}
 		if len(t.Environment.Env) > 0 {
 			svc["environment"] = t.Environment.Env
@@ -111,14 +121,25 @@ func (r *Runner) startCompose(ctx context.Context, t *task.Task, name, logDir st
 	if err != nil {
 		return "", func() {}, err
 	}
+	var image string
 	down := func() {
-		writeFile(filepath.Join(logDir, "compose.log"), r.docker.ComposeLogs(context.WithoutCancel(ctx), p))
+		bg := context.WithoutCancel(ctx)
+		writeFile(filepath.Join(logDir, "compose.log"), r.docker.ComposeLogs(bg, p))
 		if r.opts.KeepContainers {
 			r.log.Info("keeping compose project", "task", t.ID, "project", p.Name)
 			return
 		}
-		if err := r.docker.ComposeDown(context.WithoutCancel(ctx), p); err != nil {
+		if err := r.docker.ComposeDown(bg, p); err != nil {
 			r.log.Warn("removing compose project", "task", t.ID, "err", err)
+		}
+		// The containers wrote to their mounts as root. Hand the evidence
+		// back to the person who ran the check, so they can delete it.
+		if uid := os.Getuid(); uid > 0 && image != "" {
+			if dir, err := mountsDir(logDir); err == nil {
+				if err := r.docker.Chown(bg, image, dir, uid, os.Getgid()); err != nil {
+					r.log.Warn("restoring ownership of compose mounts", "task", t.ID, "dir", dir, "err", err)
+				}
+			}
 		}
 	}
 	res, err := r.docker.ComposeUp(ctx, p, t.Environment.Compose.Wait, t.Environment.BuildTimeout)
@@ -132,5 +153,16 @@ func (r *Runner) startCompose(ctx context.Context, t *task.Task, name, logDir st
 	if err != nil {
 		return "", down, err
 	}
+	// Remembered for the ownership repair in down: the service's own image
+	// is the one image certain to be present when the project is gone.
+	if image, err = r.docker.ContainerImage(ctx, id); err != nil {
+		r.log.Warn("finding the service image", "task", t.ID, "err", err)
+	}
 	return id, down, nil
+}
+
+// mountsDir is the host directory a control's project may bind-mount for
+// its logs, SKEPTIC_LOG_DIR to the task's compose file.
+func mountsDir(logDir string) (string, error) {
+	return filepath.Abs(filepath.Join(logDir, "compose-mounts"))
 }

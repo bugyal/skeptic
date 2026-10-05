@@ -261,7 +261,10 @@ func (c *Client) Start(ctx context.Context, o StartOptions) (string, error) {
 		args = append(args, "--network", o.Network)
 	}
 	if o.Memory != "" {
-		args = append(args, "--memory", o.Memory)
+		// Without --memory-swap Docker lets a container swap as much again
+		// as its limit, so a limit means one thing on a host with swap and
+		// another on one without. Set equal, the limit is the limit (D25).
+		args = append(args, "--memory", o.Memory, "--memory-swap", o.Memory)
 	}
 	if o.CPUs != "" {
 		args = append(args, "--cpus", o.CPUs)

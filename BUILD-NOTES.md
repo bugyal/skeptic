@@ -2,7 +2,7 @@
 
 Status: **historical** — this records v0.1 as first built, on 2026-09-24.
 For what has changed since, see `CHANGELOG.md` (0.1.1 through 0.4.0); for why,
-`docs/decisions.md` (D1–D24); for what is left, `docs/roadmap.md`.
+`docs/decisions.md` (D1–D25); for what is left, `docs/roadmap.md`.
 Everything below was verified with the exact commands listed at the end.
 
 ## What is implemented

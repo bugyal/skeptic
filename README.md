@@ -203,7 +203,8 @@ container as hard limits, as Harbor's Docker environment does:
 `cpus`/`memory_mb` (and the legacy `memory = "2G"`) in Harbor's `task.toml`,
 `deploy.resources.limits` in a Terminal-Bench 1.x compose file, and the same two
 keys in `skeptic.toml`. A test killed at the limit is `ERROR`, not a score of
-zero. The two override flags replace every task's limits.
+zero. The limit includes swap, so it means the same on a host with swap as on
+one without. The two override flags replace every task's limits.
 
 ### `skeptic lint`
 
