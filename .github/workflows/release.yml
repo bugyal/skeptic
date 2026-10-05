@@ -1,8 +1,17 @@
 name: release
 
+# A release starts from a tag. Push one, or press "Run workflow" with the
+# version from CHANGELOG.md and this tags the branch head itself. Either way
+# the release is created as a draft, for the owner to read and publish.
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, as its CHANGELOG.md heading has it (0.4.0, not v0.4.0). Tags this branch's head as v<version>."
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -21,6 +30,32 @@ jobs:
         with:
           go-version: '1.22'
           cache: true
+
+      # Only for the button. The changelog section must already exist, so
+      # a release is never cut by accident, and the tag must be new. A tag
+      # pushed with GITHUB_TOKEN does not start the push workflow above, so
+      # this run is the release; goreleaser reads the tag it just made.
+      - name: tag the release
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -eu
+          case "$VERSION" in
+            v*) echo "give the version without the v: ${VERSION#v}"; exit 1 ;;
+          esac
+          if ! grep -qF "## [$VERSION] - " CHANGELOG.md; then
+            echo "CHANGELOG.md has no [$VERSION] section at this commit; cut the release first"
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null; then
+            echo "v$VERSION already exists"
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$VERSION" -m "v$VERSION"
+          git push origin "refs/tags/v$VERSION"
 
       - uses: goreleaser/goreleaser-action@v6
         with:

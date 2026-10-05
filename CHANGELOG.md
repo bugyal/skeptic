@@ -5,6 +5,13 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **A release button.** The release workflow can be run by hand with a
+  version from `CHANGELOG.md`; it tags the branch head and builds the draft
+  release, so a release no longer needs a machine that can push tags. The
+  changelog section must exist and the tag must be new, or it refuses.
+
 ### Fixed
 
 - **A memory limit now includes swap.** Docker's `--memory` alone lets a

@@ -56,7 +56,8 @@ steps, which only the repository owner can take:
    repository, with **Contents: read and write** and nothing else.
 3. In `bugyal/skeptic` → Settings → Secrets and variables → Actions, add it
    as `HOMEBREW_TAP_GITHUB_TOKEN`.
-4. Tag the next release as usual. Its workflow uploads the cask. v0.4.0 is
+4. Tag the next release as usual, or press **Run workflow** on the release
+   workflow with the version from `CHANGELOG.md`. Its workflow uploads the cask. v0.4.0 is
    the first release that carries the config; if its tag is pushed before
    the secret exists, re-run its release workflow afterwards. Releases before
    it never upload a cask.
